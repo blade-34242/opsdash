@@ -78,18 +78,9 @@ class CalendarParsingService {
                                         if ($vobj && isset($vobj->VEVENT)) {
                                             foreach ($vobj->select('VEVENT') as $vevent) {
                                                 $dtStart = $vevent->DTSTART?->getDateTime();
-                                                $dtEnd = $vevent->DTEND?->getDateTime();
-                                                if (!$dtEnd && $dtStart && isset($vevent->DURATION)) {
-                                                    try {
-                                                        $dtEnd = (clone $dtStart)->add(new DateInterval((string)$vevent->DURATION->getValue()));
-                                                    } catch (\Throwable) {
-                                                        $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                                    }
-                                                } elseif (!$dtEnd && $dtStart) {
-                                                    $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                                }
+                                                $dtEnd = $this->resolveVEventEnd($vevent, $dtStart);
                                                 if ($dtStart && $dtEnd) {
-                                                    $summary = isset($vevent->SUMMARY) ? (string)$vevent->SUMMARY->getValue() : '';
+                                                    $summary = $this->extractVEventSummary($vevent);
                                                     $out[] = [
                                                         'calendar' => $calendarName,
                                                         'calendar_id' => $calendarId,
@@ -135,20 +126,22 @@ class CalendarParsingService {
                             $end = isset($payload['DTEND'])
                                 ? $this->parseStructuredDate($payload['DTEND'])
                                 : null;
-                            if (!$end && $start && isset($payload['DURATION'])) {
+                            $duration = isset($payload['DURATION'])
+                                ? $this->extractTextValue($payload['DURATION'])
+                                : null;
+                            if (!$end && $start && $duration !== null) {
                                 try {
                                     $dtStart = new \DateTimeImmutable($start, new \DateTimeZone('UTC'));
-                                    $interval = new DateInterval((string)$payload['DURATION']);
+                                    $interval = new DateInterval($duration);
                                     $end = $dtStart->add($interval)->format('Y-m-d H:i:s');
                                 } catch (\Throwable) {
                                     $end = null;
                                 }
                             }
                             if ($start && $end) {
-                                $summary = '';
-                                if (isset($payload['SUMMARY'])) {
-                                    $summary = is_array($payload['SUMMARY']) ? (string)($payload['SUMMARY'][0] ?? '') : (string)$payload['SUMMARY'];
-                                }
+                                $summary = isset($payload['SUMMARY'])
+                                    ? ($this->extractTextValue($payload['SUMMARY']) ?? '')
+                                    : '';
                                 $out[] = [
                                     'calendar' => $calendarName,
                                     'calendar_id' => $calendarId,
@@ -162,25 +155,16 @@ class CalendarParsingService {
                             }
                         }
                         if (isset($payload['calendardata'])) {
-                            $ics = (string)$payload['calendardata'];
+                            $ics = $this->extractTextValue($payload['calendardata']) ?? '';
                             if ($ics !== '' && strlen($ics) < $maxIcsBytes) {
                                 try {
                                     $vobj = Reader::read($ics);
                                     if ($vobj && isset($vobj->VEVENT)) {
                                         foreach ($vobj->select('VEVENT') as $vevent) {
                                             $dtStart = $vevent->DTSTART?->getDateTime();
-                                            $dtEnd = $vevent->DTEND?->getDateTime();
-                                            if (!$dtEnd && $dtStart && isset($vevent->DURATION)) {
-                                                try {
-                                                    $dtEnd = (clone $dtStart)->add(new DateInterval((string)$vevent->DURATION->getValue()));
-                                                } catch (\Throwable) {
-                                                    $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                                }
-                                            } elseif (!$dtEnd && $dtStart) {
-                                                $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                            }
+                                            $dtEnd = $this->resolveVEventEnd($vevent, $dtStart);
                                             if ($dtStart && $dtEnd) {
-                                                $summary = isset($vevent->SUMMARY) ? (string)$vevent->SUMMARY->getValue() : '';
+                                                $summary = $this->extractVEventSummary($vevent);
                                                 $out[] = [
                                                     'calendar' => $calendarName,
                                                     'calendar_id' => $calendarId,
@@ -205,7 +189,7 @@ class CalendarParsingService {
                         $start = $payload['start'] ?? null;
                         $end = $payload['end'] ?? null;
                         if ($start && $end) {
-                            $summary = (string)($payload['summary'] ?? '');
+                            $summary = $this->extractTextValue($payload['summary'] ?? null) ?? '';
                             $out[] = [
                                 'calendar' => $calendarName,
                                 'calendar_id' => $calendarId,
@@ -228,7 +212,7 @@ class CalendarParsingService {
                 $start = $this->extractDateValue($row['start']);
                 $end = $this->extractDateValue($row['end']);
                 if ($start && $end) {
-                    $summary = (string)($row['summary'] ?? '');
+                    $summary = $this->extractTextValue($row['summary'] ?? null) ?? '';
                     $out[] = [
                         'calendar' => $calendarName,
                         'calendar_id' => $calendarId,
@@ -243,25 +227,16 @@ class CalendarParsingService {
             }
             $payload = $row['object'] ?? $row['calendardata'] ?? null;
             if ($payload) {
-                $ics = (string)$payload;
+                $ics = $this->extractTextValue($payload) ?? '';
                 if ($ics !== '' && strlen($ics) < $maxIcsBytes) {
                     try {
                         $vobj = Reader::read($ics);
                         if ($vobj && isset($vobj->VEVENT)) {
                             foreach ($vobj->select('VEVENT') as $vevent) {
                                 $dtStart = $vevent->DTSTART?->getDateTime();
-                                $dtEnd = $vevent->DTEND?->getDateTime();
-                                if (!$dtEnd && $dtStart && isset($vevent->DURATION)) {
-                                    try {
-                                        $dtEnd = (clone $dtStart)->add(new DateInterval((string)$vevent->DURATION->getValue()));
-                                    } catch (\Throwable) {
-                                        $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                    }
-                                } elseif (!$dtEnd && $dtStart) {
-                                    $dtEnd = (clone $dtStart)->modify('+1 hour');
-                                }
+                                $dtEnd = $this->resolveVEventEnd($vevent, $dtStart);
                                 if ($dtStart && $dtEnd) {
-                                    $summary = isset($vevent->SUMMARY) ? (string)$vevent->SUMMARY->getValue() : '';
+                                    $summary = $this->extractVEventSummary($vevent);
                                     $out[] = [
                                         'calendar' => $calendarName,
                                         'calendar_id' => $calendarId,
@@ -402,11 +377,11 @@ class CalendarParsingService {
         if (!$start || !$end) {
             return null;
         }
-        $summary = (string)($this->readObjectValue($row, [
+        $summary = $this->extractTextValue($this->readObjectValue($row, [
             'getSummary', 'getTitle', 'getName',
         ], [
             'summary', 'title', 'name',
-        ]) ?? '');
+        ]) ?? '') ?? '';
         $allDay = $rowAllDay;
         $allDayRaw = $this->readObjectValue($row, [
             'isAllDay', 'isAllDayEvent', 'getAllDay', 'getIsAllDay',
@@ -445,6 +420,36 @@ class CalendarParsingService {
         return null;
     }
 
+    private function resolveVEventEnd(object $vevent, ?\DateTimeInterface $dtStart): ?\DateTimeInterface {
+        $dtEnd = method_exists($vevent, '__get') || isset($vevent->DTEND)
+            ? $vevent->DTEND?->getDateTime()
+            : null;
+        if ($dtEnd || !$dtStart) {
+            return $dtEnd;
+        }
+
+        if (isset($vevent->DURATION)) {
+            $duration = $this->extractTextValue($vevent->DURATION->getValue());
+            if ($duration !== null) {
+                try {
+                    return (clone $dtStart)->add(new DateInterval($duration));
+                } catch (\Throwable) {
+                    // fall through to default duration
+                }
+            }
+        }
+
+        return (clone $dtStart)->modify('+1 hour');
+    }
+
+    private function extractVEventSummary(object $vevent): string {
+        if (!isset($vevent->SUMMARY)) {
+            return '';
+        }
+
+        return $this->extractTextValue($vevent->SUMMARY->getValue()) ?? '';
+    }
+
     private function extractDateValue(mixed $value): ?string {
         if ($value instanceof \DateTimeInterface) {
             return $value->format('Y-m-d H:i:s');
@@ -468,6 +473,49 @@ class CalendarParsingService {
             if (isset($value['datetime'])) {
                 $tzName = isset($value['timezone']) ? (string)$value['timezone'] : null;
                 return $this->normalizeDateString((string)$value['datetime'], $tzName ?: null);
+            }
+        }
+        return null;
+    }
+
+    private function extractTextValue(mixed $value): ?string {
+        if (is_string($value)) {
+            return $value !== '' ? $value : null;
+        }
+        if (is_int($value) || is_float($value) || is_bool($value)) {
+            return (string)$value;
+        }
+        if (is_array($value)) {
+            if (array_key_exists(0, $value)) {
+                return $this->extractTextValue($value[0]);
+            }
+            if (array_key_exists('value', $value)) {
+                return $this->extractTextValue($value['value']);
+            }
+            return null;
+        }
+        if (is_object($value)) {
+            if (method_exists($value, 'getValue')) {
+                try {
+                    return $this->extractTextValue($value->getValue());
+                } catch (\Throwable) {
+                    return null;
+                }
+            }
+            if ($value instanceof \JsonSerializable) {
+                try {
+                    return $this->extractTextValue($value->jsonSerialize());
+                } catch (\Throwable) {
+                    return null;
+                }
+            }
+            if (method_exists($value, '__toString')) {
+                try {
+                    $stringValue = (string)$value;
+                    return $stringValue !== '' ? $stringValue : null;
+                } catch (\Throwable) {
+                    return null;
+                }
             }
         }
         return null;

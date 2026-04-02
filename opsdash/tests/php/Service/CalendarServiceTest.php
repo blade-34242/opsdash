@@ -67,4 +67,54 @@ final class CalendarServiceTest extends TestCase {
         $this->assertSame('2026-01-08 17:00:00', $rows[0]['end']);
         $this->assertFalse($rows[0]['allday']);
     }
+
+    public function testParseRowsStructuredDurationArray(): void {
+        $service = new CalendarParsingService();
+
+        $raw = [
+            [
+                'objects' => [
+                    [
+                        'SUMMARY' => ['Focus session', []],
+                        'DTSTART' => [
+                            [
+                                'date' => '2025-12-15 09:00:00.000000',
+                                'timezone_type' => 3,
+                                'timezone' => 'UTC',
+                            ],
+                            [],
+                        ],
+                        'DURATION' => ['PT45M', []],
+                    ],
+                ],
+            ],
+        ];
+
+        $rows = $service->parseRows($raw, 'opsdash-work', 'opsdash-work');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Focus session', $rows[0]['summary']);
+        $this->assertSame('2025-12-15 09:00:00', $rows[0]['start']);
+        $this->assertSame('2025-12-15 09:45:00', $rows[0]['end']);
+    }
+
+    public function testParseRowsTopLevelSummaryArray(): void {
+        $service = new CalendarParsingService();
+
+        $raw = [
+            [
+                'summary' => ['Focus block', []],
+                'start' => '2026-01-08 16:00:00',
+                'end' => '2026-01-08 17:00:00',
+                'allday' => false,
+            ],
+        ];
+
+        $rows = $service->parseRows($raw, 'personal', 'personal');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Focus block', $rows[0]['summary']);
+        $this->assertSame('2026-01-08 16:00:00', $rows[0]['start']);
+        $this->assertSame('2026-01-08 17:00:00', $rows[0]['end']);
+    }
 }
