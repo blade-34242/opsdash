@@ -16,6 +16,7 @@
 - Default widget presets are bootstrapped in the HTML template to avoid a blank main area on hard reloads.
 - Widget loading overlays are first-load only; refresh keeps stale content on screen and surfaces a compact `Updating...` hint in the toolbar.
 - Notes fetch runs after main data hydrate and does not block dashboard readiness.
+- Frontend bundle size is now a tracked follow-up area; see `BUNDLE_SIZE_PLAN.md` for the chunk-splitting strategy instead of just raising the Vite warning limit.
 
 ## Tips
 - For extremely busy users, suggest filtering calendars or switching to weekly range.

@@ -10,6 +10,7 @@ A quick guide to the docs that matter most when working on the Operational Dashb
 ## Architecture & Code
 - **ARCHITECTURE.md** - high-level view of controllers, services, and Vue SPA structure.
 - **DIRECTORY_STRUCTURE.md** - what ships in the App Store tarball and why.
+- **BUNDLE_SIZE_PLAN.md** - plan for reducing the main Vite bundle and splitting heavy frontend paths safely.
 - **ROADMAP.md** - consolidated backlog and priorities.
 
 ## Feature Specs

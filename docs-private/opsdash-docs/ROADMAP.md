@@ -6,6 +6,7 @@
 
 ## P1 (next)
 - UI polish for charts and layout tabs.
+- Frontend bundle-size reduction pass: analyze the main Vite chunk, split heavy chart/onboarding/edit-mode code, and keep the warning as a real performance signal until the main bundle is smaller.
 
 ## P2 (later)
 - Caching review follow-ups.
