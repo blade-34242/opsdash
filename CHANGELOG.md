@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+### Changed
+- Widget edit options now include direct tab actions so widgets can be moved or copied to another dashboard tab without relying only on drag and drop.
+
 ### Fixed
 - `Period Comparison` / lookback time summary now shows an in-card hint when trend lookback is set to `1`, so week/month comparison no longer fails silently when previous-period data was not requested.
 

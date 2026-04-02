@@ -89,4 +89,31 @@ describe('WidgetOptionsMenu', () => {
       },
     ])
   })
+
+  it('shows tab actions and emits move/copy targets', async () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry,
+        options: {},
+        open: true,
+        tabs: [
+          { id: 'tab-1', label: 'Overview' },
+          { id: 'tab-2', label: 'Charts' },
+        ],
+        currentTabId: 'tab-1',
+      },
+    })
+
+    const text = wrapper.text().replace(/\s+/g, ' ')
+    expect(text).toContain('Tab actions')
+    expect(text).toContain('Current tab')
+    expect(text).toContain('Charts')
+
+    const moveButtons = wrapper.findAll('.tab-actions__buttons .ghost.sm')
+    await moveButtons[2].trigger('click')
+    await moveButtons[3].trigger('click')
+
+    expect(wrapper.emitted('move-to-tab')?.[0]).toEqual(['tab-2'])
+    expect(wrapper.emitted('duplicate-to-tab')?.[0]).toEqual(['tab-2'])
+  })
 })

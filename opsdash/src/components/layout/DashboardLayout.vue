@@ -6,6 +6,8 @@
       :open-options-id="openOptionsId"
       :preset-label="presetLabel"
       :context="context"
+      :tabs="tabs"
+      :current-tab-id="currentTabId"
       @select-first="selectFirst"
       @move="moveSelected"
       @cycle-width="cycleSelectedWidth"
@@ -15,6 +17,8 @@
       @toggle-options="toggleOptions"
       @open-advanced="openAdvancedTargets"
       @edit-options="(id, key, value) => emit('edit:options', id, key, value)"
+      @move-to-tab="(id, tabId) => emit('edit:move-tab', id, tabId)"
+      @duplicate-to-tab="(id, tabId) => emit('edit:duplicate-tab', id, tabId)"
     />
 
     <DashboardGrid
@@ -55,6 +59,8 @@ const props = defineProps<{
   editable?: boolean
   widgetTypes?: Array<{ type: string; label: string }>
   presetLabel?: string | null
+  tabs?: Array<{ id: string; label: string }>
+  currentTabId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -62,6 +68,8 @@ const emit = defineEmits<{
   (e: 'edit:height', id: string): void
   (e: 'edit:remove', id: string): void
   (e: 'edit:move', id: string, dir: 'up' | 'down'): void
+  (e: 'edit:move-tab', id: string, tabId: string): void
+  (e: 'edit:duplicate-tab', id: string, tabId: string): void
   (e: 'edit:options', id: string, key: string, value: any): void
   (e: 'edit:add', type: string, orderHint?: number): void
   (e: 'edit:reorder', id: string, orderHint?: number | null): void

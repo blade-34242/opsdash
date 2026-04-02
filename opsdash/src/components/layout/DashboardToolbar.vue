@@ -76,9 +76,13 @@
               :open="openOptionsId === selectedItem.id"
               :show-advanced="selectedItem.type === 'targets_v2'"
               :context="context"
+              :tabs="tabs"
+              :current-tab-id="currentTabId"
               @toggle="(nextOpen) => $emit('toggle-options', selectedItem.id, nextOpen)"
               @open-advanced="$emit('open-advanced', selectedItem.id)"
               @change="(key,value)=>$emit('edit-options', selectedItem.id, key, value)"
+              @move-to-tab="(tabId) => $emit('move-to-tab', selectedItem.id, tabId)"
+              @duplicate-to-tab="(tabId) => $emit('duplicate-to-tab', selectedItem.id, tabId)"
             />
             <button
               v-if="presetLabel"
@@ -111,6 +115,8 @@ const props = defineProps<{
   openOptionsId: string | null
   presetLabel?: string | null
   context: WidgetRenderContext
+  tabs?: Array<{ id: string; label: string }>
+  currentTabId?: string | null
 }>()
 
 defineEmits<{
@@ -123,6 +129,8 @@ defineEmits<{
   (e: 'toggle-options', id: string, nextOpen: boolean): void
   (e: 'open-advanced', id: string): void
   (e: 'edit-options', id: string, key: string, value: any): void
+  (e: 'move-to-tab', id: string, tabId: string): void
+  (e: 'duplicate-to-tab', id: string, tabId: string): void
 }>()
 
 const selectedItemTitle = computed(() => {

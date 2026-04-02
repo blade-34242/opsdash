@@ -192,6 +192,39 @@
           </template>
         </div>
       </div>
+      <div v-if="tabTargets.length" class="opt-section">
+        <div class="opt-section__title">Tab actions</div>
+        <div class="tab-actions">
+          <div v-for="tab in tabTargets" :key="tab.id" class="tab-actions__row">
+            <div class="tab-actions__meta">
+              <div class="tab-actions__label">{{ tab.label }}</div>
+              <div v-if="tab.current" class="tab-actions__hint">Current tab</div>
+            </div>
+            <div class="tab-actions__buttons">
+              <button
+                type="button"
+                class="ghost sm"
+                :disabled="tab.current"
+                @click.stop="emit('move-to-tab', tab.id)"
+              >
+                Move
+              </button>
+              <button
+                type="button"
+                class="ghost sm"
+                :disabled="tab.current"
+                @click.stop="emit('duplicate-to-tab', tab.id)"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="showTabActionsHint" class="opt-section">
+        <div class="opt-section__title">Tab actions</div>
+        <div class="tab-actions__empty">Add another tab to move or copy this widget between tabs.</div>
+      </div>
       <div v-if="showAdvanced" class="opt-row opt-row--footer">
         <button
           type="button"
@@ -215,12 +248,16 @@ const props = defineProps<{
   open: boolean
   showAdvanced?: boolean
   context?: Record<string, any>
+  tabs?: Array<{ id: string; label: string }>
+  currentTabId?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'change', key: string, value: any): void
   (e: 'toggle', open: boolean): void
   (e: 'open-advanced'): void
+  (e: 'move-to-tab', tabId: string): void
+  (e: 'duplicate-to-tab', tabId: string): void
 }>()
 
 const local = ref<Record<string, any>>({})
@@ -258,6 +295,16 @@ const specificControls = computed(() => {
   const merged = [...controls, ...dynamic].filter((c: any) => !blockKeys.has(c.key))
   return merged
 })
+
+const tabTargets = computed(() =>
+  (props.tabs || []).map((tab) => ({
+    id: String(tab.id),
+    label: String(tab.label || tab.id),
+    current: String(tab.id) === String(props.currentTabId || ''),
+  })),
+)
+
+const showTabActionsHint = computed(() => (props.tabs || []).length === 1)
 
 watch(
   () => props.options,
@@ -449,9 +496,9 @@ function splitFilterValue(value: string) {
   --opt-input-text: #0f172a;
   --opt-code-bg: color-mix(in oklab, #e2e8f0, #f8fafc 62%);
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   right: 0;
-  top:auto;
+  bottom: auto;
   background: var(--opt-pop-bg);
   color: var(--opt-pop-text);
   border: 1px solid var(--opt-pop-border);
@@ -465,6 +512,7 @@ function splitFilterValue(value: string) {
   max-height: min(420px, calc(100vh - 108px));
   overflow: auto;
   overflow-x: hidden;
+  transform-origin: top right;
 }
 
 :global(body.opsdash-theme-dark .options-pop) {
@@ -496,6 +544,45 @@ function splitFilterValue(value: string) {
   grid-template-columns: 1fr;
   justify-content: flex-end;
   margin-top: 4px;
+}
+
+.tab-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.tab-actions__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--opt-section-border);
+  border-radius: 10px;
+  background: var(--opt-section-bg);
+}
+
+.tab-actions__meta {
+  min-width: 0;
+}
+
+.tab-actions__label {
+  color: var(--opt-pop-text);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.tab-actions__hint,
+.tab-actions__empty {
+  color: var(--opt-pop-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.tab-actions__buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .link-btn {

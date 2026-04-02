@@ -103,4 +103,42 @@ describe('useWidgetLayoutManager', () => {
     expect(manager.defaultTabId.value).toBe(firstTabId)
     expect(manager.activeTabId.value).toBe(firstTabId)
   })
+
+  it('moves widgets to another tab and activates the destination tab', () => {
+    const manager = makeManager()
+
+    manager.addWidget('test_widget')
+    manager.addTab('Secondary')
+    const sourceTabId = manager.layoutTabs.value[0].id
+    const targetTabId = manager.layoutTabs.value[1].id
+    const widgetId = manager.layoutTabs.value[0].widgets[0].id
+
+    manager.setActiveTab(sourceTabId)
+    const moved = manager.moveWidgetToTab(widgetId, targetTabId)
+
+    expect(moved).toBe(true)
+    expect(manager.activeTabId.value).toBe(targetTabId)
+    expect(manager.layoutTabs.value[0].widgets).toHaveLength(0)
+    expect(manager.layoutTabs.value[1].widgets).toHaveLength(1)
+    expect(manager.layoutTabs.value[1].widgets[0].id).toBe(widgetId)
+  })
+
+  it('duplicates widgets into another tab without removing the source widget', () => {
+    const manager = makeManager()
+
+    manager.addWidget('test_widget')
+    manager.addTab('Secondary')
+    const sourceTabId = manager.layoutTabs.value[0].id
+    const targetTabId = manager.layoutTabs.value[1].id
+    const widgetId = manager.layoutTabs.value[0].widgets[0].id
+
+    manager.setActiveTab(sourceTabId)
+    const duplicateId = manager.duplicateWidgetToTab(widgetId, targetTabId)
+
+    expect(duplicateId).toBeTruthy()
+    expect(manager.layoutTabs.value[0].widgets).toHaveLength(1)
+    expect(manager.layoutTabs.value[1].widgets).toHaveLength(1)
+    expect(manager.layoutTabs.value[1].widgets[0].id).not.toBe(widgetId)
+    expect(manager.layoutTabs.value[1].widgets[0].type).toBe('test_widget')
+  })
 })

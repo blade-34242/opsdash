@@ -255,10 +255,14 @@
                 :editable="isLayoutEditing"
                 :widget-types="availableWidgetTypesForStrategy"
                 :preset-label="dashboardModeLabel"
+                :tabs="layoutTabs.map((tab) => ({ id: tab.id, label: tab.label }))"
+                :current-tab-id="activeTabId"
                 @edit:width="cycleWidth"
                 @edit:height="cycleHeight"
                 @edit:remove="removeWidget"
                 @edit:move="moveWidget"
+                @edit:move-tab="handleMoveWidgetToTab"
+                @edit:duplicate-tab="handleDuplicateWidgetToTab"
                 @edit:options="updateWidgetOptions"
                 @edit:add="addWidgetAt"
                 @edit:reorder="reorderWidget"
@@ -460,6 +464,8 @@ const {
   cycleWidth,
   cycleHeight,
   moveWidget,
+  moveWidgetToTab,
+  duplicateWidgetToTab,
   removeWidget,
   addWidgetAt,
   reorderWidget,
@@ -537,6 +543,24 @@ function handleAddWidget() {
   addWidgetAt(newWidgetType.value, hint)
   newWidgetType.value = ''
   addOrderHint.value = null
+}
+
+function handleMoveWidgetToTab(id: string, tabId: string) {
+  const targetTab = layoutTabs.value.find((tab) => tab.id === tabId)
+  if (!targetTab) return
+  const moved = moveWidgetToTab(id, tabId)
+  if (moved) {
+    notifySuccess(`Moved widget to ${targetTab.label}`)
+  }
+}
+
+function handleDuplicateWidgetToTab(id: string, tabId: string) {
+  const targetTab = layoutTabs.value.find((tab) => tab.id === tabId)
+  if (!targetTab) return
+  const duplicated = duplicateWidgetToTab(id, tabId)
+  if (duplicated) {
+    notifySuccess(`Copied widget to ${targetTab.label}`)
+  }
 }
 
 function toggleLayoutEditing() {

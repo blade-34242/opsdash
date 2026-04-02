@@ -161,6 +161,76 @@ export function useWidgetLayoutManager(options: {
     persistWidgets()
   }
 
+  function nextWidgetOrder(tabId: string) {
+    const tab = layoutTabs.value.find((entry) => entry.id === tabId)
+    const maxOrder = (tab?.widgets || []).reduce((acc, widget) => Math.max(acc, widget.layout.order || 0), 0)
+    return maxOrder + 10
+  }
+
+  function cloneWidgetDefinition(widget: WidgetDefinition, overrides: Partial<WidgetDefinition> = {}): WidgetDefinition {
+    return {
+      ...widget,
+      ...overrides,
+      layout: {
+        ...widget.layout,
+        ...(overrides.layout || {}),
+      },
+      options: widget.options ? JSON.parse(JSON.stringify(widget.options)) : {},
+    }
+  }
+
+  function moveWidgetToTab(id: string, targetTabId: string) {
+    const sourceTabId = activeTab.value?.id
+    if (!sourceTabId || sourceTabId === targetTabId) return false
+    const sourceTab = layoutTabs.value.find((tab) => tab.id === sourceTabId)
+    const widget = sourceTab?.widgets.find((entry) => entry.id === id)
+    if (!widget || !layoutTabs.value.some((tab) => tab.id === targetTabId)) return false
+
+    const movedWidget = cloneWidgetDefinition(widget, {
+      layout: {
+        ...widget.layout,
+        order: nextWidgetOrder(targetTabId),
+      },
+    })
+
+    layoutTabs.value = layoutTabs.value.map((tab) => {
+      if (tab.id === sourceTabId) {
+        return { ...tab, widgets: tab.widgets.filter((entry) => entry.id !== id) }
+      }
+      if (tab.id === targetTabId) {
+        return { ...tab, widgets: [...tab.widgets, movedWidget] }
+      }
+      return tab
+    })
+    activeTabId.value = targetTabId
+    widgetsDirty.value = true
+    persistWidgets()
+    return true
+  }
+
+  function duplicateWidgetToTab(id: string, targetTabId: string) {
+    const sourceTabId = activeTab.value?.id
+    if (!sourceTabId || sourceTabId === targetTabId) return null
+    const sourceTab = layoutTabs.value.find((tab) => tab.id === sourceTabId)
+    const widget = sourceTab?.widgets.find((entry) => entry.id === id)
+    if (!widget || !layoutTabs.value.some((tab) => tab.id === targetTabId)) return null
+
+    const duplicatedWidget = cloneWidgetDefinition(widget, {
+      id: `widget-${widget.type}-${Date.now().toString(36)}`,
+      layout: {
+        ...widget.layout,
+        order: nextWidgetOrder(targetTabId),
+      },
+    })
+
+    layoutTabs.value = layoutTabs.value.map((tab) =>
+      tab.id === targetTabId ? { ...tab, widgets: [...tab.widgets, duplicatedWidget] } : tab,
+    )
+    widgetsDirty.value = true
+    persistWidgets()
+    return duplicatedWidget.id
+  }
+
   function addWidget(type: string) {
     const entry = widgetsRegistry[type]
     if (!entry) return
@@ -329,6 +399,8 @@ export function useWidgetLayoutManager(options: {
     cycleWidth,
     cycleHeight,
     moveWidget,
+    moveWidgetToTab,
+    duplicateWidgetToTab,
     removeWidget,
     addWidget,
     addWidgetAt,
