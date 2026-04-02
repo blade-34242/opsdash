@@ -1,13 +1,13 @@
 <template>
-  <div class="card targets-card" :style="cardStyle">
+  <div class="card targets-card" :class="{ 'targets-card--endless': neverFinishedMode }" :style="cardStyle">
+    <div v-if="neverFinishedMode" class="targets-fireframe" aria-hidden="true"></div>
     <div class="targets-header" v-if="showHeader">
       <strong>{{ title || 'Targets' }}</strong>
       <span class="hint" v-if="total.targetHours > 0">{{ totalDisplay.percentText }}%</span>
     </div>
     <div v-if="neverFinishedMode" class="targets-hustle">
       <div class="targets-hustle__badge">
-        <span class="targets-hustle__title">Never Finished</span>
-        <div class="targets-hustle__orb">
+        <div class="targets-hustle__orb" aria-hidden="true">
           <div
             v-for="(scene, index) in hustleScenes"
             :key="scene.id"
@@ -15,17 +15,6 @@
             :class="{ 'is-active': index === activeSceneIndex }"
           >
             <component :is="scene.icon" class="targets-hustle__icon" aria-hidden="true" />
-          </div>
-        </div>
-        <div class="targets-hustle__meta">
-          <span class="targets-hustle__label">{{ hustleScenes[activeSceneIndex]?.label }}</span>
-          <div class="targets-hustle__dots" aria-hidden="true">
-            <span
-              v-for="(scene, index) in hustleScenes"
-              :key="scene.id + '-dot'"
-              class="targets-hustle__dot"
-              :class="{ 'is-active': index === activeSceneIndex }"
-            ></span>
           </div>
         </div>
       </div>
@@ -350,7 +339,20 @@ function colorMix(hex: string, factor = 0.5): string {
 
 <style scoped>
 .targets-card{ display:flex; flex-direction:column; gap:var(--widget-gap, 8px); font-size:var(--widget-font, 14px) }
-.targets-card{ position:relative }
+.targets-card{ position:relative; overflow:hidden; isolation:isolate }
+.targets-card > *{ position:relative; z-index:1 }
+.targets-fireframe{ position:absolute; inset:2px; border-radius:inherit; pointer-events:none; z-index:0; overflow:hidden; opacity:.96 }
+.targets-fireframe::before{ content:''; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px color-mix(in srgb, #fb923c 58%, rgba(255,255,255,.14)), inset 0 0 18px color-mix(in srgb, #f97316 18%, transparent), inset 0 0 42px color-mix(in srgb, #dc2626 12%, transparent) }
+.targets-fireframe::after{ content:''; position:absolute; inset:0; border-radius:inherit; background:
+  radial-gradient(34% 14% at 12% 0%, color-mix(in srgb, #fdba74 58%, transparent), transparent 70%),
+  radial-gradient(30% 12% at 34% 1%, color-mix(in srgb, #fb923c 52%, transparent), transparent 72%),
+  radial-gradient(26% 11% at 58% 0%, color-mix(in srgb, #f97316 48%, transparent), transparent 70%),
+  radial-gradient(24% 12% at 82% 1%, color-mix(in srgb, #fb7185 30%, transparent), transparent 74%),
+  radial-gradient(12% 24% at 0% 18%, color-mix(in srgb, #f97316 38%, transparent), transparent 76%),
+  radial-gradient(12% 24% at 100% 20%, color-mix(in srgb, #fb923c 34%, transparent), transparent 78%);
+  filter:blur(9px) saturate(1.16);
+  opacity:.82
+}
 .targets-header{ display:flex; justify-content:space-between; align-items:center }
 .targets-header strong{ font-size:var(--widget-title-size, calc(14px * var(--widget-scale, 1))) }
 .targets-main{ display:flex; flex-direction:column; gap:calc(4px * var(--widget-space, 1)); font-size:calc(13px * var(--widget-scale, 1)) }
@@ -358,23 +360,17 @@ function colorMix(hex: string, factor = 0.5): string {
 .targets-main .line.forecast{ flex-direction:column; gap:calc(2px * var(--widget-space, 1)) }
 .targets-main .line .value{ display:flex; gap:calc(6px * var(--widget-space, 1)); align-items:center }
 .targets-hustle{ position:absolute; top:calc(8px * var(--widget-space, 1)); right:calc(8px * var(--widget-space, 1)); z-index:2 }
-.targets-hustle__badge{ display:grid; grid-template-columns:auto auto; grid-template-areas:'title title' 'orb meta'; gap:calc(5px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1)); align-items:center; padding:calc(5px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1)); border-radius:calc(15px * var(--widget-space, 1)); background:color-mix(in srgb, var(--bg) 90%, transparent); border:1px solid color-mix(in srgb, #f97316 26%, var(--line)); box-shadow:0 8px 22px color-mix(in srgb, #020617 26%, transparent) }
-.targets-hustle__title{ grid-area:title; display:block; width:100%; text-align:center; justify-self:center; font-size:calc(8px * var(--widget-scale, 1)); font-weight:800; letter-spacing:.08em; line-height:1; text-transform:uppercase; color:#ea580c }
-.targets-hustle__orb{ grid-area:orb; position:relative; width:calc(50px * var(--widget-space, 1)); aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 35% 30%, color-mix(in srgb, #fb923c 20%, transparent), transparent 45%), linear-gradient(145deg, color-mix(in srgb, #f97316 16%, transparent), color-mix(in srgb, var(--brand) 12%, transparent)); border:1px solid color-mix(in srgb, #f97316 34%, var(--line)); box-shadow:inset 0 0 0 1px color-mix(in srgb, #fb923c 10%, transparent); overflow:hidden }
+.targets-hustle__badge{ display:grid; place-items:center; padding:calc(8px * var(--widget-space, 1)); border-radius:calc(20px * var(--widget-space, 1)); background:color-mix(in srgb, var(--bg) 90%, transparent); border:1px solid color-mix(in srgb, #f97316 32%, var(--line)); box-shadow:0 10px 26px color-mix(in srgb, #020617 28%, transparent), inset 0 0 0 1px color-mix(in srgb, #fb923c 10%, transparent) }
+.targets-hustle__orb{ position:relative; width:200px; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 35% 30%, color-mix(in srgb, #fb923c 24%, transparent), transparent 45%), linear-gradient(145deg, color-mix(in srgb, #f97316 18%, transparent), color-mix(in srgb, var(--brand) 12%, transparent)); border:1px solid color-mix(in srgb, #f97316 34%, var(--line)); box-shadow:inset 0 0 0 1px color-mix(in srgb, #fb923c 12%, transparent), 0 0 24px color-mix(in srgb, #f97316 10%, transparent); overflow:hidden }
 .targets-hustle__orb::after{ content:''; position:absolute; inset:12%; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, #fb923c 18%, transparent) 0%, transparent 72%); opacity:.45; filter:blur(4px); pointer-events:none; transition:opacity .34s ease, transform .34s ease }
 .targets-hustle__scene{ position:absolute; inset:0; display:grid; place-items:center; opacity:0; transform:scale(.92); transition:opacity .34s ease, transform .34s ease, filter .34s ease; filter:saturate(.82) brightness(.88) }
 .targets-hustle__scene::after{ content:''; position:absolute; inset:16%; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, #fb923c 24%, transparent) 0%, transparent 74%); opacity:0; transform:scale(.86); filter:blur(4px); transition:opacity .34s ease, transform .34s ease; pointer-events:none }
 .targets-hustle__scene.is-active{ opacity:1; transform:scale(1); filter:saturate(1.08) brightness(1.06) }
 .targets-hustle__scene.is-active::after{ opacity:.82; transform:scale(1.04) }
-.targets-hustle__icon{ width:100%; max-width:29px; height:auto; color:color-mix(in srgb, #fff 22%, #f97316 78%); transition:filter .34s ease, opacity .34s ease, transform .34s ease; opacity:.78; filter:drop-shadow(0 0 0 transparent) }
+.targets-hustle__icon{ width:100%; max-width:200px; height:auto; color:color-mix(in srgb, #fff 22%, #f97316 78%); transition:filter .34s ease, opacity .34s ease, transform .34s ease; opacity:.78; filter:drop-shadow(0 0 0 transparent) }
 .targets-hustle__icon :deep(svg),
 .targets-hustle__icon:deep(svg){ width:100%; height:auto; stroke-width:1.5 }
 .targets-hustle__scene.is-active .targets-hustle__icon{ opacity:1; transform:scale(1.02); filter:drop-shadow(0 0 8px color-mix(in srgb, #fb923c 45%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, #f97316 20%, transparent)) }
-.targets-hustle__meta{ grid-area:meta; display:flex; flex-direction:column; gap:calc(3px * var(--widget-space, 1)); align-items:flex-start; justify-content:center; min-width:calc(40px * var(--widget-space, 1)); width:calc(40px * var(--widget-space, 1)) }
-.targets-hustle__label{ font-size:calc(6.75px * var(--widget-scale, 1)); font-weight:800; letter-spacing:.06em; line-height:1; text-transform:uppercase; color:#ea580c; white-space:nowrap }
-.targets-hustle__dots{ display:flex; gap:calc(4px * var(--widget-space, 1)) }
-.targets-hustle__dot{ width:calc(5px * var(--widget-space, 1)); height:calc(5px * var(--widget-space, 1)); border-radius:50%; background:color-mix(in srgb, var(--muted) 28%, transparent); transition:transform .14s ease, background-color .14s ease }
-.targets-hustle__dot.is-active{ background:#f97316; transform:scale(1.25) }
 .targets-badges{ display:flex; flex-wrap:wrap; gap:calc(6px * var(--widget-space, 1)) }
 .targets-categories{ display:flex; flex-direction:column; gap:calc(10px * var(--widget-space, 1)); padding-top:calc(6px * var(--widget-space, 1)); border-top:1px solid var(--line) }
 .category{ display:flex; flex-direction:column; gap:calc(6px * var(--widget-space, 1)); font-size:calc(12px * var(--widget-scale, 1)); padding:calc(4px * var(--widget-space, 1)) 0 }
@@ -410,6 +406,8 @@ function colorMix(hex: string, factor = 0.5): string {
 .cat-meta .badge{ font-size:calc(10px * var(--widget-scale, 1)) }
 @media (max-width: 720px) {
   .targets-hustle{ top:calc(6px * var(--widget-space, 1)); right:calc(6px * var(--widget-space, 1)) }
-  .targets-hustle__badge{ padding:calc(4px * var(--widget-space, 1)) calc(5px * var(--widget-space, 1)) }
+  .targets-hustle__badge{ padding:calc(6px * var(--widget-space, 1)) }
+  .targets-hustle__orb{ width:200px }
+  .targets-hustle__icon{ max-width:200px }
 }
 </style>

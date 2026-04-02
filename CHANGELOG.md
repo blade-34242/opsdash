@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Current-period highlight styling is now consistent across the trend/overview widgets that mark the active week or month.
 - Widget edit options now include direct tab actions so widgets can be moved or copied to another dashboard tab without relying only on drag and drop.
 - Deck widgets are now split more clearly by intent: `Deck cards` remains the action/management widget, while the new `Deck stats` widget shows a compact week/month summary for a filtered Deck slice using shared board/stack/tag/scope filters.
+- The `Targets` widget `Never Finished · Stay Hard` mode now uses a much larger icon-only hustle badge and an inset flame frame that stays clipped inside the widget bounds.
 
 ### Fixed
 - Fixed calendar payload parsing for Sabre/CalDAV rows that can expose structured arrays instead of plain strings (for example `DURATION` / summary values), preventing `Array to string conversion` warnings in `CalendarParsingService`.
