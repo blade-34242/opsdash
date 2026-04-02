@@ -45,6 +45,7 @@ describe('TimeTargetsCard', () => {
       id: 'work',
       label: 'Work',
       actualHours: 9,
+      plannedHours: 3,
       targetHours: 32,
       percent: 28,
       deltaHours: -23,
@@ -87,6 +88,7 @@ describe('TimeTargetsCard', () => {
     const todayInline = wrapper.find('.today-inline')
     expect(todayInline.exists()).toBe(true)
     expect(todayInline.text()).toContain('Today')
+    expect(wrapper.text()).toContain('Planned 3h')
     expect(wrapper.find('.bar-track').exists()).toBe(true)
     expect(wrapper.find('.bar-track .today-overlay').exists()).toBe(true)
     expect(wrapper.find('.bar-track .today-chip').exists()).toBe(false)

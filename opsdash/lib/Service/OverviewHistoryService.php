@@ -86,6 +86,7 @@ final class OverviewHistoryService {
         int $offset,
         \DateTimeImmutable $currentFrom,
         \DateTimeImmutable $currentTo,
+        \DateTimeImmutable $analysisTo,
         array $currentByDay,
         bool $includeAll,
         array $selectedIds,
@@ -112,7 +113,7 @@ final class OverviewHistoryService {
             $dayMap[$dateKey] = $payload;
         }
 
-        $trend[] = $this->summarizeCurrentDayOff($dayMap, $currentFrom, $currentTo, $range);
+        $trend[] = $this->summarizeCurrentDayOff($dayMap, $currentFrom, $currentTo, $analysisTo, $range);
 
         for ($step = 1; $step <= $maxLookback; $step++) {
             [$lookFrom, $lookTo] = $this->calendarAccess->rangeBounds($range, $offset - $step, $userTz, $weekStart);
@@ -172,13 +173,17 @@ final class OverviewHistoryService {
         array $currentByDay,
         \DateTimeImmutable $from,
         \DateTimeImmutable $to,
+        \DateTimeImmutable $analysisTo,
         string $range,
     ): array {
-        $totalDays = $this->countDaysInclusive($from, $to);
+        $effectiveTo = $analysisTo->getTimestamp() < $from->getTimestamp()
+            ? $from
+            : ($analysisTo < $to ? $analysisTo : $to);
+        $totalDays = $this->countDaysInclusive($from, $effectiveTo);
         $daysOff = 0;
         $daysWorked = 0;
         $cursor = $from;
-        while ($cursor->getTimestamp() <= $to->getTimestamp()) {
+        while ($cursor->getTimestamp() <= $effectiveTo->getTimestamp()) {
             $key = $cursor->format('Y-m-d');
             $hours = isset($currentByDay[$key]) ? (float)($currentByDay[$key]['total_hours'] ?? 0.0) : 0.0;
             if ($hours <= 0.01) {
@@ -196,7 +201,7 @@ final class OverviewHistoryService {
             'offset' => 0,
             'label' => $this->formatDayOffLabel($range, 0),
             'from' => $from->format('Y-m-d'),
-            'to' => $to->format('Y-m-d'),
+            'to' => $effectiveTo->format('Y-m-d'),
             'totalDays' => $totalDays,
             'daysOff' => $daysOff,
             'daysWorked' => $daysWorked,

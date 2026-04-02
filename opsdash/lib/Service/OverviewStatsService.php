@@ -33,6 +33,7 @@ final class OverviewStatsService {
      *   categoryColors: array<string, string>,
      *   perDayByCat: array<string, array<string, float>>,
      *   totalHours: float,
+     *   futureTotalHours: float,
      *   byCalList: array<int, array<string, mixed>>,
      *   byDay: array<string, array<string, mixed>>,
      *   hod: array<string, array<int, float>>,
@@ -49,7 +50,12 @@ final class OverviewStatsService {
      *   maxPerCal: int,
      *   maxTotal: int,
      *   colorsById: array<string, string>,
-     *   weekStart: int
+     *   weekStart: int,
+     *   analysisTo: \DateTimeImmutable,
+     *   currentPeriodClipped: bool,
+     *   currentCutoff: string|null,
+     *   todayActualHours: float,
+     *   todayFutureHours: float
      * } $context
      * @return array<string, mixed>
      */
@@ -75,6 +81,7 @@ final class OverviewStatsService {
         $categoryColors = $context['categoryColors'];
         $perDayByCat = $context['perDayByCat'];
         $totalHours = (float)$context['totalHours'];
+        $futureTotalHours = (float)($context['futureTotalHours'] ?? 0.0);
         $byCalList = $context['byCalList'];
         $byDay = $context['byDay'];
         $hod = $context['hod'];
@@ -92,14 +99,21 @@ final class OverviewStatsService {
         $maxTotal = (int)$context['maxTotal'];
         $colorsById = $context['colorsById'];
         $weekStart = (int)($context['weekStart'] ?? 1);
+        $analysisTo = $context['analysisTo'];
+        $currentPeriodClipped = (bool)($context['currentPeriodClipped'] ?? false);
+        $currentCutoff = $context['currentCutoff'] ?? null;
+        $todayActualHours = (float)($context['todayActualHours'] ?? 0.0);
+        $todayFutureHours = (float)($context['todayFutureHours'] ?? 0.0);
 
         $kpi = $this->kpiService->build([
             'from' => $from,
             'to' => $to,
+            'analysisTo' => $analysisTo,
             'userTz' => $userTz,
             'byDay' => $byDay,
             'byCalList' => $byCalList,
             'totalHours' => $totalHours,
+            'futureTotalHours' => $futureTotalHours,
             'daysCount' => $daysCount,
             'avgPerDay' => $avgPerDay,
             'avgPerEvent' => $avgPerEvent,
@@ -110,6 +124,10 @@ final class OverviewStatsService {
             'earliestStartTs' => $earliestStartTs,
             'latestEndTs' => $latestEndTs,
             'longestSessionHours' => $longestSessionHours,
+            'currentPeriodClipped' => $currentPeriodClipped,
+            'currentCutoff' => $currentCutoff,
+            'todayActualHours' => $todayActualHours,
+            'todayFutureHours' => $todayFutureHours,
         ]);
 
         $historyInfo = $this->historyService->build([
@@ -137,6 +155,7 @@ final class OverviewStatsService {
             'currentEveningShare' => $kpi['evening_share'],
             'currentByDay' => $byDay,
             'trendLookback' => $trendLookback,
+            'analysisTo' => $analysisTo,
         ]);
         $categoryTotalsPrev = $historyInfo['categoryTotalsPrev'];
         $prevTotal = $historyInfo['prevTotal'];

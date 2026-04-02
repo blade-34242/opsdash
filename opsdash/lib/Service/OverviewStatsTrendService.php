@@ -25,7 +25,8 @@ final class OverviewStatsTrendService {
      *   precomputedDaysWorked: array<int,int>,
      *   mapCalToCategory: callable,
      *   allDayHours: float,
-     *   categoryMeta: array<string, array{id: string, label: string}>
+     *   categoryMeta: array<string, array{id: string, label: string}>,
+     *   analysisTo?: \DateTimeImmutable
      * } $context
      * @return array{dayOffTrend: array<int, array<string, mixed>>, balanceHistory: array<int, array<string, mixed>>}
      */
@@ -46,12 +47,14 @@ final class OverviewStatsTrendService {
         $mapCalToCategory = $context['mapCalToCategory'];
         $allDayHours = (float)$context['allDayHours'];
         $categoryMeta = $context['categoryMeta'];
+        $analysisTo = $context['analysisTo'] ?? $to;
 
         $dayOffTrend = $this->historyService->buildDayOffTrend(
             $range,
             $offset,
             $from,
             $to,
+            $analysisTo,
             $currentByDay,
             $includeAll,
             $selectedIds,

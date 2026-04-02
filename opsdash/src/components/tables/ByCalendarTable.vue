@@ -64,7 +64,10 @@
             </div>
           </td>
           <td class="num">{{ row.events_count }}</td>
-          <td class="num">{{ n2(row.total_hours) }}</td>
+          <td class="num hours-cell">
+            <div>{{ n2(row.total_hours) }}</div>
+            <div v-if="Number(row.future_hours ?? 0) > 0.0001" class="hint planned-sub">+{{ n2(row.future_hours) }} planned</div>
+          </td>
           <td class="num">{{ targetText(calendarId(row)) }}</td>
           <td class="num">
             <template v-if="hasTarget(calendarId(row))">
@@ -228,10 +231,11 @@ function groupSummary(group: TableGroup): string {
   const summary = group.summary
   if (!summary) return `${group.rows.length} calendar${group.rows.length === 1 ? '' : 's'}`
   const actual = props.n2(summary.actualHours)
+  const planned = Number((summary as any).plannedHours ?? 0)
   if (summary.targetHours > 0) {
-    return `${actual} h / ${props.n2(summary.targetHours)} h`
+    return `${actual} h / ${props.n2(summary.targetHours)} h${planned > 0 ? ` · +${props.n2(planned)} h planned` : ''}`
   }
-  return `${actual} h`
+  return `${actual} h${planned > 0 ? ` · +${props.n2(planned)} h planned` : ''}`
 }
 
 function groupPercent(group: TableGroup): string {

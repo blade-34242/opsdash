@@ -8,10 +8,12 @@ final class OverviewStatsKpiService {
      * @param array{
      *   from: \DateTimeImmutable,
      *   to: \DateTimeImmutable,
+     *   analysisTo: \DateTimeImmutable,
      *   userTz: \DateTimeZone,
      *   byDay: array<string, array<string, mixed>>,
      *   byCalList: array<int, array<string, mixed>>,
      *   totalHours: float,
+     *   futureTotalHours: float,
      *   daysCount: int,
      *   avgPerDay: float,
      *   avgPerEvent: float,
@@ -21,17 +23,25 @@ final class OverviewStatsKpiService {
      *   overlapCount: int,
      *   earliestStartTs: int|null,
      *   latestEndTs: int|null,
-     *   longestSessionHours: float
+     *   longestSessionHours: float,
+     *   currentPeriodClipped: bool,
+     *   currentCutoff: string|null,
+     *   todayActualHours: float,
+     *   todayFutureHours: float
      * } $context
      * @return array<string, mixed>
      */
     public function build(array $context): array {
         $from = $context['from'];
         $to = $context['to'];
+        $analysisTo = ($context['analysisTo'] ?? null) instanceof \DateTimeImmutable
+            ? $context['analysisTo']
+            : $to;
         $userTz = $context['userTz'];
         $byDay = $context['byDay'];
         $byCalList = $context['byCalList'];
         $totalHours = (float)$context['totalHours'];
+        $futureTotalHours = (float)($context['futureTotalHours'] ?? 0.0);
         $daysCount = (int)$context['daysCount'];
         $avgPerDay = (float)$context['avgPerDay'];
         $avgPerEvent = (float)$context['avgPerEvent'];
@@ -42,6 +52,10 @@ final class OverviewStatsKpiService {
         $earliestStartTs = $context['earliestStartTs'];
         $latestEndTs = $context['latestEndTs'];
         $longestSessionHours = (float)$context['longestSessionHours'];
+        $currentPeriodClipped = (bool)($context['currentPeriodClipped'] ?? false);
+        $currentCutoff = $context['currentCutoff'] ?? null;
+        $todayActualHours = (float)($context['todayActualHours'] ?? 0.0);
+        $todayFutureHours = (float)($context['todayFutureHours'] ?? 0.0);
 
         $activeDays = $daysCount;
         $busiest = null;
@@ -111,7 +125,10 @@ final class OverviewStatsKpiService {
         $halfThreshold = 4.0;
         $lastDayOff = null;
         $lastHalfDay = null;
-        $cursor = $to;
+        $cursor = $analysisTo instanceof \DateTimeImmutable ? $analysisTo : $to;
+        if ($cursor->getTimestamp() < $from->getTimestamp()) {
+            $cursor = $from;
+        }
         while ($cursor->getTimestamp() >= $from->getTimestamp()) {
             $key = $cursor->format('Y-m-d');
             $dayTotal = isset($byDay[$key]) ? (float)$byDay[$key]['total_hours'] : 0.0;
@@ -133,6 +150,7 @@ final class OverviewStatsKpiService {
 
         return [
             'total_hours' => round($totalHours, 2),
+            'future_hours' => round($futureTotalHours, 2),
             'avg_per_day' => round($avgPerDay, 2),
             'avg_per_event' => round($avgPerEvent, 2),
             'events' => $eventsCount,
@@ -150,6 +168,10 @@ final class OverviewStatsKpiService {
             'weekend_share' => $weekendShare,
             'evening_share' => $eveningShare,
             'overlap_events' => $overlapCount,
+            'current_period_clipped' => $currentPeriodClipped,
+            'current_cutoff' => $currentCutoff,
+            'today_actual_hours' => round($todayActualHours, 2),
+            'today_future_hours' => round($todayFutureHours, 2),
         ];
     }
 }

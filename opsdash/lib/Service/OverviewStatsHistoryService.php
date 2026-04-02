@@ -34,7 +34,8 @@ final class OverviewStatsHistoryService {
      *   currentWeekendShare: float,
      *   currentEveningShare: float,
      *   currentByDay: array<string, array<string, mixed>>,
-     *   trendLookback: int
+     *   trendLookback: int,
+     *   analysisTo: \DateTimeImmutable
      * } $context
      * @return array<string,mixed>
      */
@@ -84,6 +85,7 @@ final class OverviewStatsHistoryService {
             'mapCalToCategory' => $context['mapCalToCategory'],
             'allDayHours' => $context['allDayHours'],
             'categoryMeta' => $context['categoryMeta'],
+            'analysisTo' => $context['analysisTo'],
         ]);
 
         return [

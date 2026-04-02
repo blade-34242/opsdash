@@ -9,7 +9,7 @@ describe('ByCalendarTable', () => {
     const wrapper = mount(ByCalendarTable, {
       props: {
         rows: [
-          { calendar: 'Cal A', total_hours: 5, events_count: 2, id: 'cal-a' },
+          { calendar: 'Cal A', total_hours: 5, future_hours: 1.5, events_count: 2, id: 'cal-a' },
         ],
         targets: { 'cal-a': 10 },
         todayHours: { 'cal-a': 2 },
@@ -20,6 +20,7 @@ describe('ByCalendarTable', () => {
     const overlay = wrapper.find('.progress-today')
     expect(overlay.exists()).toBe(true)
     expect(wrapper.find('.progress-chip').exists()).toBe(false)
+    expect(wrapper.text()).toContain('+1.50 planned')
   })
 
   it('omits today overlay when no todayHours are provided', () => {

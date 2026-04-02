@@ -14,6 +14,7 @@ export interface TargetsProgress {
   id: string
   label: string
   actualHours: number
+  plannedHours: number
   targetHours: number
   percent: number
   deltaHours: number
@@ -70,6 +71,7 @@ export function createEmptyTargetsSummary(config?: TargetsConfig): TargetsSummar
     id: 'total',
     label: t('Total'),
     actualHours: 0,
+    plannedHours: 0,
     targetHours: totalTarget,
     percent: 0,
     deltaHours: 0,
@@ -128,6 +130,10 @@ export function buildTargetsSummary(input: BuildTargetsSummaryInput): TargetsSum
     const raw = Number(row?.total_hours ?? row?.hours ?? 0)
     return Number.isFinite(raw) ? sum + raw : sum
   }, 0)
+  const totalPlanned = (input.byCal || []).reduce((sum: number, row: any) => {
+    const raw = Number(row?.future_hours ?? row?.planned_hours ?? 0)
+    return Number.isFinite(raw) ? sum + raw : sum
+  }, 0)
   const totalTarget = cfg.totalHours || 0
   const totalPace = computePaceInfo({
     includeWeekend: cfg.pace.includeWeekendTotal,
@@ -142,6 +148,7 @@ export function buildTargetsSummary(input: BuildTargetsSummaryInput): TargetsSum
     id: 'total',
     label: t('Total'),
     actual: totalActual,
+    planned: totalPlanned,
     target: totalTarget,
     pace: totalPace,
     thresholds: cfg.pace.thresholds,
@@ -151,6 +158,7 @@ export function buildTargetsSummary(input: BuildTargetsSummaryInput): TargetsSum
 
   const categories = cfg.categories.map((cat) => {
     const actual = computeCategoryActual(cat, input.byCal, input.groupsById)
+    const planned = computeCategoryHours(cat, input.byCal, input.groupsById, 'future_hours')
     const paceMode = cat.paceMode || cfg.pace.mode
     const pace = computePaceInfo({
       includeWeekend: cat.includeWeekend,
@@ -164,6 +172,7 @@ export function buildTargetsSummary(input: BuildTargetsSummaryInput): TargetsSum
       id: cat.id,
       label: cat.label,
       actual,
+      planned,
       target: cat.targetHours,
       pace,
       thresholds: cfg.pace.thresholds,
@@ -247,6 +256,7 @@ function makeProgress(opts: {
   id: string
   label: string
   actual: number
+  planned: number
   target: number
   pace: PaceInfo
   thresholds: { onTrack: number; atRisk: number }
@@ -255,6 +265,7 @@ function makeProgress(opts: {
 }): TargetsProgress {
   const target = Math.max(0, opts.target || 0)
   const actual = Math.max(0, opts.actual || 0)
+  const planned = Math.max(0, opts.planned || 0)
   const percent = target > 0 ? clampPct((actual / target) * 100) : 0
   const remaining = target - actual
   const delta = actual - target
@@ -265,6 +276,7 @@ function makeProgress(opts: {
     id: opts.id,
     label: opts.label,
     actualHours: round2(actual),
+    plannedHours: round2(planned),
     targetHours: round2(target),
     percent,
     deltaHours: round2(delta),
@@ -299,11 +311,20 @@ function statusLabel(status: TargetsProgress['status']): string {
 }
 
 function computeCategoryActual(cat: TargetCategoryConfig, byCal: any[], groupsById: Record<string, number>): number {
+  return computeCategoryHours(cat, byCal, groupsById, 'total_hours')
+}
+
+function computeCategoryHours(
+  cat: TargetCategoryConfig,
+  byCal: any[],
+  groupsById: Record<string, number>,
+  field: 'total_hours' | 'future_hours',
+): number {
   if (!Array.isArray(byCal)) return 0
   const groups = Array.isArray(cat.groupIds) && cat.groupIds.length ? new Set(cat.groupIds) : null
   let sum = 0
   for (const row of byCal) {
-    const hours = Number(row?.total_hours ?? row?.hours ?? 0)
+    const hours = Number(row?.[field] ?? 0)
     if (!Number.isFinite(hours) || hours <= 0) continue
     const id = String(row?.id ?? row?.calendar ?? '')
     const group = Number(row?.group ?? row?.group_id ?? groupsById?.[id] ?? 0)

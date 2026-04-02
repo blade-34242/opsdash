@@ -33,6 +33,7 @@ describe('targets forecast helpers', () => {
       id: 'total',
       label: 'Total',
       actualHours: 20,
+      plannedHours: 0,
       targetHours: 40,
       percent: 50,
       deltaHours: 0,

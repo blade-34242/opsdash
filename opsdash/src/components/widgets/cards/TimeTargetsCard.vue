@@ -37,6 +37,9 @@
           Δ {{ formatSigned(total.deltaHours) }}h
         </span>
       </div>
+      <div class="line" v-if="total.plannedHours > 0">
+        Planned {{ formatHours(total.plannedHours) }} h upcoming
+      </div>
       <div class="line" v-if="config.ui.showNeedPerDay && total.targetHours > 0">
         Days left {{ total.daysLeft }} • Need {{ formatHours(total.needPerDay) }} h/day
       </div>
@@ -94,6 +97,9 @@
           </span>
           <span v-if="cat.todayHours > 0" class="hint today-inline">
             {{ cat.todayText }}
+          </span>
+          <span v-if="cat.plannedHours > 0" class="hint planned-inline">
+            Planned {{ formatHours(cat.plannedHours) }}h
           </span>
           <span v-if="config.ui.showNeedPerDay && cat.targetHours > 0" class="hint">
             Need {{ formatHours(cat.needPerDay) }}h/day · {{ cat.daysLeft }} days left
@@ -210,6 +216,7 @@ const categoryItems = computed(() => categoryGroups.value.map(group => {
     id: group.id,
     label: group.label || summary.label,
     actualHours: summary.actualHours,
+    plannedHours: Number((summary as any).plannedHours ?? 0),
     targetHours,
     percent: display.percent,
     percentText: display.percentText,
@@ -297,6 +304,7 @@ function fallbackProgress(id: string, label: string): TargetsProgress {
     id,
     label,
     actualHours: 0,
+    plannedHours: 0,
     targetHours: 0,
     percent: 0,
     deltaHours: 0,

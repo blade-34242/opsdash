@@ -37,10 +37,11 @@ final class OverviewDataService {
      *   include: array{stats: bool, byCal: bool, byDay: bool, longest: bool, lookback: bool},
      *   debug: bool,
      *   maxPerCal: int,
-     *   maxTotal: int
+     *   maxTotal: int,
+     *   analysisNow?: \DateTimeImmutable
      * } $context
      * @return array{
-     *   meta: array{truncated: bool, limits: array{maxPerCal: int, maxTotal: int, totalProcessed: int}},
+     *   meta: array{truncated: bool, limits: array{maxPerCal: int, maxTotal: int, totalProcessed: int}, currentPeriodClipped: bool, currentCutoff: string|null},
      *   payload: array<string, mixed>,
      *   queryDbg: array<int, mixed>
      * }
@@ -71,6 +72,9 @@ final class OverviewDataService {
         $debug = (bool)$context['debug'];
         $maxPerCal = (int)$context['maxPerCal'];
         $maxTotal = (int)$context['maxTotal'];
+        $analysisNow = ($context['analysisNow'] ?? null) instanceof \DateTimeImmutable
+            ? $context['analysisNow']->setTimezone($userTz)
+            : new \DateTimeImmutable('now', $userTz);
 
         $mapCalToCategory = function(string $calId) use ($groupsById, $groupToCategory): string {
             $group = isset($groupsById[$calId]) ? (int)$groupsById[$calId] : 0;
@@ -107,8 +111,10 @@ final class OverviewDataService {
             colorsById: $colorsById,
             categoryMeta: $categoryMeta,
             mapCalToCategory: $mapCalToCategory,
+            now: $analysisNow,
         );
         $totalHours = $agg['totalHours'];
+        $futureTotalHours = $agg['futureTotalHours'];
         $byCalMap = $agg['byCalMap'];
         $byCalList = $agg['byCalList'];
         $byDay = $agg['byDay'];
@@ -132,6 +138,12 @@ final class OverviewDataService {
         $dowOrder = $agg['dowOrder'];
         $hod = $agg['hod'];
         $dow = $agg['dowTotals'];
+        $currentPeriodClipped = (bool)($agg['currentPeriodClipped'] ?? false);
+        $currentCutoff = $agg['currentCutoff'] ?? null;
+        $analysisTo = $agg['analysisTo'];
+        $todayKey = $analysisNow->format('Y-m-d');
+        $todayActualHours = isset($byDay[$todayKey]) ? (float)($byDay[$todayKey]['total_hours'] ?? 0.0) : 0.0;
+        $todayFutureHours = isset($byDay[$todayKey]) ? (float)($byDay[$todayKey]['future_hours'] ?? 0.0) : 0.0;
 
         // Build effective calendar order: selected or all (on first run)
         $effectiveIds = $includeAll ? $calendarIds : $selectedIds;
@@ -225,6 +237,7 @@ final class OverviewDataService {
                 'categoryColors' => $categoryColors,
                 'perDayByCat' => $perDayByCat,
                 'totalHours' => $totalHours,
+                'futureTotalHours' => $futureTotalHours,
                 'byCalList' => $byCalList,
                 'byDay' => $byDay,
                 'hod' => $hod,
@@ -242,6 +255,11 @@ final class OverviewDataService {
                 'maxTotal' => $maxTotal,
                 'colorsById' => $colorsById,
                 'weekStart' => $weekStart,
+                'analysisTo' => $analysisTo,
+                'currentPeriodClipped' => $currentPeriodClipped,
+                'currentCutoff' => $currentCutoff,
+                'todayActualHours' => $todayActualHours,
+                'todayFutureHours' => $todayFutureHours,
             ]);
         }
         if ($include['byCal']) {
@@ -265,6 +283,8 @@ final class OverviewDataService {
                     'maxTotal' => $maxTotal,
                     'totalProcessed' => $totalAdded,
                 ],
+                'currentPeriodClipped' => $currentPeriodClipped,
+                'currentCutoff' => $currentCutoff,
             ],
             'payload' => $payload,
             'queryDbg' => $queryDbg,

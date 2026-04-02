@@ -7,9 +7,12 @@ export interface TimeSummary {
   rangeEnd: string
   offset: number
   totalHours: number
+  futureHours: number
   avgDay: number
   avgEvent: number
   medianDay: number
+  todayActualHours: number
+  todayPlannedHours: number
   busiest: { date?: string; hours?: number } | null
   workdayAvg: number
   workdayMedian: number
@@ -136,8 +139,17 @@ export function useSummaries(input: UseSummariesInput) {
     () => input.selected.value.length || (input.calendars.value?.length ?? 0),
   )
 
+  const visibleByDayRows = computed(() => {
+    const rows = Array.isArray(input.byDay.value) ? input.byDay.value : []
+    const clipped = Boolean((input.stats as any)?.current_period_clipped)
+    const cutoffRaw = String((input.stats as any)?.current_cutoff ?? '').trim()
+    const cutoffDate = cutoffRaw ? cutoffRaw.slice(0, 10) : ''
+    if (!clipped || !cutoffDate) return rows
+    return rows.filter((row: any) => String(row?.date ?? '') <= cutoffDate)
+  })
+
   const dailyTotals = computed(() =>
-    (input.byDay.value || []).map((d: any) => Number(d?.total_hours ?? d?.hours ?? 0)),
+    visibleByDayRows.value.map((d: any) => Number(d?.total_hours ?? d?.hours ?? 0)),
   )
 
   const filteredDailyTotals = computed(() => {
@@ -149,7 +161,7 @@ export function useSummaries(input: UseSummariesInput) {
   })
 
   const workdayTotals = computed(() =>
-    (input.byDay.value || [])
+    visibleByDayRows.value
       .filter((d: any) => {
         const dow = dayOfWeek(String(d?.date))
         return dow >= 1 && dow <= 5
@@ -158,7 +170,7 @@ export function useSummaries(input: UseSummariesInput) {
   )
 
   const weekendTotals = computed(() =>
-    (input.byDay.value || [])
+    visibleByDayRows.value
       .filter((d: any) => {
         const dow = dayOfWeek(String(d?.date))
         return dow === 0 || dow === 6
@@ -192,9 +204,12 @@ export function useSummaries(input: UseSummariesInput) {
     rangeEnd: input.rangeEnd.value,
     offset: input.offset.value,
     totalHours: Number((input.stats as any)?.total_hours ?? 0),
+    futureHours: Number((input.stats as any)?.future_hours ?? 0),
     avgDay: avg(filteredDailyTotals.value),
     avgEvent: Number((input.stats as any)?.avg_per_event ?? 0),
     medianDay: median(filteredDailyTotals.value),
+    todayActualHours: Number((input.stats as any)?.today_actual_hours ?? 0),
+    todayPlannedHours: Number((input.stats as any)?.today_future_hours ?? 0),
     busiest: (input.stats as any)?.busiest_day ?? null,
     workdayAvg: avg(workdayValues.value),
     workdayMedian: median(workdayValues.value),

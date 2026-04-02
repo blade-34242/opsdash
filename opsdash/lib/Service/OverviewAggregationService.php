@@ -11,9 +11,10 @@ final class OverviewAggregationService {
      * @param callable(string): string $mapCalToCategory
      * @return array{
      *   totalHours: float,
-     *   byCalMap: array<string, array{id:string,calendar:string,events_count:int,total_hours:float}>,
-     *   byCalList: array<int, array{id:string,calendar:string,events_count:int,total_hours:float}>,
-     *   byDay: array<string, array{date:string,events_count:int,total_hours:float}>,
+     *   futureTotalHours: float,
+     *   byCalMap: array<string, array{id:string,calendar:string,events_count:int,total_hours:float,future_hours:float}>,
+     *   byCalList: array<int, array{id:string,calendar:string,events_count:int,total_hours:float,future_hours:float}>,
+     *   byDay: array<string, array{date:string,events_count:int,total_hours:float,future_hours:float}>,
      *   perDayByCal: array<string, array<string, float>>,
      *   dowByCal: array<string, array<string, float>>,
      *   perDayByCat: array<string, array<string, float>>,
@@ -33,7 +34,10 @@ final class OverviewAggregationService {
      *   long: array<int, array{calendar:string,summary:string,duration_h:float,start:string,desc:string,allday:bool}>,
      *   dowOrder: string[],
      *   hod: array<string, array<int, float>>,
-     *   dowTotals: array<string, float>
+     *   dowTotals: array<string, float>,
+     *   currentPeriodClipped: bool,
+     *   currentCutoff: string|null,
+     *   analysisTo: \DateTimeImmutable
      * }
      */
     public function aggregate(
@@ -45,8 +49,10 @@ final class OverviewAggregationService {
         array $colorsById,
         array $categoryMeta,
         callable $mapCalToCategory,
+        ?\DateTimeImmutable $now = null,
     ): array {
         $totalHours = 0.0;
+        $futureTotalHours = 0.0;
         $byCalMap = [];
         $byDay = [];
         $long = [];
@@ -74,12 +80,20 @@ final class OverviewAggregationService {
             $hod[$d] = array_fill(0, 24, 0.0);
         }
 
+        $analysisNow = ($now ?? new \DateTimeImmutable('now', $userTz))->setTimezone($userTz);
+        $currentPeriodClipped = $analysisNow >= $from && $analysisNow <= $to;
+        $analysisTo = $currentPeriodClipped ? $analysisNow : (($analysisNow < $from) ? $from : $to);
+        $actualWindowStart = $from;
+        $actualWindowEnd = $analysisTo;
+        $futureWindowStart = $analysisNow > $from ? $analysisNow : $from;
+        $futureWindowEnd = $to;
+
         foreach ($events as $r) {
             $isAllDayEvent = !empty($r['allday']);
-            $h = (float)($r['hours'] ?? 0);
+            $h = (float)($r['hours'] ?? 0.0);
             $calName = (string)($r['calendar'] ?? '');
             $calId = (string)($r['calendar_id'] ?? $calName);
-            $byCalMap[$calId] = $byCalMap[$calId] ?? ['id' => $calId, 'calendar' => $calName, 'events_count' => 0, 'total_hours' => 0.0];
+            $byCalMap[$calId] = $byCalMap[$calId] ?? ['id' => $calId, 'calendar' => $calName, 'events_count' => 0, 'total_hours' => 0.0, 'future_hours' => 0.0];
 
             $catId = $mapCalToCategory($calId);
             if (!isset($categoryTotals[$catId])) {
@@ -120,101 +134,87 @@ final class OverviewAggregationService {
                 }
             }
 
-            if ($dtStartUser) {
-                $ts = $dtStartUser->getTimestamp();
-                if ($earliestStartTs === null || $ts < $earliestStartTs) {
-                    $earliestStartTs = $ts;
-                }
-            }
-            if ($dtEndUser) {
-                $te = $dtEndUser->getTimestamp();
-                if ($latestEndTs === null || $te > $latestEndTs) {
-                    $latestEndTs = $te;
-                }
-            }
-
             $daysSpanned = 1;
             if ($dtStartUser && $dtEndUser) {
                 $eventDurSeconds = max(0, $dtEndUser->getTimestamp() - $dtStartUser->getTimestamp());
-                if ($isAllDayEvent) {
-                    if ($eventDurSeconds <= 0) {
-                        $eventDurSeconds = 86400;
-                    }
-                    $daysSpanned = max(1, (int)ceil($eventDurSeconds / 86400));
-                } else {
-                    $eventDur = $eventDurSeconds / 3600.0;
-                    if ($eventDur > $longestSessionHours) {
-                        $longestSessionHours = $eventDur;
-                    }
+                if ($isAllDayEvent && $eventDurSeconds <= 0) {
+                    $eventDurSeconds = 86400;
                 }
-            }
-            if ($isAllDayEvent && $allDayHours > $longestSessionHours) {
-                $longestSessionHours = $allDayHours;
+                if ($isAllDayEvent) {
+                    $daysSpanned = max(1, (int)ceil($eventDurSeconds / 86400));
+                }
             }
 
             $eventHours = $isAllDayEvent ? ($allDayHours * $daysSpanned) : $h;
             if (!$isAllDayEvent && $eventHours <= 0 && $dtStartUser && $dtEndUser && $dtEndUser > $dtStartUser) {
                 $eventHours = ($dtEndUser->getTimestamp() - $dtStartUser->getTimestamp()) / 3600.0;
             }
-            $totalHours += $eventHours;
-            $byCalMap[$calId]['events_count']++;
-            $byCalMap[$calId]['total_hours'] += $eventHours;
-            $categoryTotals[$catId] = ($categoryTotals[$catId] ?? 0.0) + $eventHours;
+            $eventDurationSeconds = ($dtStartUser && $dtEndUser && $dtEndUser > $dtStartUser)
+                ? max(1, $dtEndUser->getTimestamp() - $dtStartUser->getTimestamp())
+                : 0;
+            $hoursPerSecond = ($eventDurationSeconds > 0 && $eventHours > 0)
+                ? ($eventHours / $eventDurationSeconds)
+                : 0.0;
 
-            if ($isAllDayEvent && $dtStartUser) {
-                $perDayContribution = $allDayHours;
-                $perHourContribution = $allDayHours / 24.0;
-                $currentDay = $dtStartUser;
-                for ($i = 0; $i < $daysSpanned; $i++) {
-                    $dayKey = $currentDay->format('Y-m-d');
-                    $byDay[$dayKey] = $byDay[$dayKey] ?? ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0];
-                    if ($i === 0) {
-                        $byDay[$dayKey]['events_count']++;
-                    }
-                    $byDay[$dayKey]['total_hours'] += $perDayContribution;
-                    $daysSeen[$dayKey] = true;
-                    $dname = $currentDay->format('D');
+            $actualStart = $dtStartUser && $dtStartUser > $actualWindowStart ? $dtStartUser : $actualWindowStart;
+            $actualEnd = $dtEndUser && $dtEndUser < $actualWindowEnd ? $dtEndUser : $actualWindowEnd;
+            $actualSeconds = ($dtStartUser && $dtEndUser && $actualEnd > $actualStart)
+                ? ($actualEnd->getTimestamp() - $actualStart->getTimestamp())
+                : 0;
+            $actualHours = $hoursPerSecond > 0 && $actualSeconds > 0 ? $actualSeconds * $hoursPerSecond : 0.0;
 
-                    $perDayByCal[$dayKey] = $perDayByCal[$dayKey] ?? [];
-                    $perDayByCal[$dayKey][$calId] = ($perDayByCal[$dayKey][$calId] ?? 0) + $perDayContribution;
+            $futureStart = $dtStartUser && $dtStartUser > $futureWindowStart ? $dtStartUser : $futureWindowStart;
+            $futureEnd = $dtEndUser && $dtEndUser < $futureWindowEnd ? $dtEndUser : $futureWindowEnd;
+            $futureSeconds = ($dtStartUser && $dtEndUser && $futureEnd > $futureStart)
+                ? ($futureEnd->getTimestamp() - $futureStart->getTimestamp())
+                : 0;
+            $futureHours = $hoursPerSecond > 0 && $futureSeconds > 0 ? $futureSeconds * $hoursPerSecond : 0.0;
 
-                    $perDayByCat[$dayKey] = $perDayByCat[$dayKey] ?? [];
-                    $perDayByCat[$dayKey][$catId] = ($perDayByCat[$dayKey][$catId] ?? 0) + $perDayContribution;
+            if ($futureHours > 0) {
+                $futureTotalHours += $futureHours;
+                $byCalMap[$calId]['future_hours'] += $futureHours;
+                $this->addFutureByDay($byDay, $futureStart, $futureEnd, $hoursPerSecond);
+            }
 
-                    $dowByCal[$dname] = $dowByCal[$dname] ?? [];
-                    $dowByCal[$dname][$calId] = ($dowByCal[$dname][$calId] ?? 0) + $perDayContribution;
-
-                    $dowByCatTotals[$dname] = $dowByCatTotals[$dname] ?? [];
-                    $dowByCatTotals[$dname][$catId] = ($dowByCatTotals[$dname][$catId] ?? 0) + $perDayContribution;
-
-                    if ($perHourContribution > 0) {
-                        for ($hour = 0; $hour < 24; $hour++) {
-                            if (isset($hod[$dname][$hour])) {
-                                $hod[$dname][$hour] += $perHourContribution;
-                            }
-                        }
-                    }
-                    $currentDay = $currentDay->modify('+1 day');
-                }
-
-                $long[] = [
-                    'calendar' => $calName,
-                    'summary' => (string)($r['title'] ?? ''),
-                    'duration_h' => $eventHours,
-                    'start' => (string)($r['start'] ?? ''),
-                    'desc' => (string)($r['desc'] ?? ''),
-                    'allday' => true,
-                ];
+            if ($actualHours <= 0) {
                 continue;
             }
 
-            if ($dtStartUser && $dtEndUser && $dtEndUser > $dtStartUser) {
-                $segmentStart = $dtStartUser;
-                while ($segmentStart < $dtEndUser) {
+            $totalHours += $actualHours;
+            $byCalMap[$calId]['events_count']++;
+            $byCalMap[$calId]['total_hours'] += $actualHours;
+            $categoryTotals[$catId] = ($categoryTotals[$catId] ?? 0.0) + $actualHours;
+
+            if ($actualStart) {
+                $ts = $actualStart->getTimestamp();
+                if ($earliestStartTs === null || $ts < $earliestStartTs) {
+                    $earliestStartTs = $ts;
+                }
+            }
+            if ($actualEnd) {
+                $te = $actualEnd->getTimestamp();
+                if ($latestEndTs === null || $te > $latestEndTs) {
+                    $latestEndTs = $te;
+                }
+            }
+            if ($actualHours > $longestSessionHours) {
+                $longestSessionHours = $actualHours;
+            }
+
+            if ($actualStart) {
+                $dayStart = $actualStart->format('Y-m-d');
+                $byDay[$dayStart] = $byDay[$dayStart] ?? ['date' => $dayStart, 'events_count' => 0, 'total_hours' => 0.0, 'future_hours' => 0.0];
+                $byDay[$dayStart]['events_count']++;
+                $daysSeen[$dayStart] = true;
+            }
+
+            if ($actualStart && $actualEnd && $actualEnd > $actualStart) {
+                $segmentStart = $actualStart;
+                while ($segmentStart < $actualEnd) {
                     $dayKey = $segmentStart->format('Y-m-d');
-                    $dayEndCandidate = $segmentStart->setTime(23, 59, 59);
-                    if ($dayEndCandidate > $dtEndUser) {
-                        $dayEndCandidate = $dtEndUser;
+                    $dayEndCandidate = $segmentStart->setTime(23, 59, 59)->modify('+1 second');
+                    if ($dayEndCandidate > $actualEnd) {
+                        $dayEndCandidate = $actualEnd;
                     }
                     $startTs = $segmentStart->getTimestamp();
                     $endTs = $dayEndCandidate->getTimestamp();
@@ -228,64 +228,34 @@ final class OverviewAggregationService {
                         }
                         $dayIntervals[$dayKey][] = [$startTs, $endTs];
                     }
-                    if ($dayEndCandidate >= $dtEndUser) {
-                        break;
-                    }
-                    $segmentStart = $dayEndCandidate->modify('+1 second');
+                    $segmentStart = $dayEndCandidate;
                 }
-            }
 
-            if ($dtStartUser) {
-                $dayStart = $dtStartUser->format('Y-m-d');
-                $byDay[$dayStart] = $byDay[$dayStart] ?? ['date' => $dayStart, 'events_count' => 0, 'total_hours' => 0.0];
-                $byDay[$dayStart]['events_count']++;
-                $daysSeen[$dayStart] = true;
+                $this->distributeActualSegment(
+                    byDay: $byDay,
+                    perDayByCal: $perDayByCal,
+                    dowByCal: $dowByCal,
+                    perDayByCat: $perDayByCat,
+                    dowByCatTotals: $dowByCatTotals,
+                    hod: $hod,
+                    daysSeen: $daysSeen,
+                    segmentStart: $actualStart,
+                    segmentEnd: $actualEnd,
+                    hoursPerSecond: $hoursPerSecond,
+                    calId: $calId,
+                    catId: $catId,
+                    userTz: $userTz,
+                );
             }
 
             $long[] = [
                 'calendar' => $calName,
                 'summary' => (string)($r['title'] ?? ''),
-                'duration_h' => $eventHours,
+                'duration_h' => $actualHours,
                 'start' => (string)($r['start'] ?? ''),
                 'desc' => (string)($r['desc'] ?? ''),
-                'allday' => false,
+                'allday' => $isAllDayEvent,
             ];
-
-            if ($dtStartUser && $dtEndUser && $dtEndUser > $dtStartUser) {
-                $cur = $dtStartUser;
-                while ($cur < $dtEndUser) {
-                    $hourStart = \DateTimeImmutable::createFromFormat('Y-m-d H:00:00', $cur->format('Y-m-d H:00:00'), $userTz) ?: $cur;
-                    $slotEnd = $hourStart->modify('+1 hour');
-                    if ($slotEnd > $dtEndUser) {
-                        $slotEnd = $dtEndUser;
-                    }
-                    $dur = max(0, ($slotEnd->getTimestamp() - $cur->getTimestamp()) / 3600.0);
-                    $dname = $cur->format('D');
-                    $hour = (int)$cur->format('G');
-                    if (isset($hod[$dname][$hour])) {
-                        $hod[$dname][$hour] += $dur;
-                    }
-
-                    $dayKey = $cur->format('Y-m-d');
-                    $perDayByCal[$dayKey] = $perDayByCal[$dayKey] ?? [];
-                    $perDayByCal[$dayKey][$calId] = ($perDayByCal[$dayKey][$calId] ?? 0) + $dur;
-
-                    $dowByCal[$dname] = $dowByCal[$dname] ?? [];
-                    $dowByCal[$dname][$calId] = ($dowByCal[$dname][$calId] ?? 0) + $dur;
-
-                    $byDay[$dayKey] = $byDay[$dayKey] ?? ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0];
-                    $byDay[$dayKey]['total_hours'] += $dur;
-                    $daysSeen[$dayKey] = true;
-
-                    $perDayByCat[$dayKey] = $perDayByCat[$dayKey] ?? [];
-                    $perDayByCat[$dayKey][$catId] = ($perDayByCat[$dayKey][$catId] ?? 0) + $dur;
-
-                    $dowByCatTotals[$dname] = $dowByCatTotals[$dname] ?? [];
-                    $dowByCatTotals[$dname][$catId] = ($dowByCatTotals[$dname][$catId] ?? 0) + $dur;
-
-                    $cur = $slotEnd;
-                }
-            }
         }
 
         $dowTotals = [];
@@ -305,7 +275,7 @@ final class OverviewAggregationService {
         while ($cursor <= $to) {
             $dayKey = $cursor->format('Y-m-d');
             if (!isset($byDay[$dayKey])) {
-                $byDay[$dayKey] = ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0];
+                $byDay[$dayKey] = ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0, 'future_hours' => 0.0];
             }
             if (!isset($perDayByCal[$dayKey])) {
                 $perDayByCal[$dayKey] = [];
@@ -317,13 +287,14 @@ final class OverviewAggregationService {
             $cursor = $cursor->add(new \DateInterval('P1D'));
         }
 
-        $eventsCount = count($events);
+        $eventsCount = array_sum(array_map(static fn (array $row): int => (int)($row['events_count'] ?? 0), $byCalList));
         $daysCount = count($daysSeen);
         $avgPerDay = $daysCount ? ($totalHours / $daysCount) : 0.0;
         $avgPerEvent = $eventsCount ? ($totalHours / $eventsCount) : 0.0;
 
         return [
             'totalHours' => $totalHours,
+            'futureTotalHours' => $futureTotalHours,
             'byCalMap' => $byCalMap,
             'byCalList' => $byCalList,
             'byDay' => $byDay,
@@ -347,6 +318,100 @@ final class OverviewAggregationService {
             'dowOrder' => $dowOrder,
             'hod' => $hod,
             'dowTotals' => $dowTotals,
+            'currentPeriodClipped' => $currentPeriodClipped,
+            'currentCutoff' => $currentPeriodClipped ? $analysisNow->format(\DateTimeInterface::ATOM) : null,
+            'analysisTo' => $analysisTo,
         ];
+    }
+
+    /**
+     * @param array<string, array{date:string,events_count:int,total_hours:float,future_hours:float}> $byDay
+     */
+    private function addFutureByDay(
+        array &$byDay,
+        ?\DateTimeImmutable $segmentStart,
+        ?\DateTimeImmutable $segmentEnd,
+        float $hoursPerSecond,
+    ): void {
+        if ($segmentStart === null || $segmentEnd === null || $segmentEnd <= $segmentStart || $hoursPerSecond <= 0) {
+            return;
+        }
+
+        $cursor = $segmentStart;
+        while ($cursor < $segmentEnd) {
+            $dayKey = $cursor->format('Y-m-d');
+            $dayEnd = $cursor->setTime(23, 59, 59)->modify('+1 second');
+            if ($dayEnd > $segmentEnd) {
+                $dayEnd = $segmentEnd;
+            }
+            $seconds = max(0, $dayEnd->getTimestamp() - $cursor->getTimestamp());
+            if ($seconds > 0) {
+                $byDay[$dayKey] = $byDay[$dayKey] ?? ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0, 'future_hours' => 0.0];
+                $byDay[$dayKey]['future_hours'] += $seconds * $hoursPerSecond;
+            }
+            $cursor = $dayEnd;
+        }
+    }
+
+    /**
+     * @param array<string, array{date:string,events_count:int,total_hours:float,future_hours:float}> $byDay
+     * @param array<string, array<string, float>> $perDayByCal
+     * @param array<string, array<string, float>> $dowByCal
+     * @param array<string, array<string, float>> $perDayByCat
+     * @param array<string, array<string, float>> $dowByCatTotals
+     * @param array<string, array<int, float>> $hod
+     * @param array<string, bool> $daysSeen
+     */
+    private function distributeActualSegment(
+        array &$byDay,
+        array &$perDayByCal,
+        array &$dowByCal,
+        array &$perDayByCat,
+        array &$dowByCatTotals,
+        array &$hod,
+        array &$daysSeen,
+        \DateTimeImmutable $segmentStart,
+        \DateTimeImmutable $segmentEnd,
+        float $hoursPerSecond,
+        string $calId,
+        string $catId,
+        \DateTimeZone $userTz,
+    ): void {
+        $cursor = $segmentStart;
+        while ($cursor < $segmentEnd) {
+            $hourStart = \DateTimeImmutable::createFromFormat('Y-m-d H:00:00', $cursor->format('Y-m-d H:00:00'), $userTz) ?: $cursor;
+            $slotEnd = $hourStart->modify('+1 hour');
+            if ($slotEnd > $segmentEnd) {
+                $slotEnd = $segmentEnd;
+            }
+            $seconds = max(0, $slotEnd->getTimestamp() - $cursor->getTimestamp());
+            if ($seconds > 0) {
+                $hours = $seconds * $hoursPerSecond;
+                $dayKey = $cursor->format('Y-m-d');
+                $dname = $cursor->format('D');
+                $hour = (int)$cursor->format('G');
+
+                $byDay[$dayKey] = $byDay[$dayKey] ?? ['date' => $dayKey, 'events_count' => 0, 'total_hours' => 0.0, 'future_hours' => 0.0];
+                $byDay[$dayKey]['total_hours'] += $hours;
+                $daysSeen[$dayKey] = true;
+
+                $perDayByCal[$dayKey] = $perDayByCal[$dayKey] ?? [];
+                $perDayByCal[$dayKey][$calId] = ($perDayByCal[$dayKey][$calId] ?? 0.0) + $hours;
+
+                $dowByCal[$dname] = $dowByCal[$dname] ?? [];
+                $dowByCal[$dname][$calId] = ($dowByCal[$dname][$calId] ?? 0.0) + $hours;
+
+                $perDayByCat[$dayKey] = $perDayByCat[$dayKey] ?? [];
+                $perDayByCat[$dayKey][$catId] = ($perDayByCat[$dayKey][$catId] ?? 0.0) + $hours;
+
+                $dowByCatTotals[$dname] = $dowByCatTotals[$dname] ?? [];
+                $dowByCatTotals[$dname][$catId] = ($dowByCatTotals[$dname][$catId] ?? 0.0) + $hours;
+
+                if (isset($hod[$dname][$hour])) {
+                    $hod[$dname][$hour] += $hours;
+                }
+            }
+            $cursor = $slotEnd;
+        }
     }
 }

@@ -9,9 +9,12 @@ const baseSummary = {
   rangeEnd: '2025-03-09',
   offset: 0,
   totalHours: 12.5,
+  futureHours: 2.5,
   avgDay: 2.5,
   avgEvent: 1.25,
   medianDay: 2,
+  todayActualHours: 0,
+  todayPlannedHours: 0,
   busiest: { date: '2025-03-04', hours: 5 },
   workdayAvg: 3,
   workdayMedian: 2.5,
@@ -73,7 +76,8 @@ describe('TimeSummaryCard', () => {
       props: {
         summary: {
           ...baseSummary,
-          todayHours: 6.5,
+          todayActualHours: 6.5,
+          todayPlannedHours: 1.5,
         },
         mode: 'active',
       },
@@ -82,6 +86,7 @@ describe('TimeSummaryCard', () => {
     const text = wrapper.text().replace(/\s+/g, ' ')
     expect(text).toContain('Total today')
     expect(text).toContain('6.50 h')
+    expect(text).toContain('Later today 1.50 h planned')
   })
 
   it('renders key metrics, top category badge, and weekend share', () => {
@@ -96,6 +101,7 @@ describe('TimeSummaryCard', () => {
     const text = wrapper.text()
     expect(text).toContain('Time Summary · Week 10')
     expect(text).toContain('12.50 h total')
+    expect(text).toContain('2.50 h planned later')
     expect(text).toContain('2.50 h/day (active days)')
     expect(text).toContain('Busiest 2025-03-04 — 5.00 h')
     expect(text).toContain('Weekend 1.00 h avg · 1.50 h median (40.0%)')

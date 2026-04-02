@@ -46,6 +46,7 @@ class OverviewHistoryServiceTest extends TestCase {
       offset: 0,
       currentFrom: new DateTimeImmutable('2025-01-06T00:00:00Z'),
       currentTo: new DateTimeImmutable('2025-01-12T23:59:59Z'),
+      analysisTo: new DateTimeImmutable('2025-01-08T12:00:00Z'),
       currentByDay: $currentByDay,
       includeAll: false,
       selectedIds: ['cal-a'],
@@ -59,9 +60,10 @@ class OverviewHistoryServiceTest extends TestCase {
     $this->assertCount(2, $trend);
     $this->assertSame(0, $trend[0]['offset']);
     $this->assertSame('This week', $trend[0]['label']);
-    $this->assertSame(7, $trend[0]['totalDays']);
+    $this->assertSame(3, $trend[0]['totalDays']);
     $this->assertSame(2, $trend[0]['daysWorked']);
-    $this->assertSame(5, $trend[0]['daysOff']);
+    $this->assertSame(1, $trend[0]['daysOff']);
+    $this->assertSame('2025-01-08', $trend[0]['to']);
 
     $this->assertSame(1, $trend[1]['offset']);
     $this->assertSame('-1 wk', $trend[1]['label']);

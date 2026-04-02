@@ -7,6 +7,7 @@
     <div class="today-highlight" v-if="showToday && todayTotal !== null">
       <div class="today-label">Total today</div>
       <div class="today-value">{{ n2(todayTotal) }} h</div>
+      <div v-if="todayPlannedHours > 0" class="today-subvalue">Later today {{ n2(todayPlannedHours) }} h planned</div>
     </div>
     <div class="today-cats" v-if="showToday && todayItems.length">
       <div class="today-cat" v-for="cat in todayItems" :key="cat.id">
@@ -18,6 +19,9 @@
 
     <div class="time-summary-inline" v-if="summaryConfig.showTotal">
       <strong>{{ n2(summary.totalHours) }} h</strong> total
+    </div>
+    <div class="time-summary-inline time-summary-inline--planned" v-if="summary.futureHours > 0">
+      {{ n2(summary.futureHours) }} h planned later
     </div>
     <div class="time-summary-inline" v-if="inlineStats">
       {{ inlineStats }}
@@ -231,9 +235,12 @@ const props = withDefaults(defineProps<{
     rangeEnd: string
     offset: number
     totalHours: number
+    futureHours: number
     avgDay: number
     avgEvent: number
     medianDay: number
+    todayActualHours: number
+    todayPlannedHours: number
     busiest: { date?: string; hours?: number } | null
     workdayAvg: number
     workdayMedian: number
@@ -325,8 +332,15 @@ const todayTotal = computed(() => {
   if (todayItems.value.length) {
     return todayItems.value.reduce((sum, g) => sum + g.todayHours, 0)
   }
+  if (Number.isFinite(props.summary.todayActualHours)) {
+    return props.summary.todayActualHours
+  }
   const v = (props.summary as any)?.todayHours
   return typeof v === 'number' && Number.isFinite(v) ? v : null
+})
+const todayPlannedHours = computed(() => {
+  const value = Number(props.summary?.todayPlannedHours ?? 0)
+  return Number.isFinite(value) ? Math.max(0, value) : 0
 })
 
 const titleText = computed(() => props.title || 'Time Summary')

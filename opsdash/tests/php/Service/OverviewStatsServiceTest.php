@@ -96,12 +96,13 @@ final class OverviewStatsServiceTest extends TestCase {
         '2024-01-03' => ['work' => 2.0],
       ],
       'totalHours' => 4.0,
+      'futureTotalHours' => 1.5,
       'byCalList' => [
-        ['calendar' => 'Work', 'total_hours' => 4.0],
+        ['calendar' => 'Work', 'total_hours' => 4.0, 'future_hours' => 1.5],
       ],
       'byDay' => [
-        '2024-01-02' => ['date' => '2024-01-02', 'total_hours' => 2.0],
-        '2024-01-03' => ['date' => '2024-01-03', 'total_hours' => 2.0],
+        '2024-01-02' => ['date' => '2024-01-02', 'total_hours' => 2.0, 'future_hours' => 0.0],
+        '2024-01-03' => ['date' => '2024-01-03', 'total_hours' => 2.0, 'future_hours' => 1.5],
       ],
       'hod' => [
         'Mon' => array_fill(0, 24, 0.0),
@@ -126,11 +127,17 @@ final class OverviewStatsServiceTest extends TestCase {
       'maxTotal' => 5000,
       'colorsById' => ['cal-1' => '#112233'],
       'weekStart' => 1,
+      'analysisTo' => new \DateTimeImmutable('2024-01-03 12:00:00', new \DateTimeZone('UTC')),
+      'currentPeriodClipped' => true,
+      'currentCutoff' => '2024-01-03T12:00:00+00:00',
+      'todayActualHours' => 2.0,
+      'todayFutureHours' => 1.5,
     ];
 
     $result = $stats->build($context);
 
     $this->assertSame(4.0, $result['total_hours']);
+    $this->assertSame(1.5, $result['future_hours']);
     $this->assertSame(4.0, $result['delta']['total_hours']);
     $this->assertSame('#2563eb', $result['balance_overview']['categories'][0]['color']);
     $this->assertNotEmpty($result['day_off_trend']);
