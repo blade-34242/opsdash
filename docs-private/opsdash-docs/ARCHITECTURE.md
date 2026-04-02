@@ -46,6 +46,7 @@ fallback remains in place even though the public interface in 30-32 does not lis
 
 - The server resolves the user timezone + first-day-of-week from Nextcloud core settings and uses them for range bounds and day bucketing.
 - The client formats dates using the user locale (Nextcloud `OC.getCanonicalLocale()` when available), the server-provided timezone, and the first-day-of-week from `userSettings`.
+- For the active period (`offset=0`), the server also derives an `analysisTo`/cutoff at `now` so aggregation can split elapsed time (`actual`) from upcoming time (`future`).
 
 ## Backend Modules
 
@@ -62,18 +63,20 @@ fallback remains in place even though the public interface in 30-32 does not lis
     - `OverviewIncludeResolver`: canonicalises include lists + flags.
     - `OverviewCorePayloadComposer`: composes core payload fragments.
     - `OverviewLoadCacheService`: encapsulates cache keys + read/write logic.
-  - `OverviewDataService`: builds the heavy stats/aggregation/charts payload for `/overview/load`.
+  - `OverviewDataService`: builds the heavy stats/aggregation/charts payload for `/overview/load`, including the current-period actual/planned split metadata.
   - `OverviewStatsService`: combines KPI, delta, and trend calculators for `/overview/load`.
     - `OverviewStatsKpiService`: current-period KPIs + availability.
     - `OverviewStatsDeltaService`: previous-period deltas.
     - `OverviewStatsTrendService`: day-off trend + balance history.
   - `CalendarAccessService`, `CalendarParsingService`, `CalendarColorService`: calendar access, parsing, and color normalization.
   - `OverviewEventsCollector`, `OverviewAggregationService`, `OverviewChartsBuilder`, `OverviewBalanceService`: read-path helpers used by `/overview/load`.
+    - `OverviewAggregationService` is the split point for active-range math: `total_hours` stays backward-compatible as actual-only while `future_hours` carries upcoming time for the same range.
 
 Guiding principles:
 - Strict read/write separation (read endpoints: side-effect free; write endpoints: POST+CSRF only).
 - Clamp all inputs, intersect calendars with user principal.
 - Add soft caps and expose truncation in `meta`.
+- Treat recurrence as normal event instances: the exclusion rule is based on time relative to `now`, not on whether an event came from an RRULE series.
 
 ## Frontend Modules (current)
 

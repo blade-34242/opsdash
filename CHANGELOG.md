@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - None yet.
 
+## 0.7.3 - 2026-04-02
+### Changed
+- Current-period aggregation now splits elapsed time from upcoming time. The current week/month counts only event time up to `now` as actual work, while later events and later recurring instances stay in separate planned totals.
+- Overview widgets now surface planned time explicitly in the frontend, including `planned later` / `upcoming` hints in `Time Summary`, `Targets`, and the calendar table.
+- Current-period highlight styling is now consistent across the trend/overview widgets that mark the active week or month.
+
+### Fixed
+- Fixed calendar payload parsing for Sabre/CalDAV rows that can expose structured arrays instead of plain strings (for example `DURATION` / summary values), preventing `Array to string conversion` warnings in `CalendarParsingService`.
+- Fixed current day-off trend logic so future days in the active week/month are no longer counted as days off before they happen.
+- Fixed current-period KPI, target, and per-day totals so future events no longer inflate “done” values in the active range.
+
 ## 0.7.2 - 2026-03-25
 ### Added
 - Added a `Never Finished · Stay Hard` option for the `Targets` widget. When enabled, the widget keeps totals in an endless 80-99% display zone and shows a compact rotating hustle badge in the card corner.

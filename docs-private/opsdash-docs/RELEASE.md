@@ -10,8 +10,9 @@ This consolidates the release workflow, packaging/signing steps, App Store submi
 ## Pre-release Checklist
 1. **Choose compatibility window** - adjust `<nextcloud min-version="X" max-version="Y"/>` if QA confirms broader support.
 2. **Update versions & changelog** - run `bash tools/release/bump_version.sh <x.y.z>` and update `CHANGELOG.md`.
-3. **Build + sanity check** - `npm ci && npm run build`; run the app locally.
-4. **Run tests** - `npm run test -- --run`, `composer run test:unit`, `npm run test:e2e`, security scripts in `tools/security/`.
+3. **Update behavior docs when payload semantics change** - refresh `API.md`, `ARCHITECTURE.md`, and `README.md` when frontend-visible meanings or `/overview/load` fields change.
+4. **Build + sanity check** - `npm ci && npm run build`; run the app locally.
+5. **Run tests** - `npm run test -- --run`, `composer run test:unit`, `npm run test:e2e`, security scripts in `tools/security/`.
 
 ## Packaging & Signing
 1. Preferred one-step helper: `make release VERSION=<x.y.z>`

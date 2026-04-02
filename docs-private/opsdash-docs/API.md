@@ -38,7 +38,9 @@ Base path: `/apps/opsdash`
     offset: number,
     from: 'YYYY-MM-DD', to: 'YYYY-MM-DD',
     truncated: boolean,
-    limits: { maxPerCal: number, maxTotal: number, totalProcessed: number }
+    limits: { maxPerCal: number, maxTotal: number, totalProcessed: number },
+    currentPeriodClipped?: boolean,
+    currentCutoff?: 'ISO-8601 timestamp'
   },
   calendars: [{ id, displayname, color }],
   selected: [id,...],
@@ -50,8 +52,18 @@ Base path: `/apps/opsdash`
   deckSettings: { ... },
   themePreference: 'auto'|'light'|'dark',
   userSettings: { timezone: 'Area/City', locale?: 'de', firstDayOfWeek: 0..6 }, // 0=Sun..6=Sat
-  stats: { total_hours, avg_per_day, ... },
-  byCal: [...], byDay: [...], longest: [...],
+  stats: {
+    total_hours,          // actual hours only for the active period; clipped at "now"
+    future_hours?,        // upcoming hours later in the active period
+    today_actual_hours?,  // elapsed hours for today
+    today_future_hours?,  // upcoming hours later today
+    current_period_clipped?, // true when offset=0 and the active period is clipped at "now"
+    current_cutoff?,      // ISO 8601 timestamp used as the actual/future split
+    avg_per_day, ...
+  },
+  byCal: [{ id, calendar, events_count, total_hours, future_hours? }, ...],
+  byDay: [{ date, events_count, total_hours, future_hours? }, ...],
+  longest: [...],
   charts: {
     pie,
     perDay,
@@ -78,6 +90,8 @@ Base path: `/apps/opsdash`
 
 Notes:
 - `stats.earliest_start` / `stats.latest_end` are ISO 8601 timestamps in the user timezone.
+- In the active period (`offset=0`), existing `total_hours` fields now mean “already happened / elapsed so far”, not “whole week/month including future events”.
+- Recurring events are not excluded as a class. Past instances count as actual time; future instances/segments stay in `future_hours`.
 
 ## Persist Selection (save)
 - Method: POST `/overview/persist`

@@ -7,6 +7,7 @@ Opsdash turns your Nextcloud calendar data into a practical operations dashboard
 ## 🚀 Feature Rundown
 - 📅 **Dashboard** – KPIs for week/month, busiest days, averages, weekend share, top categories, longest events, and multi-tab layouts.
 - 🎯 **Targets & pacing** – per-calendar and per-category goals, pace hints, trend context, and forecast signals.
+- ⏱️ **Current period done vs planned** – active week/month separates elapsed hours from future hours so “done” metrics stop at now and upcoming time stays clearly labeled.
 - ⚖️ **Balance** – share cards, stacked bars, relations/ratios, heatmaps, lookback trends, and daypart toggles.
 - 🧠 **Notes** – edit “This week/month”, view “Last week/month”, and optionally surface notes in cards.
 - 🧩 **Onboarding wizard & profiles** – guided setup, rerun onboarding, and save/load/delete/export/import profile presets.
@@ -34,7 +35,7 @@ Opsdash turns your Nextcloud calendar data into a practical operations dashboard
 ## Compatibility
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-32 | 0.6.4 |
+| `master` | 30-32 | 0.7.3 |
 | `release/0.5.x` | 30-32 | Store-ready line |
 
 ## Install
@@ -67,7 +68,7 @@ make smoke
 
 ## Packaging
 ```bash
-make release VERSION=0.6.4
+make release VERSION=0.7.3
 ```
 
 One-step release helper:
@@ -77,7 +78,7 @@ One-step release helper:
 
 Manual packaging only:
 ```bash
-make appstore VERSION=0.6.4
+make appstore VERSION=0.7.3
 ```
 
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  

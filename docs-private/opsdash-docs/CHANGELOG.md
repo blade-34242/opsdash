@@ -5,6 +5,13 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 ## Unreleased
 - None yet.
 
+## 0.7.3 - 2026-04-02
+- Current-period Aggregation trennt jetzt zwischen `actual` und `planned`: laufende Woche/Monat zählen nur bis `now`, spätere Events und spätere Recurrence-Instanzen bleiben in `future_hours`.
+- Frontend zeigt die Trennung sichtbar in `Time Summary`, `Targets` und `Calendar Table` (`planned later`, `upcoming`, per-category planned values).
+- `Day off`-Trend für die aktive Periode clippt jetzt an den aktuellen Tag statt Zukunftstage vorab als frei zu zählen.
+- Current-week/current-period Highlight-Styling über mehrere Widgets vereinheitlicht.
+- Kalender-Parsing gehärtet gegen strukturierte Sabre-/CalDAV-Werte (`DURATION`, Summary, ICS text arrays), damit keine `Array to string conversion`-Warnings mehr auftreten.
+
 ## 0.7.2 - 2026-03-25
 - `Targets`-Widget erweitert um den optionalen Modus `Never Finished · Stay Hard`.
 - Widget-Edit-Toolbar von der unteren Floating-Bar in eine obere Secondary Toolbar unter den Tabs verschoben.
