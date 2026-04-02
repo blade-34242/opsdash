@@ -6,11 +6,13 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 - None yet.
 
 ## 0.7.3 - 2026-04-02
-- Current-period Aggregation trennt jetzt zwischen `actual` und `planned`: laufende Woche/Monat zählen nur bis `now`, spätere Events und spätere Recurrence-Instanzen bleiben in `future_hours`.
-- Frontend zeigt die Trennung sichtbar in `Time Summary`, `Targets` und `Calendar Table` (`planned later`, `upcoming`, per-category planned values).
-- `Day off`-Trend für die aktive Periode clippt jetzt an den aktuellen Tag statt Zukunftstage vorab als frei zu zählen.
-- Current-week/current-period Highlight-Styling über mehrere Widgets vereinheitlicht.
-- Kalender-Parsing gehärtet gegen strukturierte Sabre-/CalDAV-Werte (`DURATION`, Summary, ICS text arrays), damit keine `Array to string conversion`-Warnings mehr auftreten.
+- Current-period aggregation now splits `actual` and `planned`: the active week/month counts only time up to `now`, while later events and later recurrence instances remain in `future_hours`.
+- The frontend now shows that split visibly in `Time Summary`, `Targets`, and `Calendar Table` (`planned later`, `upcoming`, and per-category planned values).
+- The `Day off` trend for the active period now clips to the current day instead of counting future days as off in advance.
+- Current-week/current-period highlight styling is now consistent across multiple widgets.
+- Calendar parsing is hardened against structured Sabre/CalDAV values (`DURATION`, summary, ICS text arrays), preventing `Array to string conversion` warnings.
+- `Period Comparison` now shows a clear in-widget hint when `lookbackWeeks = 1` and no comparison data is being loaded.
+- Widget options now include direct `Move` / `Copy` actions for other dashboard tabs in addition to the existing drag-and-drop flow.
 
 ## 0.7.2 - 2026-03-25
 - `Targets`-Widget erweitert um den optionalen Modus `Never Finished · Stay Hard`.
