@@ -295,11 +295,11 @@ function clamp(v: number, min: number, max: number) {
   transition: transform .2s ease, background .2s ease;
 }
 .dayoff-tile--current{
-  outline:2px solid color-mix(in oklab, var(--brand), white 10%);
+  outline:1px solid color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
   outline-offset:1px;
   box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--brand), transparent 70%),
-    0 4px 14px color-mix(in oklab, var(--brand), transparent 78%);
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
 }
 .dayoff-tile__label{
   font-size:calc(11px * var(--widget-scale, 1));

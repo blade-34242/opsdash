@@ -143,4 +143,27 @@ describe('BalanceIndexCard', () => {
       '-2',
     ])
   })
+
+  it('does not add a special inline box shadow to the first historical trend block', () => {
+    const wrapper = mount(BalanceIndexCard, {
+      props: {
+        overview: {
+          index: 0.75,
+          trendHistory: [
+            { offset: 1, label: '-1 wk', categories: [{ id: 'work', share: 60 }] },
+            { offset: 2, label: '-2 wk', categories: [{ id: 'work', share: 40 }] },
+          ],
+        },
+        targetsCategories: [{ id: 'work', targetHours: 10 }],
+        showTrend: true,
+        showCurrent: true,
+        lookbackWeeks: 2,
+      },
+    })
+
+    const blocks = wrapper.findAll('.trend-block')
+    expect(blocks[0].attributes('style') || '').not.toContain('box-shadow')
+    expect(blocks[0].classes()).not.toContain('current')
+    expect(blocks[blocks.length - 1].classes()).toContain('current')
+  })
 })

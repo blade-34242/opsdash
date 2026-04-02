@@ -644,7 +644,12 @@ function classifyDayOffTone(value: number): 'low' | 'mid' | 'high' {
   background: var(--color-main-background);
 }
 .dayoff-tile--current {
-  border-color: var(--color-primary);
+  border-color: color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
+  outline: 1px solid color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
 }
 .dayoff-tile--low {
   background: color-mix(in srgb, #10b981 12%, var(--color-main-background));
@@ -778,8 +783,11 @@ function classifyDayOffTone(value: number): 'low' | 'mid' | 'high' {
   transition: background .2s ease;
 }
 .mix-cell--current {
-  outline: 1px solid color-mix(in oklab, var(--brand), transparent 35%);
+  outline: 1px solid color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
   outline-offset: 1px;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
 }
 .mix-cell--trend-up {
   background: color-mix(in oklab, #16a34a, white 65%);

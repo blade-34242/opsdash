@@ -278,7 +278,6 @@ const trendBlockStyle = (idx: number) => {
   const color = shadeColor(base, deviation * 0.6)
   return {
     background: color,
-    boxShadow: idx === 0 ? `0 0 0 2px color-mix(in oklab, ${color}, #ffffff 60%)` : undefined,
   }
 }
 
@@ -507,7 +506,11 @@ function computedPeriodTag(idx: number) {
 }
 .trend-block.current{
   background:var(--color-primary,#2563eb);
-  box-shadow:0 0 0 2px color-mix(in oklab, var(--color-primary,#2563eb), #ffffff 60%);
+  outline:1px solid color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
+  outline-offset:1px;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
 }
 .trend-line-row{
   display:flex;

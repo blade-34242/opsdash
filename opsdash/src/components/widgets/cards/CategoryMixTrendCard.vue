@@ -582,8 +582,32 @@ function clamp(v: number, min: number, max: number) {
     inset 0 -3px 0 0 color-mix(in oklab, var(--mix-accent), transparent 18%);
 }
 .mix-cell--current{
-  outline: 1px solid color-mix(in oklab, var(--brand), transparent 35%);
+  outline: 1px solid color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 35%);
   outline-offset:1px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--mix-bg), transparent 55%),
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
+}
+.mix-cell--current.mix-cell--mode-hybrid{
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--mix-bg), transparent 55%),
+    inset 0 -3px 0 0 color-mix(in oklab, var(--mix-accent), transparent 30%),
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
+}
+:global(#opsdash.opsdash-theme-dark .mix-cell.mix-cell--current){
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--mix-bg), transparent 64%),
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
+}
+:global(#opsdash.opsdash-theme-dark .mix-cell.mix-cell--current.mix-cell--mode-hybrid){
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--mix-bg), transparent 64%),
+    inset 0 -3px 0 0 color-mix(in oklab, var(--mix-accent), transparent 18%),
+    0 0 0 1px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 72%),
+    0 4px 12px color-mix(in oklab, var(--brand, var(--color-primary, #2563eb)), transparent 84%);
 }
 .mix-cell--mode-hybrid{
   box-shadow: inset 0 -3px 0 0 color-mix(in oklab, var(--mix-accent), transparent 30%);
