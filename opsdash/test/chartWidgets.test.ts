@@ -202,9 +202,13 @@ describe('chart widgets', () => {
     expect(props.lookbackEntries).toHaveLength(2)
     expect(props.lookbackEntries[0].id).toBe('offset-1')
     expect(props.lookbackEntries[1].id).toBe('offset-0')
+    expect(props.lookbackEntries[0].color).toBe('#9aa6b2')
+    expect(props.lookbackEntries[1].color).toBe('#8895a3')
 
     const reversedProps = entry.buildProps({ options: { reverseOrder: true } } as any, ctx) as any
     expect(reversedProps.lookbackEntries[0].id).toBe('offset-0')
     expect(reversedProps.lookbackEntries[1].id).toBe('offset-1')
+    expect(reversedProps.lookbackEntries[0].color).toBe('#9aa6b2')
+    expect(reversedProps.lookbackEntries[1].color).toBe('#8895a3')
   })
 })

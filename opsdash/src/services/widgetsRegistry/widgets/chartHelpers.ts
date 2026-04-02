@@ -5,10 +5,10 @@ type PieData = { ids: string[]; labels: string[]; data: number[]; colors?: strin
 type StackedData = { labels: string[]; series: Array<{ id: string; name?: string; label?: string; color?: string; data?: number[]; forecast?: number[] }> }
 type ChartFilterMode = 'category' | 'calendar'
 
-const LOOKBACK_PALETTE = ['#2563eb', '#f97316', '#10b981', '#a855f7', '#ec4899', '#14b8a6']
+const LOOKBACK_PALETTE = ['#9aa6b2', '#8895a3', '#778697', '#68788a', '#596b7e', '#4d6074']
 
 export function getLookbackColor(index: number): string {
-  return LOOKBACK_PALETTE[index % LOOKBACK_PALETTE.length] || '#60a5fa'
+  return LOOKBACK_PALETTE[index % LOOKBACK_PALETTE.length] || '#6f8193'
 }
 
 export function sortLookbackOffsets<T extends { offset?: number }>(input: T[]): T[] {

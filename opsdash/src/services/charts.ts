@@ -54,7 +54,7 @@ export function invert(hex: string): string {
   return rgbToHex(255 - rgb.r, 255 - rgb.g, 255 - rgb.b)
 }
 
-// Blue → purple gradient for heatmap cells
+// Muted paper → steel gradient for heatmap cells
 export function heatColor(t: number): string {
   const clamp = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
   const tt = Math.pow(clamp(t), 0.6)

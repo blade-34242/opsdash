@@ -1,5 +1,5 @@
 <template>
-  <!-- Heatmap canvas: renders a 24×7 matrix using a blue→purple gradient -->
+  <!-- Heatmap canvas: renders a 24×7 matrix using a muted paper→steel gradient -->
   <canvas ref="cv" class="chart" />
 </template>
 

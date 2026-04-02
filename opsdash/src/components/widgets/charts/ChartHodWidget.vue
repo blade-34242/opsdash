@@ -85,7 +85,7 @@ const lookbackLabel = computed(() => {
   color: var(--muted);
 }
 .chart-widget--hod {
-  --heatmap-low: color-mix(in srgb, var(--brand, #2563eb) 10%, var(--card, #ffffff));
-  --heatmap-high: color-mix(in srgb, var(--brand, #2563eb) 80%, var(--card, #ffffff));
+  --heatmap-low: color-mix(in srgb, #d8d2c4 28%, var(--card, #ffffff));
+  --heatmap-high: color-mix(in srgb, #4f6477 88%, var(--card, #ffffff));
 }
 </style>
