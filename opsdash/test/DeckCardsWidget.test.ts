@@ -65,6 +65,27 @@ describe('DeckCardsWidget', () => {
     expect(wrapper.find('.deck-card__title').text()).toBe('Open mine today')
   })
 
+  it('filters cards by stackIds before applying the active filter', () => {
+    const withStacks = cards.map((card, index) => ({
+      ...card,
+      stackId: index === 0 ? 101 : 102,
+      stackTitle: index === 0 ? 'Doing' : 'Done',
+    }))
+    const wrapper = mount(DeckCardsWidget, {
+      props: {
+        cards: withStacks,
+        rangeLabel: 'This week',
+        filters: ['all'],
+        defaultFilter: 'all',
+        stackIds: [101],
+      },
+      global: { stubs },
+    })
+
+    expect(wrapper.findAll('.deck-card').length).toBe(1)
+    expect(wrapper.find('.deck-card__title').text()).toBe('Open mine today')
+  })
+
   it('adds auto tag filters with counts', () => {
     const taggedCards = [
       {

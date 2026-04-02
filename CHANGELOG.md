@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Overview widgets now surface planned time explicitly in the frontend, including `planned later` / `upcoming` hints in `Time Summary`, `Targets`, and the calendar table.
 - Current-period highlight styling is now consistent across the trend/overview widgets that mark the active week or month.
 - Widget edit options now include direct tab actions so widgets can be moved or copied to another dashboard tab without relying only on drag and drop.
+- Deck widgets are now split more clearly by intent: `Deck cards` remains the action/management widget, while the new `Deck stats` widget shows a compact week/month summary for a filtered Deck slice using shared board/stack/tag/scope filters.
 
 ### Fixed
 - Fixed calendar payload parsing for Sabre/CalDAV rows that can expose structured arrays instead of plain strings (for example `DURATION` / summary values), preventing `Array to string conversion` warnings in `CalendarParsingService`.

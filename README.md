@@ -13,7 +13,7 @@ Opsdash turns your Nextcloud calendar data into a practical operations dashboard
 - 🧩 **Onboarding wizard & profiles** – guided setup, rerun onboarding, and save/load/delete/export/import profile presets.
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
 - 🔐 **Nextcloud-native** – same session, same permissions, CSRF-protected writes, no external API calls.
-- 🗂️ **Deck widgets** – per-widget board/filter selection, auto-scroll ticker, counts, duplicate-tag disambiguation by board context, and optional deck summary.
+- 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
 - 📨 **Report tab (preview)** – configure weekly/monthly digest preferences and reminder behavior.
 - 📐 **Widget sizing controls** – per-widget width/height plus scale/dense options for layout tuning.
 

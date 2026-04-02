@@ -4,9 +4,15 @@ const DeckCardsWidget = defineAsyncComponent(() =>
   import('../../../components/widgets/deck/DeckCardsWidget.vue').then((m) => m.default),
 )
 
-import { buildDeckTagOptions } from '../../deckTags'
 import { buildTitle, parseBoardIds, parseFilters, prettyFilterLabel } from '../helpers'
 import type { RegistryEntry } from '../types'
+import {
+  buildDeckStackOptions,
+  buildDeckTagControlOptions,
+  filterDeckBaseCards,
+  normalizeDeckCustomFilters,
+  parseDeckNumericIds,
+} from '../../deckWidgetMetrics'
 
 const baseTitle = 'Deck cards'
 
@@ -46,6 +52,7 @@ export const deckCardsEntry: RegistryEntry = {
   },
   controls: [
     { key: 'boardIds', label: 'Boards to include', type: 'multiselect', options: [] },
+    { key: 'stackIds', label: 'Stacks to include', type: 'multiselect', options: [] },
     { key: 'filters', label: 'Filters to show', type: 'multiselect', options: [] },
     { key: 'autoTagsEnabled', label: 'Auto tag filters', type: 'toggle' },
     { key: 'allowMine', label: 'Allow mine filters', type: 'toggle' },
@@ -85,24 +92,27 @@ export const deckCardsEntry: RegistryEntry = {
       { value: 'due_today_mine', label: prettyFilterLabel('due_today_mine') },
       { value: 'created_today_all', label: prettyFilterLabel('created_today_all') },
       { value: 'created_today_mine', label: prettyFilterLabel('created_today_mine') },
+      { value: 'created_range_all', label: prettyFilterLabel('created_range_all') },
+      { value: 'created_range_mine', label: prettyFilterLabel('created_range_mine') },
     ]
     const boardOptions = Array.isArray(ctx.deckBoards)
       ? ctx.deckBoards.map((b: any) => ({ value: b.id, label: b.title || `Board ${b.id}` }))
       : []
-    const boardIds = Array.isArray(options.boardIds)
-      ? options.boardIds
-      : parseBoardIds(options.boardIds)
-    const allowArchived = options.includeArchived !== false
-    const includeCompleted = options.includeCompleted !== false
-    const boardSet = new Set(boardIds.map((id: any) => Number(id)).filter((id: number) => Number.isInteger(id)))
     const cards = Array.isArray(ctx.deckCards) ? ctx.deckCards : []
-    const cleaned = cards.filter((card: any) => {
-      if (boardSet.size && !(card?.boardId != null && boardSet.has(Number(card.boardId)))) return false
-      if (!allowArchived && card?.status === 'archived') return false
-      if (!includeCompleted && card?.status === 'done') return false
-      return true
+    const boardIds = Array.isArray(options.boardIds) ? options.boardIds : parseBoardIds(options.boardIds)
+    const stackIds = parseDeckNumericIds(options.stackIds)
+    const baseForStacks = filterDeckBaseCards(cards, {
+      boardIds,
+      includeArchived: options.includeArchived !== false,
+      includeCompleted: options.includeCompleted !== false,
     })
-    const tagOptions = buildDeckTagOptions(cleaned)
+    const cleaned = filterDeckBaseCards(baseForStacks, {
+      stackIds,
+      includeArchived: options.includeArchived !== false,
+      includeCompleted: options.includeCompleted !== false,
+    })
+    const stackOptions = buildDeckStackOptions(baseForStacks)
+    const tagOptions = buildDeckTagControlOptions(cleaned)
     const tagControls = []
     if (options.autoTagsEnabled !== false && tagOptions.length) {
       tagControls.push({
@@ -117,6 +127,7 @@ export const deckCardsEntry: RegistryEntry = {
       { key: 'filters', label: 'Filters', type: 'multiselect', options: filterChoices },
       filterSelect,
       { key: 'boardIds', label: 'Boards', type: 'multiselect', options: boardOptions },
+      { key: 'stackIds', label: 'Stacks', type: 'multiselect', options: stackOptions },
       ...tagControls,
     ]
   },
@@ -125,8 +136,9 @@ export const deckCardsEntry: RegistryEntry = {
     const boardIds = Array.isArray(def.options?.boardIds)
       ? def.options.boardIds
       : parseBoardIds(def.options?.boardIds)
+    const stackIds = parseDeckNumericIds(def.options?.stackIds)
     const defaultFilter = filters.includes(def.options?.defaultFilter) ? def.options?.defaultFilter : (filters[0] || 'all')
-    const customFilters = normalizeCustomFilters(def.options?.customFilters)
+    const customFilters = normalizeDeckCustomFilters(def.options?.customFilters)
     return {
       title: buildTitle(baseTitle, def.options?.titlePrefix),
       cardBg: def.options?.cardBg,
@@ -140,6 +152,7 @@ export const deckCardsEntry: RegistryEntry = {
       loading: ctx.deckLoading,
       error: ctx.deckError,
       boardIds,
+      stackIds,
       filters,
       defaultFilter,
       allowMine: def.options?.allowMine !== false,
@@ -161,51 +174,4 @@ export const deckCardsEntry: RegistryEntry = {
       onUpdateFilters: (values: any) => ctx.onUpdateWidgetOptions?.(def.id, 'filters', values),
     }
   },
-}
-
-type CustomDeckFilter = {
-  id: string
-  label: string
-  labelIds?: string[]
-  labels?: string[]
-  assignees?: string[]
-}
-
-function normalizeCustomFilters(input: any): CustomDeckFilter[] {
-  let raw: any[] = []
-  if (Array.isArray(input)) {
-    raw = input
-  } else if (typeof input === 'string' && input.trim() !== '') {
-    try {
-      const parsed = JSON.parse(input)
-      if (Array.isArray(parsed)) raw = parsed
-    } catch {
-      raw = []
-    }
-  }
-  return raw
-    .map((item) => {
-      if (!item || typeof item !== 'object') return null
-      const label = String(item.label || item.name || '').trim()
-      if (!label) return null
-      const id = slugify(String(item.id || label))
-      const labelIds = Array.isArray(item.labelIds)
-        ? item.labelIds.map((v) => String(v).trim()).filter(Boolean)
-        : []
-      const labels = Array.isArray(item.labels)
-        ? item.labels.map((v) => String(v).trim()).filter(Boolean)
-        : []
-      const assignees = Array.isArray(item.assignees)
-        ? item.assignees.map((v) => String(v).trim()).filter(Boolean)
-        : []
-      return { id, label, labelIds, labels, assignees }
-    })
-    .filter(Boolean) as CustomDeckFilter[]
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
 }

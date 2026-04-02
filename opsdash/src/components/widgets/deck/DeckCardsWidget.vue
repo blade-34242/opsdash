@@ -30,9 +30,12 @@
 import { computed, ref, watch } from 'vue'
 import DeckCardsPanel from '../../panels/DeckCardsPanel.vue'
 import type { DeckCardSummary } from '../../../services/deck'
-import { buildDeckTagOptions, cardHasTag } from '../../../services/deckTags'
 import type { DeckFilterMode, DeckMineMode } from '../../../services/reporting'
-import { formatDateKey, parseDateTime } from '../../../services/dateTime'
+import {
+  buildDeckTagControlOptions,
+  filterDeckBaseCards,
+  filterDeckCardsForMode,
+} from '../../../services/deckWidgetMetrics'
 
 const props = withDefaults(defineProps<{
   cards: DeckCardSummary[]
@@ -45,6 +48,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   error?: string | null
   boardIds?: Array<number | string>
+  stackIds?: Array<number | string>
   filters?: DeckFilterMode[]
   defaultFilter?: DeckFilterMode
   allowMine?: boolean
@@ -94,31 +98,25 @@ const defaultFilters: DeckFilterMode[] = [
   'created_today_mine',
 ]
 
-const boardsSet = computed<Set<number>>(() => {
-  const ids = (props.boardIds || []).map((id) => Number(id)).filter((id) => Number.isInteger(id))
-  return new Set(ids)
-})
-
 const baseCards = computed(() => {
-  const base = (props.cards || []).filter((card) => {
-    if (!boardsSet.value.size) return true
-    return card.boardId != null && boardsSet.value.has(Number(card.boardId))
+  return filterDeckBaseCards(props.cards || [], {
+    boardIds: props.boardIds,
+    stackIds: props.stackIds,
+    includeArchived: true,
+    includeCompleted: true,
   })
-  return base
 })
 
 const cleanedCards = computed(() => {
-  const allowArchived = props.includeArchived !== false
-  return baseCards.value.filter(
-    (card) =>
-      (allowArchived || card.status !== 'archived') &&
-      (props.includeCompleted !== false || card.status !== 'done'),
-  )
+  return filterDeckBaseCards(baseCards.value, {
+    includeArchived: props.includeArchived !== false,
+    includeCompleted: props.includeCompleted !== false,
+  })
 })
 
 const tagOptions = computed(() => {
   if (props.autoTagsEnabled === false) return []
-  return buildDeckTagOptions(cleanedCards.value)
+  return buildDeckTagControlOptions(cleanedCards.value)
 })
 
 const tagSelection = computed(() => {
@@ -150,7 +148,15 @@ const filterCounts = computed(() => {
   const cleaned = cleanedCards.value
   const counts = new Map<DeckFilterMode, number>()
   filterModes.value.forEach((mode) => {
-    counts.set(mode, filterCardsForMode(mode, cleaned, allowArchived).length)
+    counts.set(mode, filterDeckCardsForMode(mode, cleaned, {
+      uid: props.uid,
+      mineMode: props.mineMode || 'assignee',
+      from: props.from,
+      to: props.to,
+      includeCompleted: props.includeCompleted !== false,
+      includeArchivedInDone: allowArchived,
+      customFilters: props.customFilters || [],
+    }).length)
   })
   return counts
 })
@@ -244,12 +250,19 @@ const allowMine = computed(() => props.allowMine !== false && !!(props.uid || ''
 
 const filteredCards = computed(() => {
   const allowArchived = props.includeArchived !== false || activeFilter.value.startsWith('archived')
-  const cleaned = baseCards.value.filter(
-    (card) =>
-      (allowArchived || card.status !== 'archived') &&
-      (props.includeCompleted !== false || card.status !== 'done'),
-  )
-  return filterCardsForMode(activeFilter.value, cleaned, allowArchived)
+  const cleaned = filterDeckBaseCards(baseCards.value, {
+    includeArchived: allowArchived,
+    includeCompleted: props.includeCompleted !== false,
+  })
+  return filterDeckCardsForMode(activeFilter.value, cleaned, {
+    uid: props.uid,
+    mineMode: props.mineMode || 'assignee',
+    from: props.from,
+    to: props.to,
+    includeCompleted: props.includeCompleted !== false,
+    includeArchivedInDone: allowArchived,
+    customFilters: props.customFilters || [],
+  })
 })
 
 function sanitizeDefaultFilter(): DeckFilterMode {
@@ -269,173 +282,5 @@ function onReorderFilters(nextOrder: DeckFilterMode[]) {
   if (!nextOrder.includes(activeFilter.value)) {
     activeFilter.value = nextOrder[0]
   }
-}
-
-function buildMineMatcher(uid: string, mode: DeckMineMode) {
-  const userId = uid.trim().toLowerCase()
-  return (card: DeckCardSummary) => {
-    if (!userId) return false
-    const assigneeMatch = (card.assignees || []).some(
-      (assignee: any) => typeof assignee.uid === 'string' && assignee.uid.toLowerCase() === userId,
-    )
-    const creatorMatch = typeof card.createdBy === 'string' && card.createdBy.trim().toLowerCase() === userId
-    const doneMatch = typeof card.doneBy === 'string' && card.doneBy.trim().toLowerCase() === userId
-    if (mode === 'creator') return creatorMatch || doneMatch
-    if (mode === 'assignee') return assigneeMatch || doneMatch
-    return assigneeMatch || creatorMatch || doneMatch
-  }
-}
-
-function deckStatusMatches(
-  card: DeckCardSummary,
-  status: 'open' | 'done' | 'archived' | 'due',
-  includeArchivedInDone: boolean,
-  includeCompleted: boolean,
-) {
-  if (status === 'open') return card.status === 'active'
-  if (status === 'archived') return card.status === 'archived'
-  if (status === 'done') {
-    if (!includeCompleted) return false
-    if (card.status === 'done') return true
-    return includeArchivedInDone && card.status === 'archived' && includeCompleted
-  }
-  if (status === 'due') return card.match === 'due'
-  return false
-}
-
-function normalizeDateKey(value?: string | null): string | null {
-  if (!value) return null
-  const trimmed = value.trim()
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
-  const parsed = parseDateTime(trimmed)
-  return parsed ? formatDateKey(parsed) : null
-}
-
-function dateKeyForTs(ts?: number | null): string | null {
-  if (ts == null) return null
-  return formatDateKey(new Date(ts))
-}
-
-function isCreatedToday(card: DeckCardSummary) {
-  const key = dateKeyForTs(card.createdTs)
-  if (!key) return false
-  return key === formatDateKey(new Date())
-}
-
-function isCreatedInRange(card: DeckCardSummary, from?: string, to?: string) {
-  const cardKey = dateKeyForTs(card.createdTs)
-  const fromKey = normalizeDateKey(from || null)
-  const toKey = normalizeDateKey(to || null)
-  if (!cardKey || !fromKey || !toKey) return false
-  return cardKey >= fromKey && cardKey <= toKey
-}
-
-function isDueInRange(card: DeckCardSummary, from?: string, to?: string) {
-  const dueKey = dateKeyForTs(card.dueTs ?? null)
-  const fromKey = normalizeDateKey(from || null)
-  const toKey = normalizeDateKey(to || null)
-  if (!dueKey || !fromKey || !toKey) return false
-  return dueKey >= fromKey && dueKey <= toKey
-}
-
-function isDueToday(card: DeckCardSummary) {
-  const dueKey = dateKeyForTs(card.dueTs ?? null)
-  if (!dueKey) return false
-  return dueKey === formatDateKey(new Date())
-}
-
-function filterCardsForMode(mode: DeckFilterMode, cleaned: DeckCardSummary[], allowArchived: boolean) {
-  const mineMatch = buildMineMatcher(props.uid || '', props.mineMode || 'assignee')
-  const includeArchivedInDone = allowArchived
-  const includeCompleted = props.includeCompleted !== false
-  if (mode === 'all') return cleaned
-  if (mode === 'mine') return cleaned.filter((card) => mineMatch(card))
-  if (mode.startsWith('created_today')) {
-    return cleaned.filter((card) => {
-      const mineOk = mode.endsWith('_mine') ? mineMatch(card) : true
-      return mineOk && isCreatedToday(card)
-    })
-  }
-  if (mode.startsWith('created_range')) {
-    return cleaned.filter((card) => {
-      const mineOk = mode.endsWith('_mine') ? mineMatch(card) : true
-      return mineOk && isCreatedInRange(card, props.from, props.to)
-    })
-  }
-  if (mode.startsWith('due_today')) {
-    return cleaned.filter((card) => {
-      const mineOk = mode.endsWith('_mine') ? mineMatch(card) : true
-      return mineOk && isDueToday(card)
-    })
-  }
-  if (mode.startsWith('due_')) {
-    return cleaned.filter((card) => {
-      const mineOk = mode.endsWith('_mine') ? mineMatch(card) : true
-      return mineOk && isDueInRange(card, props.from, props.to)
-    })
-  }
-  if (mode.startsWith('custom_')) {
-    const key = mode.slice('custom_'.length)
-    const custom = (props.customFilters || []).find((f) => f.id === key)
-    if (!custom) return []
-    return cleaned.filter((card) => {
-      return matchesCustomFilter(card, custom, mineMatch)
-    })
-  }
-  if (mode.startsWith('tag_')) {
-    return cleaned.filter((card) => cardHasTag(card, mode))
-  }
-  if (mode.includes('_')) {
-    const [statusKey, scope] = mode.split('_') as ['open' | 'done' | 'archived' | 'due', 'all' | 'mine']
-    return cleaned.filter((card) => {
-      const statusOk = deckStatusMatches(card, statusKey, includeArchivedInDone, includeCompleted)
-      const mineOk = scope === 'all' ? true : mineMatch(card)
-      return statusOk && mineOk
-    })
-  }
-  return cleaned
-}
-
-function matchesCustomFilter(
-  card: DeckCardSummary,
-  filter: { labelIds?: string[]; labels?: string[]; assignees?: string[] },
-  mineMatch: (card: DeckCardSummary) => boolean,
-): boolean {
-  const labelIds = (filter.labelIds || []).map((id) => id.trim().toLowerCase()).filter(Boolean)
-  const labels = (filter.labels || []).map((l) => l.trim().toLowerCase()).filter(Boolean)
-  const assignees = (filter.assignees || []).map((a) => a.trim().toLowerCase()).filter(Boolean)
-  const hasLabelIds = labelIds.length > 0
-  const hasLabels = labels.length > 0
-  const hasAssignees = assignees.length > 0
-  if (!hasLabelIds && !hasLabels && !hasAssignees) return false
-
-  let labelOk = true
-  if (hasLabelIds || hasLabels) {
-    const cardLabelIds = (card.labels || [])
-      .map((label) => (label.id != null ? String(label.id).trim().toLowerCase() : ''))
-      .filter(Boolean)
-    const cardLabels = (card.labels || [])
-      .map((label) => String(label.title || '').trim().toLowerCase())
-      .filter(Boolean)
-    labelOk =
-      (!hasLabelIds || labelIds.some((id) => cardLabelIds.includes(id))) &&
-      (!hasLabels || labels.some((label) => cardLabels.includes(label)))
-  }
-
-  let assigneeOk = true
-  if (hasAssignees) {
-    const cardAssignees = (card.assignees || [])
-      .map((assignee) => String(assignee.uid || '').trim().toLowerCase())
-      .filter(Boolean)
-    assigneeOk = assignees.some((uid) => cardAssignees.includes(uid))
-    if (!assigneeOk && assignees.includes('me')) {
-      assigneeOk = mineMatch(card)
-    }
-    if (!assigneeOk && assignees.includes('unassigned')) {
-      assigneeOk = cardAssignees.length === 0
-    }
-  }
-
-  return labelOk && assigneeOk
 }
 </script>

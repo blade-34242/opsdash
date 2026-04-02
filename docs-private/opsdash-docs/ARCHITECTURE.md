@@ -86,7 +86,11 @@ Guiding principles:
 - `src/components/charts/`, `src/components/tables/`, `src/components/panels/`: shared primitives and panels.
 - `composables/useDashboard*`: load/persist/selection/profile orchestration helpers.
 - `composables/useCategories.ts`, `useCharts.ts`, `useSummaries.ts`, `useBalance.ts`: shared data shaping for cards/widgets.
+- `src/services/deckWidgetMetrics.ts`: shared Deck filtering + metric helpers reused by `Deck cards` and `Deck stats`.
 - `src/services/widgetsRegistry/`: widget definitions + default layout/options.
 - `src/services/targets/`: targets math, forecasts, pace logic.
 
 Widget rendering is registry-driven; most visual units are standalone components to keep App.vue lean.
+Deck widget intent is split intentionally:
+- `Deck cards` is the action/management widget.
+- `Deck stats` is the compact range-bound summary widget.

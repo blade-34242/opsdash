@@ -13,6 +13,7 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 - Calendar parsing is hardened against structured Sabre/CalDAV values (`DURATION`, summary, ICS text arrays), preventing `Array to string conversion` warnings.
 - `Period Comparison` now shows a clear in-widget hint when `lookbackWeeks = 1` and no comparison data is being loaded.
 - Widget options now include direct `Move` / `Copy` actions for other dashboard tabs in addition to the existing drag-and-drop flow.
+- Deck widgets are now separated into a management-first `Deck cards` widget and a compact `Deck stats` widget. Both widgets share the same base filter language (`boards`, `stacks`, `tags`, `mine/unassigned` scope), while `Deck stats` stays bound to the current dashboard week/month context.
 
 ## 0.7.2 - 2026-03-25
 - `Targets`-Widget erweitert um den optionalen Modus `Never Finished · Stay Hard`.

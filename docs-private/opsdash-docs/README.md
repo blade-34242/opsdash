@@ -14,7 +14,7 @@ A quick guide to the docs that matter most when working on the Operational Dashb
 
 ## Feature Specs
 - **ONBOARDING_WORKFLOW.md** - current 8-step wizard flow, quick-setup behavior, goal suggestion rules, and persistence notes.
-- **DECK_INTEGRATION.md** - API usage, seeding helpers, fixtures, and UI goals for the Deck tab.
+- **DECK_INTEGRATION.md** - API usage, seeding helpers, fixtures, and the current split between `Deck cards` and `Deck stats`.
 - **REPORTING_FEATURE.md** - recap cadence, delivery channels, and notification/email plans.
 - **SIDEBAR_CONFIGURATION.md** / **SIDEBAR_RANGE_CONTROLS.md** - every sidebar control, persistence path, and UX rationale.
 - **LIGHT_DARK_THEMING.md** - theme tokens, bootloader behaviour, and testing notes.

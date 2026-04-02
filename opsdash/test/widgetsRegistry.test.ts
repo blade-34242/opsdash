@@ -265,4 +265,35 @@ describe('widgetsRegistry targets_v2', () => {
     expect(mapWidgetToComponent(defDeck, { ...baseCtx, deckLoading: true })?.loading).toBe(false)
     expect(mapWidgetToComponent({ ...defSummary, type: 'unknown' }, baseCtx)).toBeNull()
   })
+
+  it('deck_stats builds compact props from widget options', () => {
+    const entry = widgetsRegistry.deck_stats
+    const def: any = {
+      id: 'deck-stats-1',
+      type: 'deck_stats',
+      layout: { width: 'half', height: 'm', order: 2 },
+      options: {
+        boardIds: [1],
+        stackIds: [11],
+        tagIds: ['tag_urgent'],
+        metrics: ['open_now', 'due_in_range'],
+        scope: 'mine',
+        mineMode: 'both',
+      },
+      version: 1,
+    }
+    const props = entry.buildProps(def, {
+      deckCards: [],
+      rangeLabel: 'This week',
+      from: '2026-04-01',
+      to: '2026-04-07',
+      uid: 'me',
+    } as any) as any
+
+    expect(props.metrics).toEqual(['open_now', 'due_in_range'])
+    expect(props.scope).toBe('mine')
+    expect(props.mineMode).toBe('both')
+    expect(props.selectionText).toContain('1 board')
+    expect(props.selectionText).toContain('Mine')
+  })
 })
