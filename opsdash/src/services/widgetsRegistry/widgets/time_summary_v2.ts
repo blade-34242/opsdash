@@ -117,6 +117,7 @@ function buildTimeSummaryProps(
     activitySummary: ctx.activitySummary,
     mode,
     config: cfg.timeSummary,
+    lookbackWeeks: Number(ctx.lookbackWeeks) || 1,
     todayGroups: def.props?.todayGroups ?? ctx.groups,
     title: buildTitle(opts.title, def.options?.titlePrefix),
     cardBg: def.options?.cardBg,

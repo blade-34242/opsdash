@@ -3,7 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
-- None yet.
+### Fixed
+- `Period Comparison` / lookback time summary now shows an in-card hint when trend lookback is set to `1`, so week/month comparison no longer fails silently when previous-period data was not requested.
 
 ## 0.7.3 - 2026-04-02
 ### Changed

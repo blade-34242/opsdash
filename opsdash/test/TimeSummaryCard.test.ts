@@ -219,4 +219,22 @@ describe('TimeSummaryCard', () => {
     expect(timeline.find('.time-summary-history__timeline').exists()).toBe(true)
     expect(timeline.find('.time-summary-history__accordion').exists()).toBe(false)
   })
+
+  it('shows a clear hint when lookback is enabled but configured to only one period', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: baseSummary,
+        mode: 'active',
+        showOverview: false,
+        showLookback: true,
+        lookbackWeeks: 1,
+        rangeMode: 'week',
+        history: [],
+      },
+    })
+
+    const text = wrapper.text().replace(/\s+/g, ' ')
+    expect(text).toContain('Lookback data required')
+    expect(text).toContain('Increase trend lookback above 1 to compare previous weeks here.')
+  })
 })

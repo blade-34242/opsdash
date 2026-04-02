@@ -133,6 +133,15 @@
         </div>
       </div>
     </div>
+    <div v-else-if="showLookbackPanel" class="time-summary-history time-summary-history--empty">
+      <div class="time-summary-history__header">
+        <div class="time-summary-history__title">Lookback</div>
+      </div>
+      <div class="time-summary-history__empty">
+        <div class="time-summary-history__empty-title">{{ lookbackEmptyTitle }}</div>
+        <div class="time-summary-history__empty-copy">{{ lookbackEmptyCopy }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -293,6 +302,7 @@ const props = withDefaults(defineProps<{
   rangeStart?: string
   rangeEnd?: string
   offset?: number
+  lookbackWeeks?: number
   showHeader?: boolean
   showToday?: boolean
   showActivity?: boolean
@@ -364,6 +374,21 @@ const showActivityDetails = computed(() => props.showActivityDetails)
 const showOverviewPanel = computed(() => props.showOverview !== false)
 const showLookbackPanel = computed(() => props.showLookback !== false)
 const showDelta = computed(() => props.showDelta !== false)
+const configuredLookbackWeeks = computed(() => {
+  const value = Number(props.lookbackWeeks ?? 1)
+  return Number.isFinite(value) ? Math.max(1, Math.trunc(value)) : 1
+})
+const lookbackNeedsConfig = computed(() => configuredLookbackWeeks.value <= 1)
+const lookbackUnitLabel = computed(() => String(props.rangeMode).toLowerCase() === 'month' ? 'months' : 'weeks')
+const lookbackEmptyTitle = computed(() =>
+  lookbackNeedsConfig.value ? 'Lookback data required' : 'No lookback data available',
+)
+const lookbackEmptyCopy = computed(() => {
+  if (lookbackNeedsConfig.value) {
+    return `Increase trend lookback above 1 to compare previous ${lookbackUnitLabel.value} here.`
+  }
+  return `No previous ${lookbackUnitLabel.value} are available for this comparison yet.`
+})
 const offsetBase = computed(() =>
   Number.isFinite(props.summary.offset) ? props.summary.offset : (props.offset ?? 0),
 )
@@ -825,6 +850,9 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   display: grid;
   gap: calc(8px * var(--widget-space, 1));
 }
+.time-summary-history--empty {
+  gap: calc(10px * var(--widget-space, 1));
+}
 .time-summary-history__header {
   display: flex;
   align-items: center;
@@ -840,6 +868,22 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+.time-summary-history__empty {
+  display: grid;
+  gap: calc(4px * var(--widget-space, 1));
+  padding: calc(10px * var(--widget-space, 1)) calc(12px * var(--widget-space, 1));
+  border-radius: calc(12px * var(--widget-space, 1));
+  border: 1px dashed color-mix(in oklab, var(--line, #e5e7eb), transparent 10%);
+  background: color-mix(in oklab, var(--card, #fff), transparent 4%);
+}
+.time-summary-history__empty-title {
+  color: var(--fg);
+  font-weight: 600;
+}
+.time-summary-history__empty-copy {
+  color: var(--muted);
+  line-height: 1.45;
 }
 .time-summary-history__timeline {
   display: grid;
