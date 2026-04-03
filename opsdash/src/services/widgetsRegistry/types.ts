@@ -90,6 +90,8 @@ export interface WidgetRenderContext {
   colorsById?: Record<string, string>
   colorsByName?: Record<string, string>
   currentTargets?: Record<string, number>
+  targetsWeek?: Record<string, number>
+  selected?: string[]
   calendarTodayHours?: Record<string, number>
   onboardingStrategy?: string | null
 }
@@ -99,6 +101,7 @@ export type WidgetRenderer = (def: WidgetDefinition, ctx: WidgetRenderContext) =
 export interface RegistryEntry {
   component: any
   buildProps: WidgetRenderer
+  resolveOptions?: (options: Record<string, any>, ctx?: WidgetRenderContext) => Record<string, any>
   defaultLayout: WidgetDefinition['layout']
   label?: string
   baseTitle?: string

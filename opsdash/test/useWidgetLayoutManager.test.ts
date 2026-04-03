@@ -141,4 +141,43 @@ describe('useWidgetLayoutManager', () => {
     expect(manager.layoutTabs.value[1].widgets[0].id).not.toBe(widgetId)
     expect(manager.layoutTabs.value[1].widgets[0].type).toBe('test_widget')
   })
+
+  it('hides deck widget types when Deck is disabled', () => {
+    const deckEnabled = ref(false)
+    const manager = useWidgetLayoutManager({
+      storageKey: 'opsdash.widgets.test',
+      widgetsRegistry: {
+        deck_cards: {
+          label: 'Deck cards',
+          defaultLayout: { width: 'half', height: 'm', order: 10 },
+        },
+        deck_stats: {
+          label: 'Deck stats',
+          defaultLayout: { width: 'half', height: 'm', order: 20 },
+        },
+      },
+      createDefaultTabs: () => ({
+        tabs: [{
+          id: 'tab-1',
+          label: 'Overview',
+          widgets: [
+            { id: 'deck-cards', type: 'deck_cards', options: {}, layout: { width: 'half', height: 'm', order: 10 }, version: 1 },
+            { id: 'deck-stats', type: 'deck_stats', options: {}, layout: { width: 'half', height: 'm', order: 20 }, version: 1 },
+          ],
+        }],
+        defaultTabId: 'tab-1',
+      }),
+      normalizeWidgetTabs: (input, fallback) => (input ? input : fallback),
+      createDashboardPreset: () => [],
+      dashboardMode: ref('standard'),
+      deckEnabled,
+      hasInitialLoad: ref(true),
+      queueSaveRef: ref(vi.fn()),
+    })
+
+    expect(manager.widgets.value).toEqual([])
+
+    deckEnabled.value = true
+    expect(manager.widgets.value.map((widget) => widget.type)).toEqual(['deck_cards', 'deck_stats'])
+  })
 })

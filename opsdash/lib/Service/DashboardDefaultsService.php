@@ -191,7 +191,7 @@ final class DashboardDefaultsService {
                 ],
                 [
                     'id' => 'tab-mk4w4rau',
-                    'label' => 'Tab 4',
+                    'label' => 'Workspace',
                     'widgets' => [
                         [
                             'id' => 'widget-note_editor-1768297159393',
@@ -201,6 +201,30 @@ final class DashboardDefaultsService {
                                 'width' => 'half',
                                 'height' => 'l',
                                 'order' => 69,
+                            ],
+                            'version' => 1,
+                        ],
+                        [
+                            'id' => 'widget-deck_stats-1768297160410',
+                            'type' => 'deck_stats',
+                            'options' => [
+                                'includeArchived' => true,
+                                'includeCompleted' => true,
+                                'scope' => 'all',
+                                'mineMode' => 'assignee',
+                                'metrics' => [
+                                    'open_now',
+                                    'overdue_now',
+                                    'mine_open',
+                                    'created_in_range',
+                                    'completed_in_range',
+                                    'due_in_range',
+                                ],
+                            ],
+                            'layout' => [
+                                'width' => 'quarter',
+                                'height' => 'm',
+                                'order' => 78,
                             ],
                             'version' => 1,
                         ],
@@ -324,6 +348,19 @@ final class DashboardDefaultsService {
             'reverseTrend' => false,
         ], ['width' => 'half', 'height' => 'm', 'order' => 30], ++$i);
         $widgets[] = $this->buildWidget('dayoff_trend', [], ['width' => 'half', 'height' => 's', 'order' => 40], ++$i);
+        $widgets[] = $this->buildWidget('deck_stats', [
+            'includeArchived' => true,
+            'includeCompleted' => true,
+            'scope' => 'all',
+            'mineMode' => 'assignee',
+            'metrics' => [
+                'open_now',
+                'overdue_now',
+                'created_in_range',
+                'completed_in_range',
+                'due_in_range',
+            ],
+        ], ['width' => 'half', 'height' => 'm', 'order' => 45], ++$i);
         $widgets[] = $this->buildWidget('category_mix_trend', [
             'lookbackWeeks' => 3,
             'density' => 'normal',

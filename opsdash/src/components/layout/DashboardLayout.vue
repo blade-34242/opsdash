@@ -36,6 +36,11 @@
       :widget-id="advancedTargetsId"
       :widgets="widgets"
       :context-targets-config="context.targetsConfig"
+      :context-targets-week="context.targetsWeek"
+      :context-groups-by-id="context.groupsById"
+      :context-calendars="context.calendars"
+      :context-selected="context.selected"
+      :strategy="context.onboardingStrategy"
       @close="closeAdvancedTargets"
       @save="saveAdvancedTargets"
       @use-global="resetToGlobalTargets"
@@ -51,7 +56,12 @@ import { mapWidgetToComponent } from '../../services/widgetsRegistry'
 import DashboardGrid from './DashboardGrid.vue'
 import DashboardToolbar from './DashboardToolbar.vue'
 import DashboardAdvancedTargetsOverlay from './DashboardAdvancedTargetsOverlay.vue'
-import type { TargetsConfig } from '../../services/targets'
+
+type AdvancedTargetsPayload = {
+  localConfig: Record<string, any> | null
+  localTargetsWeek: Record<string, number>
+  localGroupsById: Record<string, number>
+}
 
 const props = defineProps<{
   widgets: WidgetDefinition[]
@@ -174,15 +184,19 @@ function closeAdvancedTargets() {
   advancedTargetsId.value = null
 }
 
-function saveAdvancedTargets(widgetId: string, config: TargetsConfig) {
-  emit('edit:options', widgetId, 'localConfig', config)
+function saveAdvancedTargets(widgetId: string, payload: AdvancedTargetsPayload) {
+  emit('edit:options', widgetId, 'localConfig', payload.localConfig)
+  emit('edit:options', widgetId, 'localTargetsWeek', payload.localTargetsWeek)
+  emit('edit:options', widgetId, 'localGroupsById', payload.localGroupsById)
   emit('edit:options', widgetId, 'useLocalConfig', true)
   closeAdvancedTargets()
 }
 
 function resetToGlobalTargets(widgetId: string) {
-  emit('edit:options', widgetId, 'useLocalConfig', false)
+  emit('edit:options', widgetId, 'localTargetsWeek', null)
+  emit('edit:options', widgetId, 'localGroupsById', null)
   emit('edit:options', widgetId, 'localConfig', null)
+  emit('edit:options', widgetId, 'useLocalConfig', false)
   closeAdvancedTargets()
 }
 

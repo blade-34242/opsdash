@@ -36,6 +36,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:8088 npx playwright test tests/e2e/dashboar
 
 ## Seeding
 - Calendar seeding scripts live under `tools/` (week/month, multi-calendar, demo).
+- `tools/seed_last_10_days.sh` seeds two realistic calendars (`Opsdash · Business`, `Opsdash · Private`) for the last 10 days ending today.
 - Deck seeding: `apps/opsdash/tools/seed_deck_boards.php`.
 
 ## Security Helpers

@@ -1,161 +1,253 @@
 <template>
   <div
-    v-if="widgetId && config"
-    class="advanced-overlay"
+    v-if="widgetId && baseConfig"
+    class="advanced-overlay onboarding-overlay"
     role="dialog"
     aria-modal="false"
     aria-label="Targets configuration"
   >
-    <div class="advanced-panel">
-      <div class="overlay-header">
-        <div>
-          <div class="overlay-title">Targets (this widget only)</div>
-          <div class="overlay-subtitle">Starts from global targets; saving keeps a local copy for this widget.</div>
-        </div>
-        <button type="button" class="close-btn" @click="close" aria-label="Close">×</button>
-      </div>
-      <div class="overlay-metrics" v-if="config">
-        <article class="metric-card">
-          <div class="metric-card__label">Overview</div>
-          <div class="metric-card__value">{{ Number(config.totalHours || 0).toFixed(1) }} h / week</div>
-          <div class="metric-card__hint">{{ categoryOptions.length }} categories • {{ categoryTotalHours.toFixed(1) }} h assigned</div>
-        </article>
-        <article class="metric-card" :class="{ warn: overlapHours > 0 }">
-          <div class="metric-card__label">Overlap</div>
-          <div class="metric-card__value">{{ overlapHours.toFixed(1) }} h</div>
-          <div class="metric-card__hint">
-            {{ overlapHours > 0 ? 'Category totals exceed weekly total target.' : 'Category totals fit within total target.' }}
-          </div>
-        </article>
-      </div>
-      <SidebarTargetsPane
-        :targets="config"
-        :category-options="categoryOptions"
-        :total-target-message="totalTargetMessage"
-        :all-day-hours-message="allDayHoursMessage"
-        :category-target-messages="categoryTargetMessages"
-        :pace-threshold-messages="paceThresholdMessages"
-        :forecast-momentum-message="forecastMomentumMessage"
-        :forecast-padding-message="forecastPaddingMessage"
-        :color-palette="colorPalette"
-        :can-add-category="canAddCategory"
-        @total-target-input="setTotalTarget"
-        @set-all-day-hours="setAllDayHours"
-        @set-category-target="({ id, value }) => setCategoryTarget(id, value)"
-        @set-category-label="({ id, label }) => setCategoryLabel(id, label)"
-        @set-category-weekend="({ id, value }) => setCategoryWeekend(id, value)"
-        @set-category-pace="({ id, mode }) => setCategoryPace(id, mode)"
-        @set-category-color="({ id, color }) => setCategoryColor(id, color)"
-        @add-category="addCategory"
-        @remove-category="removeCategory"
-        @set-include-weekend-total="setIncludeWeekendTotal"
-        @set-pace-mode="setPaceMode"
-        @set-threshold="({ key, value }) => setThreshold(key, value)"
-        @set-forecast-method="setForecastMethod"
-        @set-forecast-momentum="setForecastMomentum"
-        @set-forecast-padding="setForecastPadding"
-        @set-ui-option="({ key, value }) => setUiOption(key as keyof TargetsConfig['ui'], value)"
-      />
-      <div class="overlay-actions">
+    <div class="advanced-panel onboarding-panel" :class="panelThemeClass()">
+      <button type="button" class="close-btn" @click="close" aria-label="Close">×</button>
+      <main class="advanced-panel__body advanced-panel__body--goals onboarding-body">
+        <section class="onboarding-step">
+          <OnboardingGoalsStep
+            :selected-strategy="selectedStrategy"
+            :selected-calendars="selectedCalendars"
+            :categories="categories"
+            :assignments="assignments"
+            :category-presets="categoryPresets"
+            :total-hours-input="totalHoursInput"
+            :on-total-hours-change="onTotalHoursChange"
+            :on-apply-total-suggestion="noop"
+            :trend-lookback-input="trendLookbackInput"
+            :active-history-lookback="trendLookbackInput"
+            :history-summary="historySummary"
+            :suggestions-loading="false"
+            :suggestions-error="''"
+            :on-trend-lookback-change="onTrendLookbackChange"
+            :suggested-calendar-targets="emptySuggestions"
+            :suggested-category-targets="emptySuggestions"
+            :on-apply-calendar-suggestion="noop"
+            :on-apply-category-suggestion="noop"
+            :add-category="addCategory"
+            :remove-category="removeCategory"
+            :move-category="moveCategory"
+            :reorder-category="reorderCategory"
+            :reorder-selected-calendar="reorderSelectedCalendar"
+            :move-selected-calendar="moveSelectedCalendar"
+            :set-category-label="setCategoryLabel"
+            :apply-category-preset="applyCategoryPreset"
+            :set-category-target="setCategoryTarget"
+            :set-category-pace-mode="setCategoryPaceMode"
+            :toggle-category-weekend="toggleCategoryWeekend"
+            :assign-calendar="assignCalendar"
+            :set-calendar-target="setCalendarTarget"
+            :get-calendar-target="getCalendarTarget"
+            :unassigned-selected-calendars="unassignedSelectedCalendars"
+            :goals-health="goalsHealth"
+            :resolved-color="resolvedColor"
+            :on-color-input="onColorInput"
+          />
+        </section>
+      </main>
+
+      <footer class="overlay-actions onboarding-footer">
         <div class="overlay-actions__left">
+          <div class="overlay-actions__hint">This editor only overrides this widget.</div>
           <button type="button" class="ghost" @click="resetToGlobalTargets">Use global targets</button>
-          <button type="button" class="ghost" @click="openOnboardingTargets">Edit via onboarding</button>
         </div>
         <div class="overlay-actions__right">
           <button type="button" class="ghost" @click="close">Cancel</button>
           <button type="button" class="ghost primary" @click="save">Save</button>
         </div>
-      </div>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import SidebarTargetsPane from '../sidebar/SidebarTargetsPane.vue'
-import { normalizeTargetsConfig, cloneTargetsConfig, type TargetsConfig } from '../../services/targets'
-import { applyNumericUpdate, type InputMessage } from '../sidebar/validation'
+import { computed, ref, watch } from 'vue'
+import OnboardingGoalsStep from '../onboarding/OnboardingGoalsStep.vue'
+import {
+  buildStrategyResult,
+  type CalendarSummary,
+  type CategoryDraft,
+  type StrategyDefinition,
+} from '../../services/onboarding'
+import { clampTarget, cloneTargetsConfig, normalizeTargetsConfig, type TargetsConfig } from '../../services/targets'
 import type { WidgetDefinition } from '../../services/widgetsRegistry'
+
+type CategoryPreset = {
+  id: string
+  title: string
+  description: string
+  colors: string[]
+  categories: CategoryDraft[]
+}
 
 const props = defineProps<{
   widgetId: string | null
   widgets: WidgetDefinition[]
   contextTargetsConfig: any
+  contextTargetsWeek?: Record<string, number>
+  contextGroupsById?: Record<string, number>
+  contextCalendars?: CalendarSummary[]
+  contextSelected?: string[]
+  strategy?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'save', widgetId: string, config: TargetsConfig): void
+  (e: 'save', widgetId: string, payload: { localConfig: TargetsConfig; localTargetsWeek: Record<string, number>; localGroupsById: Record<string, number> }): void
   (e: 'use-global', widgetId: string): void
   (e: 'open-onboarding', step?: string): void
 }>()
 
-const config = ref<TargetsConfig | null>(null)
-const totalTargetMessage = ref<InputMessage | null>(null)
-const allDayHoursMessage = ref<InputMessage | null>(null)
-const forecastMomentumMessage = ref<InputMessage | null>(null)
-const forecastPaddingMessage = ref<InputMessage | null>(null)
-const paceThresholdMessages = reactive<{ onTrack: InputMessage | null; atRisk: InputMessage | null }>({
-  onTrack: null,
-  atRisk: null,
+const BASE_CATEGORY_COLORS = ['#2563EB', '#F97316', '#10B981', '#A855F7', '#EC4899', '#14B8A6', '#F59E0B', '#6366F1', '#0EA5E9', '#65A30D']
+
+const categoryPresets: CategoryPreset[] = [
+  {
+    id: 'work_hobby_sport',
+    title: 'Work / Hobby / Sport',
+    description: 'Simple split for work, play, and fitness.',
+    colors: ['#2563EB', '#F97316', '#10B981'],
+    categories: [
+      { id: 'work', label: 'Work', targetHours: 32, includeWeekend: false, paceMode: 'days_only', color: '#2563EB' },
+      { id: 'hobby', label: 'Hobby', targetHours: 6, includeWeekend: true, paceMode: 'days_only', color: '#F97316' },
+      { id: 'sport', label: 'Sport', targetHours: 4, includeWeekend: true, paceMode: 'days_only', color: '#10B981' },
+    ],
+  },
+  {
+    id: 'focus_personal_recovery',
+    title: 'Focus / Personal / Recovery',
+    description: 'Balance deep work, personal time, and rest.',
+    colors: ['#6366F1', '#EC4899', '#14B8A6'],
+    categories: [
+      { id: 'focus', label: 'Focus', targetHours: 30, includeWeekend: false, paceMode: 'days_only', color: '#6366F1' },
+      { id: 'personal', label: 'Personal', targetHours: 8, includeWeekend: true, paceMode: 'days_only', color: '#EC4899' },
+      { id: 'recovery', label: 'Recovery', targetHours: 6, includeWeekend: true, paceMode: 'days_only', color: '#14B8A6' },
+    ],
+  },
+  {
+    id: 'client_internal_learning',
+    title: 'Client / Internal / Learning',
+    description: 'A fuller split for client work, internal work, learning, admin, and recovery.',
+    colors: ['#2563EB', '#F97316', '#10B981', '#A855F7', '#EC4899'],
+    categories: [
+      { id: 'client', label: 'Client', targetHours: 24, includeWeekend: false, paceMode: 'days_only', color: '#2563EB' },
+      { id: 'internal', label: 'Internal', targetHours: 8, includeWeekend: false, paceMode: 'days_only', color: '#F97316' },
+      { id: 'learning', label: 'Learning', targetHours: 4, includeWeekend: true, paceMode: 'days_only', color: '#10B981' },
+      { id: 'admin', label: 'Admin', targetHours: 2, includeWeekend: true, paceMode: 'days_only', color: '#A855F7' },
+      { id: 'recovery', label: 'Recovery', targetHours: 4, includeWeekend: true, paceMode: 'days_only', color: '#EC4899' },
+    ],
+  },
+]
+
+const baseConfig = ref<TargetsConfig | null>(null)
+const selectedStrategy = ref<StrategyDefinition['id']>('total_only')
+const totalHoursInput = ref<number | null>(null)
+const trendLookbackInput = ref(3)
+const categories = ref<CategoryDraft[]>([])
+const assignments = ref<Record<string, string>>({})
+const calendarTargets = ref<Record<string, number>>({})
+const calendarOrder = ref<string[]>([])
+
+const emptySuggestions = Object.freeze({}) as Record<string, number>
+const historySummary = Object.freeze({ enabled: false, available: 0, label: 'No lookback suggestions in widget-local mode.' })
+
+const allCalendars = computed<CalendarSummary[]>(() =>
+  Array.isArray(props.contextCalendars) ? props.contextCalendars : [],
+)
+
+const selectedIds = computed(() => {
+  const allowed = new Set(allCalendars.value.map((calendar) => calendar.id))
+  return calendarOrder.value.filter((calendarId) => allowed.has(calendarId))
 })
-const categoryTargetMessages = reactive<Record<string, InputMessage | null>>({})
-const defaultTargets = normalizeTargetsConfig(undefined)
+
+const calendarById = computed(() => new Map(allCalendars.value.map((calendar) => [calendar.id, calendar])))
+const selectedCalendars = computed(() =>
+  selectedIds.value
+    .map((calendarId) => calendarById.value.get(calendarId))
+    .filter((calendar): calendar is CalendarSummary => Boolean(calendar)),
+)
+
+const categoryTotalHours = computed(() =>
+  categories.value.reduce((sum, category) => sum + (Number(category.targetHours) || 0), 0),
+)
+
+const totalCalendarTargetHours = computed(() =>
+  selectedCalendars.value.reduce((sum, calendar) => sum + (Number(getCalendarTarget(calendar.id)) || 0), 0),
+)
+
+const unassignedSelectedCalendars = computed(() =>
+  selectedCalendars.value.filter((calendar) => !assignments.value[calendar.id]),
+)
+
+const goalsHealth = computed(() => {
+  const assigned = selectedCalendars.value.filter((calendar) => assignments.value[calendar.id]).length
+  const unassigned = Math.max(0, selectedCalendars.value.length - assigned)
+  const calendarTotal = roundGoal(totalCalendarTargetHours.value)
+  const categoryTotal = roundGoal(categoryTotalHours.value)
+  const delta = roundGoal(categoryTotal - calendarTotal)
+  return {
+    assigned,
+    unassigned,
+    calendarTotal,
+    categoryTotal,
+    delta,
+    totalsMatch: Math.abs(delta) <= 0.01,
+  }
+})
 
 watch(
-  () => props.widgetId,
-  (id) => {
-    if (!id) {
-      config.value = null
-      resetMessages()
-      return
-    }
-    const widget = props.widgets.find((w) => w.id === id)
-    const opts: any = widget?.options || {}
-    const base = opts.useLocalConfig && opts.localConfig
-      ? normalizeTargetsConfig(opts.localConfig)
-      : normalizeTargetsConfig(props.contextTargetsConfig)
-    config.value = cloneTargetsConfig(base)
-    resetMessages()
+  () => [
+    props.widgetId,
+    props.strategy,
+    JSON.stringify(props.contextTargetsConfig || {}),
+    JSON.stringify(props.contextTargetsWeek || {}),
+    JSON.stringify(props.contextGroupsById || {}),
+    JSON.stringify(props.contextSelected || []),
+    JSON.stringify(props.contextCalendars || []),
+  ],
+  () => {
+    hydrateDraft()
   },
   { immediate: true },
 )
 
-const categoryOptions = computed(() => config.value?.categories ?? [])
-const categoryTotalHours = computed(() =>
-  categoryOptions.value.reduce((sum, cat) => sum + (Number(cat?.targetHours) || 0), 0),
-)
-const overlapHours = computed(() => {
-  const total = Number(config.value?.totalHours ?? 0)
-  return Math.max(0, categoryTotalHours.value - total)
-})
-const BASE_CATEGORY_COLORS = ['#2563EB', '#F97316', '#10B981', '#A855F7', '#EC4899', '#14B8A6', '#F59E0B', '#6366F1', '#0EA5E9', '#65A30D']
-const colorPalette = computed(() => {
-  const palette = new Set<string>()
-  const push = (value?: string | null) => {
-    const color = sanitizeHexColor(value)
-    if (color) palette.add(color)
+function hydrateDraft() {
+  if (!props.widgetId) {
+    baseConfig.value = null
+    return
   }
-  categoryOptions.value.forEach((cat) => push((cat as any).color))
-  BASE_CATEGORY_COLORS.forEach((color) => palette.add(color))
-  return Array.from(palette)
-})
-const canAddCategory = computed(() => {
-  const cfg = config.value
-  if (!cfg) return false
-  return nextGroupId(cfg) !== null
-})
 
-function resetMessages() {
-  totalTargetMessage.value = null
-  allDayHoursMessage.value = null
-  forecastMomentumMessage.value = null
-  forecastPaddingMessage.value = null
-  paceThresholdMessages.onTrack = null
-  paceThresholdMessages.atRisk = null
-  Object.keys(categoryTargetMessages).forEach((key) => {
-    delete categoryTargetMessages[key]
+  const widget = props.widgets.find((entry) => entry.id === props.widgetId)
+  const options: any = widget?.options || {}
+  const useLocal = options.useLocalConfig === true
+  const currentConfig = normalizeTargetsConfig(
+    useLocal && options.localConfig ? options.localConfig : props.contextTargetsConfig,
+  )
+  baseConfig.value = cloneTargetsConfig(currentConfig)
+  selectedStrategy.value = resolveStrategy(currentConfig, props.strategy)
+  totalHoursInput.value = clampTotalHours(currentConfig.totalHours)
+  trendLookbackInput.value = clampLookback(currentConfig?.balance?.trend?.lookbackWeeks ?? 3)
+  categories.value = cloneCategoryDrafts(currentConfig.categories)
+  const selected = sanitizeSelected(props.contextSelected, allCalendars.value)
+  calendarOrder.value = selected
+
+  const sourceTargets = normalizeTargetMap(useLocal ? options.localTargetsWeek : props.contextTargetsWeek)
+  const nextTargets: Record<string, number> = {}
+  selected.forEach((calendarId) => {
+    if (Number.isFinite(sourceTargets[calendarId])) {
+      nextTargets[calendarId] = sourceTargets[calendarId]
+    }
   })
+  calendarTargets.value = nextTargets
+
+  const sourceGroups = normalizeGroupMap(useLocal ? options.localGroupsById : props.contextGroupsById)
+  assignments.value = selectedStrategy.value === 'full_granular'
+    ? buildAssignments(selected, categories.value, sourceGroups)
+    : {}
 }
 
 function close() {
@@ -163,8 +255,41 @@ function close() {
 }
 
 function save() {
-  if (!props.widgetId || !config.value) return
-  emit('save', props.widgetId, cloneTargetsConfig(config.value))
+  if (!props.widgetId || !baseConfig.value) return
+
+  const result = buildStrategyResult(
+    selectedStrategy.value,
+    allCalendars.value,
+    selectedIds.value,
+    selectedStrategy.value === 'full_granular'
+      ? { categories: categories.value.map((category) => ({ ...category })), assignments: { ...assignments.value } }
+      : undefined,
+  )
+
+  const nextConfig = mergeGoalConfig(baseConfig.value, result.targetsConfig)
+  nextConfig.balance.trend.lookbackWeeks = trendLookbackInput.value
+  if (selectedStrategy.value === 'total_only') {
+    const total = clampTotalHours(totalHoursInput.value)
+    if (total != null) nextConfig.totalHours = total
+  } else if (selectedStrategy.value === 'total_plus_categories') {
+    nextConfig.totalHours = roundGoal(totalCalendarTargetHours.value || nextConfig.totalHours)
+  } else {
+    nextConfig.totalHours = roundGoal(categoryTotalHours.value || nextConfig.totalHours)
+  }
+
+  const localTargetsWeek: Record<string, number> = {}
+  selectedIds.value.forEach((calendarId) => {
+    const target = Number(calendarTargets.value[calendarId])
+    if (Number.isFinite(target)) {
+      localTargetsWeek[calendarId] = clampTarget(target)
+    }
+  })
+
+  emit('save', props.widgetId, {
+    localConfig: nextConfig,
+    localTargetsWeek,
+    localGroupsById: result.groups,
+  })
 }
 
 function resetToGlobalTargets() {
@@ -172,16 +297,254 @@ function resetToGlobalTargets() {
   emit('use-global', props.widgetId)
 }
 
-function openOnboardingTargets() {
-  emit('open-onboarding', 'goals')
+function noop() {}
+
+function panelThemeClass() {
+  if (typeof document === 'undefined') return 'theme-light'
+  const root = document.querySelector('#opsdash')
+  return root?.classList.contains('opsdash-theme-dark') ? 'theme-dark' : 'theme-light'
 }
 
-function sanitizeHexColor(value: any): string | null {
+function onTotalHoursChange(input: HTMLInputElement) {
+  const parsed = Number(input.value)
+  totalHoursInput.value = Number.isFinite(parsed) ? clampTotalHours(parsed) : null
+}
+
+function onTrendLookbackChange(input: HTMLInputElement) {
+  const parsed = Number(input.value)
+  if (!Number.isFinite(parsed)) return
+  trendLookbackInput.value = clampLookback(parsed)
+}
+
+function addCategory() {
+  const nextIndex = categories.value.length + 1
+  const fallbackColor = BASE_CATEGORY_COLORS[(nextIndex - 1) % BASE_CATEGORY_COLORS.length] || '#2563EB'
+  categories.value = [
+    ...categories.value,
+    {
+      id: `cat_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`,
+      label: `Category ${nextIndex}`,
+      targetHours: 0,
+      includeWeekend: true,
+      paceMode: 'days_only',
+      color: fallbackColor,
+    },
+  ]
+}
+
+function removeCategory(id: string) {
+  categories.value = categories.value.filter((category) => category.id !== id)
+  const nextAssignments = { ...assignments.value }
+  Object.keys(nextAssignments).forEach((calendarId) => {
+    if (nextAssignments[calendarId] === id) {
+      nextAssignments[calendarId] = ''
+    }
+  })
+  assignments.value = nextAssignments
+}
+
+function moveCategory(id: string, direction: 'up' | 'down') {
+  const index = categories.value.findIndex((category) => category.id === id)
+  if (index < 0) return
+  const target = direction === 'up' ? index - 1 : index + 1
+  if (target < 0 || target >= categories.value.length) return
+  const next = [...categories.value]
+  const [item] = next.splice(index, 1)
+  next.splice(target, 0, item)
+  categories.value = next
+}
+
+function reorderCategory(sourceId: string, targetId: string) {
+  categories.value = reorderByIds(categories.value, sourceId, targetId)
+}
+
+function reorderSelectedCalendar(sourceId: string, targetId: string) {
+  calendarOrder.value = reorderByIds(calendarOrder.value, sourceId, targetId)
+}
+
+function moveSelectedCalendar(id: string, direction: 'up' | 'down') {
+  const index = calendarOrder.value.findIndex((calendarId) => calendarId === id)
+  if (index < 0) return
+  const target = direction === 'up' ? index - 1 : index + 1
+  if (target < 0 || target >= calendarOrder.value.length) return
+  const next = [...calendarOrder.value]
+  const [item] = next.splice(index, 1)
+  next.splice(target, 0, item)
+  calendarOrder.value = next
+}
+
+function setCategoryLabel(id: string, value: string) {
+  categories.value = categories.value.map((category) =>
+    category.id === id ? { ...category, label: value.trim() || category.label } : category,
+  )
+}
+
+function applyCategoryPreset(preset: CategoryPreset) {
+  categories.value = preset.categories.map((category) => ({ ...category }))
+  const nextAssignments: Record<string, string> = {}
+  selectedIds.value.forEach((calendarId, index) => {
+    const category = preset.categories[index % preset.categories.length]
+    nextAssignments[calendarId] = category?.id || ''
+  })
+  assignments.value = nextAssignments
+}
+
+function setCategoryTarget(id: string, value: string) {
+  const parsed = Number(value)
+  categories.value = categories.value.map((category) =>
+    category.id === id
+      ? { ...category, targetHours: Number.isFinite(parsed) ? clampTarget(parsed) : 0 }
+      : category,
+  )
+}
+
+function setCategoryPaceMode(id: string, value: CategoryDraft['paceMode']) {
+  categories.value = categories.value.map((category) =>
+    category.id === id ? { ...category, paceMode: value === 'time_aware' ? 'time_aware' : 'days_only' } : category,
+  )
+}
+
+function toggleCategoryWeekend(id: string, checked: boolean) {
+  categories.value = categories.value.map((category) =>
+    category.id === id ? { ...category, includeWeekend: checked } : category,
+  )
+}
+
+function assignCalendar(calendarId: string, categoryId: string) {
+  assignments.value = {
+    ...assignments.value,
+    [calendarId]: categoryId,
+  }
+}
+
+function setCalendarTarget(id: string, value: string) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    const next = { ...calendarTargets.value }
+    delete next[id]
+    calendarTargets.value = next
+    return
+  }
+  calendarTargets.value = {
+    ...calendarTargets.value,
+    [id]: clampTarget(parsed),
+  }
+}
+
+function getCalendarTarget(id: string): number | '' {
+  return Number.isFinite(calendarTargets.value[id]) ? calendarTargets.value[id] : ''
+}
+
+function resolvedColor(category: { color?: string | null }) {
+  return sanitizeColor(category?.color) ?? BASE_CATEGORY_COLORS[0]
+}
+
+function onColorInput(id: string, value: string) {
+  const color = sanitizeColor(value)
+  categories.value = categories.value.map((category) =>
+    category.id === id ? { ...category, color: color ?? resolvedColor(category) } : category,
+  )
+}
+
+function normalizeGroupMap(input: any): Record<string, number> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {}
+  const next: Record<string, number> = {}
+  Object.entries(input).forEach(([calendarId, value]) => {
+    const normalizedId = String(calendarId || '').trim()
+    if (!normalizedId) return
+    next[normalizedId] = Math.max(0, Math.min(9, Math.trunc(Number(value) || 0)))
+  })
+  return next
+}
+
+function normalizeTargetMap(input: any): Record<string, number> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {}
+  const next: Record<string, number> = {}
+  Object.entries(input).forEach(([calendarId, value]) => {
+    const normalizedId = String(calendarId || '').trim()
+    const target = Number(value)
+    if (!normalizedId || !Number.isFinite(target)) return
+    next[normalizedId] = clampTarget(target)
+  })
+  return next
+}
+
+function sanitizeSelected(input: any, calendars: CalendarSummary[]) {
+  const allowed = new Set(calendars.map((calendar) => calendar.id))
+  return Array.isArray(input)
+    ? input.map((calendarId) => String(calendarId || '')).filter((calendarId) => allowed.has(calendarId))
+    : []
+}
+
+function cloneCategoryDrafts(input: any): CategoryDraft[] {
+  if (!Array.isArray(input)) return []
+  return input.map((category: any, index: number) => ({
+    id: String(category?.id ?? `cat_${index}`).trim() || `cat_${index}`,
+    label: String(category?.label ?? `Category ${index + 1}`).trim() || `Category ${index + 1}`,
+    targetHours: Number.isFinite(category?.targetHours) ? Number(category.targetHours) : 0,
+    includeWeekend: category?.includeWeekend !== false,
+    paceMode: category?.paceMode === 'time_aware' ? 'time_aware' : 'days_only',
+    color: sanitizeColor(category?.color) ?? null,
+  }))
+}
+
+function buildAssignments(selected: string[], categoriesInput: CategoryDraft[], groupsById: Record<string, number>) {
+  const groupToCategory = new Map<number, string>()
+  categoriesInput.forEach((category, index) => {
+    const normalizedGroup = index + 1
+    groupToCategory.set(normalizedGroup, category.id)
+  })
+
+  const next: Record<string, string> = {}
+  selected.forEach((calendarId) => {
+    const explicitGroup = Math.max(0, Math.min(9, Math.trunc(Number(groupsById[calendarId]) || 0)))
+    next[calendarId] = groupToCategory.get(explicitGroup) || ''
+  })
+  return next
+}
+
+function mergeGoalConfig(base: TargetsConfig, goal: TargetsConfig): TargetsConfig {
+  const next = cloneTargetsConfig(base)
+  next.totalHours = goal.totalHours
+  next.categories = goal.categories
+  next.ui.showCategoryBlocks = goal.ui.showCategoryBlocks
+  next.ui.showCategoryCharts = goal.ui.showCategoryCharts
+  next.ui.showCalendarCharts = goal.ui.showCalendarCharts
+  next.balance.categories = [...(goal.balance?.categories || [])]
+  next.balance.useCategoryMapping = goal.balance?.useCategoryMapping === true
+  return next
+}
+
+function resolveStrategy(config: TargetsConfig, rawStrategy?: string | null): StrategyDefinition['id'] {
+  if (rawStrategy === 'full_granular' || rawStrategy === 'total_plus_categories' || rawStrategy === 'total_only') {
+    return rawStrategy
+  }
+  if (Array.isArray(config?.categories) && config.categories.length > 0) {
+    return 'full_granular'
+  }
+  return 'total_plus_categories'
+}
+
+function clampTotalHours(value: number | null | undefined): number | null {
+  if (!Number.isFinite(value ?? NaN)) return null
+  const clamped = Math.max(0, Math.min(1000, Number(value)))
+  return Math.round(clamped * 100) / 100
+}
+
+function clampLookback(value: number): number {
+  if (!Number.isFinite(value)) return 3
+  return Math.max(1, Math.min(6, Math.round(value)))
+}
+
+function roundGoal(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.round(Math.max(0, value) * 2) / 2
+}
+
+function sanitizeColor(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
-  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) {
-    return null
-  }
+  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) return null
   if (trimmed.length === 4) {
     const [, r, g, b] = trimmed
     return `#${r}${r}${g}${g}${b}${b}`.toUpperCase()
@@ -189,173 +552,15 @@ function sanitizeHexColor(value: any): string | null {
   return trimmed.toUpperCase()
 }
 
-function nextGroupId(cfg: TargetsConfig): number | null {
-  const used = new Set<number>()
-  cfg.categories.forEach((cat) => {
-    (cat.groupIds || []).forEach((g) => {
-      const n = Number(g)
-      if (Number.isFinite(n)) used.add(n)
-    })
-  })
-  for (let i = 1; i <= 9; i++) {
-    if (!used.has(i)) return i
-  }
-  return null
-}
-
-function makeCategoryId(): string {
-  return `cat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`
-}
-
-function findNextCategoryColor(cfg: TargetsConfig): string | null {
-  const used = new Set<string>()
-  cfg.categories.forEach((cat) => {
-    const color = sanitizeHexColor((cat as any)?.color)
-    if (color) used.add(color)
-  })
-  for (const color of BASE_CATEGORY_COLORS) {
-    if (!used.has(color)) return color
-  }
-  return BASE_CATEGORY_COLORS[0] ?? null
-}
-
-function updateTargets(mutator: (cfg: TargetsConfig)=>void) {
-  if (!config.value) return
-  const next = cloneTargetsConfig(config.value)
-  mutator(next)
-  config.value = next
-}
-
-function updateCategory(id: string, mutator: (cat: TargetsConfig['categories'][number]) => void) {
-  updateTargets((cfg) => {
-    const cat = cfg.categories.find((c) => c.id === id)
-    if (cat) mutator(cat)
-  })
-}
-
-function setTotalTarget(value: string) {
-  applyNumericUpdate(
-    value,
-    { min: 0, max: 1000, step: 0.5, decimals: 2 },
-    (message) => { totalTargetMessage.value = message },
-    (num) => updateTargets((cfg) => { cfg.totalHours = num }),
-  )
-}
-
-function setAllDayHours(value: string) {
-  applyNumericUpdate(
-    value,
-    { min: 0, max: 24, step: 0.25, decimals: 2 },
-    (message) => { allDayHoursMessage.value = message },
-    (num) => updateTargets((cfg) => { cfg.allDayHours = num }),
-    '0–24 hours per day',
-  )
-}
-
-function setCategoryTarget(id: string, value: string) {
-  applyNumericUpdate(
-    value,
-    { min: 0, max: 1000, step: 0.5, decimals: 2 },
-    (message) => { categoryTargetMessages[id] = message },
-    (num) => updateCategory(id, (cat) => { cat.targetHours = num }),
-  )
-}
-
-function setCategoryLabel(id: string, label: string) {
-  updateCategory(id, (cat) => { cat.label = label.trim() || cat.label })
-}
-
-function setCategoryWeekend(id: string, value: boolean) {
-  updateCategory(id, (cat) => { cat.includeWeekend = value })
-}
-
-function setCategoryColor(id: string, color: string) {
-  const sanitized = sanitizeHexColor(color)
-  updateCategory(id, (cat) => { (cat as any).color = sanitized ?? null })
-}
-
-function setCategoryPace(id: string, mode: string) {
-  if (mode !== 'days_only' && mode !== 'time_aware') return
-  updateCategory(id, (cat) => { cat.paceMode = mode as TargetsConfig['pace']['mode'] })
-}
-
-function setIncludeWeekendTotal(value: boolean) {
-  updateTargets((cfg) => { cfg.pace.includeWeekendTotal = value })
-}
-
-function setPaceMode(mode: string) {
-  if (mode !== 'days_only' && mode !== 'time_aware') return
-  updateTargets((cfg) => { cfg.pace.mode = mode as TargetsConfig['pace']['mode'] })
-}
-
-function setThreshold(which: 'onTrack' | 'atRisk', value: string) {
-  applyNumericUpdate(
-    value,
-    { min: -100, max: 100, step: 0.1, decimals: 1 },
-    (message) => { paceThresholdMessages[which] = message },
-    (num) => updateTargets((cfg) => { cfg.pace.thresholds[which] = num }),
-  )
-}
-
-function setForecastMethod(method: string) {
-  const mode = method === 'momentum' ? 'momentum' : 'linear'
-  updateTargets((cfg) => { cfg.forecast.methodPrimary = mode })
-}
-
-function setForecastMomentum(value: string) {
-  applyNumericUpdate(
-    value,
-    { min: 1, max: 14, step: 1, decimals: 0 },
-    (message) => { forecastMomentumMessage.value = message },
-    (num) => updateTargets((cfg) => { cfg.forecast.momentumLastNDays = num }),
-  )
-}
-
-function setForecastPadding(value: string) {
-  applyNumericUpdate(
-    value,
-    { min: 0, max: 100, step: 0.1, decimals: 1 },
-    (message) => { forecastPaddingMessage.value = message },
-    (num) => updateTargets((cfg) => { cfg.forecast.padding = num }),
-  )
-}
-
-function setUiOption(key: keyof TargetsConfig['ui'], value: boolean) {
-  updateTargets((cfg) => {
-    if (!cfg.ui) cfg.ui = { ...defaultTargets.ui }
-    ;(cfg.ui as any)[key] = value
-  })
-}
-
-function addCategory() {
-  const cfg = config.value
-  if (!cfg) return
-  const nextGroup = nextGroupId(cfg)
-  if (nextGroup === null) return
-  updateTargets((next) => {
-    const color = findNextCategoryColor(next)
-    next.categories = [
-      ...next.categories,
-      {
-        id: makeCategoryId(),
-        label: `Category ${next.categories.length + 1}`,
-        targetHours: 0,
-        includeWeekend: true,
-        paceMode: 'days_only',
-        color,
-        groupIds: [nextGroup],
-      } as any,
-    ]
-  })
-}
-
-function removeCategory(id: string) {
-  const cfg = config.value
-  if (!cfg || cfg.categories.length <= 1) return
-  updateTargets((next) => {
-    next.categories = next.categories.filter((cat) => cat.id !== id)
-  })
-  delete categoryTargetMessages[id]
+function reorderByIds<T extends { id: string } | string>(items: T[], sourceId: string, targetId: string): T[] {
+  const getId = (item: T) => typeof item === 'string' ? item : item.id
+  const sourceIndex = items.findIndex((item) => getId(item) === sourceId)
+  const targetIndex = items.findIndex((item) => getId(item) === targetId)
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return [...items]
+  const next = [...items]
+  const [item] = next.splice(sourceIndex, 1)
+  next.splice(targetIndex, 0, item)
+  return next
 }
 </script>
 
@@ -401,7 +606,6 @@ function removeCategory(id: string) {
   --adv-surface-muted: var(--color-background-contrast, #f8fafc);
   --adv-border: color-mix(in oklab, var(--color-border, #d1d5db), transparent 20%);
   --adv-muted: var(--muted, #64748b);
-  --adv-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
   --adv-warn-border: color-mix(in oklab, #dc2626, var(--color-border, #d1d5db) 45%);
   --adv-warn-bg: color-mix(in oklab, #fff1f2, var(--color-main-background, #fff) 40%);
   --adv-button-bg: color-mix(in oklab, #ffffff, #f8fafc 35%);
@@ -417,8 +621,8 @@ function removeCategory(id: string) {
   background:var(--adv-surface);
   color:var(--adv-text);
   pointer-events:auto;
-  width:min(1080px, 100%);
-  max-height:min(78vh, 860px);
+  width:min(1180px, 100%);
+  max-height:min(82vh, 940px);
   border-radius:14px;
   box-shadow:
     0 18px 48px rgba(15, 23, 42, 0.32),
@@ -428,74 +632,36 @@ function removeCategory(id: string) {
   flex-direction:column;
   border:1px solid color-mix(in oklab, var(--color-primary, #2563eb), var(--adv-border-base) 70%);
 }
-.advanced-panel > .sb-pane{
+.advanced-panel__body{
   flex:1 1 auto;
   overflow:auto;
-  padding:16px 18px 18px;
+  padding:18px 18px 10px;
 }
-.overlay-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 18px 14px;
-  border-bottom:1px solid var(--color-border, #e5e7eb);
-  background:var(--adv-surface);
-}
-.overlay-title{
-  font-weight:700;
-  font-size:1.35rem;
-  line-height:1.2;
-}
-.overlay-subtitle{
-  font-size:0.85rem;
-  color:var(--adv-muted);
-  margin-top:4px;
+.advanced-panel__body--goals{
+  padding-top:18px;
 }
 .close-btn{
-  background:none;
-  border:none;
-  font-size:1.35rem;
+  position:absolute;
+  top:12px;
+  right:12px;
+  z-index:2;
+  background:color-mix(in oklab, var(--adv-surface, #ffffff), transparent 12%);
+  border:1px solid var(--adv-border);
+  border-radius:999px;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  font-size:1.15rem;
   line-height:1;
   cursor:pointer;
   color:var(--adv-muted);
-  padding:0 2px;
+  padding:0;
 }
 .close-btn:hover{
   color:var(--color-primary, #2563eb);
-}
-.overlay-metrics{
-  display:grid;
-  gap:12px;
-  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-  padding:14px 18px 6px;
-}
-.metric-card{
-  border:1px solid var(--adv-border);
-  border-radius:10px;
-  padding:10px 12px 11px;
-  background:var(--adv-surface-muted);
-  box-shadow:0 6px 16px rgba(15, 23, 42, 0.08);
-  display:grid;
-  gap:3px;
-}
-.metric-card.warn{
-  border-color:var(--adv-warn-border);
-  background:var(--adv-warn-bg);
-}
-.metric-card__label{
-  font-size:0.72rem;
-  letter-spacing:0.04em;
-  text-transform:uppercase;
-  color:var(--adv-muted);
-  font-weight:700;
-}
-.metric-card__value{
-  font-size:1.45rem;
-  font-weight:700;
-}
-.metric-card__hint{
-  font-size:0.82rem;
-  color:var(--adv-muted);
+  background:color-mix(in oklab, var(--color-primary, #2563eb), var(--adv-surface, #ffffff) 88%);
+  border-color:color-mix(in oklab, var(--color-primary, #2563eb), transparent 52%);
 }
 .overlay-actions{
   display:flex;
@@ -506,105 +672,21 @@ function removeCategory(id: string) {
   border-top:1px solid var(--color-border, #e5e7eb);
   background:var(--adv-surface-alt);
 }
+.overlay-actions__left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.overlay-actions__hint{
+  font-size:0.82rem;
+  color:var(--adv-muted);
+}
 .overlay-actions__left,
 .overlay-actions__right{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
-}
-.advanced-panel :deep(.sb-title){
-  margin:0;
-  font-size:13px;
-  letter-spacing:0.05em;
-  text-transform:uppercase;
-  color:var(--adv-muted);
-}
-.advanced-panel :deep(.target-config){
-  display:grid;
-  gap:14px;
-}
-.advanced-panel :deep(.target-config > .field){
-  border:1px solid var(--adv-border);
-  border-radius:8px;
-  padding:11px 12px;
-  background:var(--adv-surface-muted);
-}
-.advanced-panel :deep(.target-config input[type='number']),
-.advanced-panel :deep(.target-config input[type='text']),
-.advanced-panel :deep(.target-config select){
-  width:100%;
-  border:1px solid var(--adv-border);
-  border-radius:8px;
-  padding:7px 10px;
-  background:var(--adv-surface);
-  color:var(--adv-text);
-}
-.advanced-panel :deep(.target-config .field .label){
-  display:block;
-  margin-bottom:6px;
-  font-size:12px;
-  font-weight:600;
-  color:var(--adv-muted);
-}
-.advanced-panel :deep(.target-category){
-  border:1px solid var(--adv-border);
-  border-radius:8px;
-  padding:14px 14px 13px;
-  background:var(--adv-surface);
-  display:grid;
-  gap:12px;
-}
-.advanced-panel :deep(.target-category .cat-header){
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.advanced-panel :deep(.target-category .cat-name){
-  min-width:180px;
-}
-.advanced-panel :deep(.target-category .remove-cat){
-  border:none;
-  background:transparent;
-  color:var(--adv-muted);
-  cursor:pointer;
-  font-size:16px;
-}
-.advanced-panel :deep(.target-category .remove-cat:not(:disabled):hover){
-  color:#dc2626;
-}
-.advanced-panel :deep(.target-category .cat-fields){
-  display:grid;
-  gap:12px;
-  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-}
-.advanced-panel :deep(.target-section){
-  border:1px solid var(--adv-border);
-  border-radius:8px;
-  padding:12px;
-  background:var(--adv-surface);
-  display:grid;
-  gap:10px;
-}
-.advanced-panel :deep(.target-section .section-title){
-  margin:0;
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:0.04em;
-  color:var(--adv-muted);
-}
-.advanced-panel :deep(.input-message){
-  font-size:12px;
-  margin-top:6px;
-}
-.advanced-panel :deep(.input-message.warning){
-  color:#b45309;
-}
-.advanced-panel :deep(.input-message.error){
-  color:#dc2626;
-}
-.advanced-panel :deep(.add-category){
-  justify-self:flex-start;
 }
 :global(#opsdash.opsdash-theme-dark .advanced-panel){
   --adv-surface: #0f172a;
@@ -614,7 +696,6 @@ function removeCategory(id: string) {
   --adv-surface-muted: color-mix(in oklab, var(--color-main-background, #0f172a), #111827 52%);
   --adv-border: color-mix(in oklab, var(--color-border, #334155), #000000 10%);
   --adv-muted: #94a3b8;
-  --adv-shadow: 0 10px 22px rgba(0, 0, 0, 0.38);
   --adv-warn-border: color-mix(in oklab, #ef4444, var(--color-border, #334155) 58%);
   --adv-warn-bg: color-mix(in oklab, #7f1d1d, var(--color-main-background, #0f172a) 75%);
   --adv-button-bg: color-mix(in oklab, #111827, #0b1220 68%);
@@ -638,7 +719,7 @@ function removeCategory(id: string) {
     align-items:center;
   }
   .advanced-panel{
-    width:min(960px, 100%);
+    width:min(1080px, 100%);
     max-height:calc(100vh - 32px);
   }
 }

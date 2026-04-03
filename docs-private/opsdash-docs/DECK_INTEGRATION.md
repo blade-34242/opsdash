@@ -20,6 +20,9 @@ Shared filter vocabulary:
 Widget roles:
 - `Deck cards` remains list-first and management-oriented.
 - `Deck stats` is range-bound to the current dashboard week/month plus offset. It does not have a separate `today` mode.
+- Default layouts now surface `Deck stats` automatically:
+  - Standard preset: included in the shipped Overview layout.
+  - Advanced preset: included in the Workspace tab.
 
 Current `Deck stats` metrics:
 - `open_now`

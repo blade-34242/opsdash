@@ -1241,6 +1241,8 @@ const { widgetContext } = useWidgetRenderContext({
   colorsById,
   colorsByName,
   currentTargets,
+  targetsWeek,
+  selected,
   calendarTodayHours,
   onboardingStrategy: computed(() => onboardingState.value?.strategy ?? null),
 })

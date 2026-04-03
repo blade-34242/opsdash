@@ -18,26 +18,40 @@ vi.mock('../src/services/widgetsRegistry', () => {
   }
 })
 
-const stubPane = {
-  template: `<div class="pane"><button class="set-total" @click="$emit('total-target-input', '12')">set</button></div>`,
-  props: [
-    'targets',
-    'categoryOptions',
-    'totalTargetMessage',
-    'allDayHoursMessage',
-    'categoryTargetMessages',
-    'paceThresholdMessages',
-    'forecastMomentumMessage',
-    'forecastPaddingMessage',
-    'canAddCategory',
-    'colorPalette',
-  ],
-}
-
 const stubMenu = {
   template: `<button class="open-adv" @click="$emit('open-advanced')">open</button>`,
   props: ['entry', 'options', 'open', 'showAdvanced'],
   emits: ['toggle', 'open-advanced', 'change'],
+}
+
+const stubAdvancedOverlay = {
+  template: `
+    <div v-if="widgetId" class="advanced-panel">
+      <button
+        class="save-overlay"
+        @click="$emit('save', widgetId, {
+          localConfig: { totalHours: 12 },
+          localTargetsWeek: { cal_a: 6 },
+          localGroupsById: { cal_a: 1 },
+        })"
+      >
+        Save
+      </button>
+      <button class="reset-overlay" @click="$emit('use-global', widgetId)">Use global targets</button>
+      <button class="open-onboarding" @click="$emit('open-onboarding', 'goals')">Edit via onboarding</button>
+    </div>
+  `,
+  props: [
+    'widgetId',
+    'widgets',
+    'contextTargetsConfig',
+    'contextTargetsWeek',
+    'contextGroupsById',
+    'contextCalendars',
+    'contextSelected',
+    'strategy',
+  ],
+  emits: ['close', 'save', 'use-global', 'open-onboarding'],
 }
 
 describe('DashboardLayout advanced targets overlay', () => {
@@ -59,8 +73,8 @@ describe('DashboardLayout advanced targets overlay', () => {
       },
       global: {
         stubs: {
-          SidebarTargetsPane: stubPane,
           WidgetOptionsMenu: stubMenu,
+          DashboardAdvancedTargetsOverlay: stubAdvancedOverlay,
         },
         mocks: {
           // mapWidgetToComponent uses the registry entry; fall back to default mapping
@@ -75,20 +89,19 @@ describe('DashboardLayout advanced targets overlay', () => {
     expect(menu.exists()).toBe(true)
     menu.vm.$emit('open-advanced')
     await wrapper.vm.$nextTick()
-    const pane = wrapper.findComponent(stubPane)
-    expect(pane.exists()).toBe(true)
-    pane.vm.$emit('total-target-input', '12')
-    await wrapper.vm.$nextTick()
-    const saveBtn = wrapper.findAll('button').find((btn) => btn.text().includes('Save'))
-    expect(saveBtn).toBeTruthy()
-    await saveBtn?.trigger('click')
+    expect(wrapper.findComponent(stubAdvancedOverlay).exists()).toBe(true)
+    await wrapper.get('.save-overlay').trigger('click')
 
     const edits = wrapper.emitted('edit:options') || []
     const localCfgPayload = edits.find((args) => args[1] === 'localConfig')
+    const localTargetsPayload = edits.find((args) => args[1] === 'localTargetsWeek')
+    const localGroupsPayload = edits.find((args) => args[1] === 'localGroupsById')
     const flagPayload = edits.find((args) => args[1] === 'useLocalConfig')
 
     expect(localCfgPayload?.[0]).toBe('w1')
     expect((localCfgPayload?.[2] as any)?.totalHours).toBe(12)
+    expect(localTargetsPayload).toEqual(['w1', 'localTargetsWeek', { cal_a: 6 }])
+    expect(localGroupsPayload).toEqual(['w1', 'localGroupsById', { cal_a: 1 }])
     expect(flagPayload).toEqual(['w1', 'useLocalConfig', true])
     wrapper.unmount()
   })
@@ -111,8 +124,8 @@ describe('DashboardLayout advanced targets overlay', () => {
       },
       global: {
         stubs: {
-          SidebarTargetsPane: stubPane,
           WidgetOptionsMenu: stubMenu,
+          DashboardAdvancedTargetsOverlay: stubAdvancedOverlay,
         },
       },
     })
@@ -124,8 +137,7 @@ describe('DashboardLayout advanced targets overlay', () => {
     expect(menu.exists()).toBe(true)
     menu.vm.$emit('open-advanced')
     await wrapper.vm.$nextTick()
-    const onboardingBtn = wrapper.findAll('button').find((btn) => btn.text().includes('Edit via onboarding'))
-    await onboardingBtn?.trigger('click')
+    await wrapper.get('.open-onboarding').trigger('click')
     expect(wrapper.emitted('open:onboarding')?.[0]).toEqual(['goals'])
 
     await wrapper.find('.layout-item').trigger('click')
@@ -134,13 +146,16 @@ describe('DashboardLayout advanced targets overlay', () => {
     expect(menuAgain.exists()).toBe(true)
     menuAgain.vm.$emit('open-advanced')
     await wrapper.vm.$nextTick()
-    const resetBtn = wrapper.findAll('button').find((btn) => btn.text().includes('Use global targets'))
-    await resetBtn?.trigger('click')
+    await wrapper.get('.reset-overlay').trigger('click')
 
     const edits = wrapper.emitted('edit:options') || []
     const resetFlag = edits.find((args) => args[1] === 'useLocalConfig')
     const resetConfig = edits.find((args) => args[1] === 'localConfig')
+    const resetTargets = edits.find((args) => args[1] === 'localTargetsWeek')
+    const resetGroups = edits.find((args) => args[1] === 'localGroupsById')
     expect(resetFlag).toEqual(['w1', 'useLocalConfig', false])
+    expect(resetTargets).toEqual(['w1', 'localTargetsWeek', null])
+    expect(resetGroups).toEqual(['w1', 'localGroupsById', null])
     expect(resetConfig).toEqual(['w1', 'localConfig', null])
     wrapper.unmount()
   })
@@ -163,8 +178,8 @@ describe('DashboardLayout advanced targets overlay', () => {
       },
       global: {
         stubs: {
-          SidebarTargetsPane: stubPane,
           WidgetOptionsMenu: stubMenu,
+          DashboardAdvancedTargetsOverlay: stubAdvancedOverlay,
         },
       },
     })
@@ -206,8 +221,8 @@ describe('DashboardLayout grid add flow', () => {
       },
       global: {
         stubs: {
-          SidebarTargetsPane: stubPane,
           WidgetOptionsMenu: stubMenu,
+          DashboardAdvancedTargetsOverlay: stubAdvancedOverlay,
         },
       },
     })
@@ -235,7 +250,7 @@ describe('DashboardLayout grid add flow', () => {
         editable: true,
       },
       global: {
-        stubs: { SidebarTargetsPane: stubPane, WidgetOptionsMenu: stubMenu },
+        stubs: { WidgetOptionsMenu: stubMenu, DashboardAdvancedTargetsOverlay: stubAdvancedOverlay },
       },
     })
 
@@ -266,7 +281,7 @@ describe('DashboardLayout grid add flow', () => {
         editable: true,
       },
       global: {
-        stubs: { SidebarTargetsPane: stubPane, WidgetOptionsMenu: stubMenu },
+        stubs: { WidgetOptionsMenu: stubMenu, DashboardAdvancedTargetsOverlay: stubAdvancedOverlay },
       },
     })
 
@@ -285,7 +300,7 @@ describe('DashboardLayout grid add flow', () => {
         editable: true,
       },
       global: {
-        stubs: { SidebarTargetsPane: stubPane, WidgetOptionsMenu: stubMenu },
+        stubs: { WidgetOptionsMenu: stubMenu, DashboardAdvancedTargetsOverlay: stubAdvancedOverlay },
       },
     })
 
@@ -305,7 +320,7 @@ describe('DashboardLayout grid add flow', () => {
         editable: true,
       },
       global: {
-        stubs: { SidebarTargetsPane: stubPane, WidgetOptionsMenu: stubMenu },
+        stubs: { WidgetOptionsMenu: stubMenu, DashboardAdvancedTargetsOverlay: stubAdvancedOverlay },
       },
     })
 
@@ -343,7 +358,7 @@ describe('DashboardLayout grid add flow', () => {
         editable: false,
       },
       global: {
-        stubs: { SidebarTargetsPane: stubPane, WidgetOptionsMenu: stubMenu },
+        stubs: { WidgetOptionsMenu: stubMenu, DashboardAdvancedTargetsOverlay: stubAdvancedOverlay },
       },
     })
 

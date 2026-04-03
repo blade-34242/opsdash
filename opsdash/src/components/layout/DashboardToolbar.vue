@@ -109,6 +109,12 @@ import { computed } from 'vue'
 import WidgetOptionsMenu from './WidgetOptionsMenu.vue'
 import { widgetsRegistry, type WidgetRenderContext } from '../../services/widgetsRegistry'
 
+const CORE_DEFAULT_OPTIONS = {
+  showHeader: true,
+  dense: false,
+  scale: 'md',
+}
+
 const props = defineProps<{
   editable?: boolean
   selectedItem: null | { id: string; layout: any; type: string; options: any; props: any }
@@ -141,7 +147,15 @@ const selectedItemTitle = computed(() => {
 })
 
 function optionValue(key: string) {
-  return props.selectedItem?.options?.[key]
+  const entry = props.selectedItem ? widgetsRegistry[props.selectedItem.type] : null
+  const resolved = entry?.resolveOptions?.(props.selectedItem?.options || {}, props.context || {}) || {}
+  const merged = {
+    ...CORE_DEFAULT_OPTIONS,
+    ...(entry?.defaultOptions || {}),
+    ...resolved,
+    ...(props.selectedItem?.options || {}),
+  }
+  return merged[key]
 }
 
 function registryEntry(type: string) {

@@ -40,6 +40,58 @@ describe('TimeTargetsCard', () => {
     expect(wrapper.text()).not.toContain('Forecast:')
   })
 
+  it('hides delta readouts when the widget delta toggle is off', () => {
+    const summary = {
+      total: {
+        id: 'total',
+        label: 'Total',
+        actualHours: 10,
+        targetHours: 20,
+        percent: 50,
+        deltaHours: -10,
+        remainingHours: 10,
+        needPerDay: 1,
+        daysLeft: 5,
+        calendarPercent: 0,
+        gap: 0,
+        status: 'behind' as const,
+        statusLabel: 'Behind',
+        includeWeekend: true,
+        paceMode: 'days_only' as const,
+      },
+      categories: [
+        {
+          id: 'work',
+          label: 'Work',
+          actualHours: 5,
+          targetHours: 12,
+          percent: 42,
+          deltaHours: -7,
+          remainingHours: 7,
+          needPerDay: 1.4,
+          daysLeft: 5,
+          calendarPercent: 0,
+          gap: 0,
+          status: 'behind' as const,
+          statusLabel: 'Behind',
+          includeWeekend: true,
+          paceMode: 'days_only' as const,
+        },
+      ],
+      forecast: { text: 'Forecast text', linear: 1, momentum: 2, primaryMethod: 'linear' as const },
+    }
+
+    const wrapper = mount(TimeTargetsCard, {
+      props: {
+        summary,
+        config: createDefaultTargetsConfig(),
+        showDelta: false,
+      },
+    })
+
+    expect(wrapper.text()).not.toContain('Δ')
+  })
+
   it('shows today overlay and inline today text on category bars', () => {
     const catSummary = {
       id: 'work',

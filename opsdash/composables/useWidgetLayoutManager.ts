@@ -2,6 +2,8 @@ import { computed, ref, watch, type Ref } from 'vue'
 
 import type { WidgetDefinition, WidgetHeight, WidgetSize, WidgetTab, WidgetTabsState } from '../src/services/widgetsRegistry'
 
+const DECK_WIDGET_TYPES = new Set(['deck_cards', 'deck_stats'])
+
 export type WidgetRegistryEntry = {
   label?: string
   defaultLayout: WidgetDefinition['layout']
@@ -80,7 +82,7 @@ export function useWidgetLayoutManager(options: {
   const widgets = computed<WidgetDefinition[]>(() => {
     const defs = activeTab.value?.widgets || []
     if (!deckEnabled.value) {
-      return defs.filter((w) => w.type !== 'deck')
+      return defs.filter((w) => !DECK_WIDGET_TYPES.has(w.type))
     }
     return defs
   })

@@ -116,4 +116,55 @@ describe('WidgetOptionsMenu', () => {
     expect(wrapper.emitted('move-to-tab')?.[0]).toEqual(['tab-2'])
     expect(wrapper.emitted('duplicate-to-tab')?.[0]).toEqual(['tab-2'])
   })
+
+  it('applies core defaults to checkbox and select controls', () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry: {
+          controls: [],
+        },
+        options: {},
+        open: true,
+      },
+    })
+
+    expect((wrapper.get('#opt-showHeader').element as HTMLInputElement).checked).toBe(true)
+    expect((wrapper.get('#opt-dense').element as HTMLInputElement).checked).toBe(false)
+    expect((wrapper.get('#opt-scale').element as HTMLSelectElement).value).toBe('md')
+  })
+
+  it('passes merged defaults into dynamic controls', () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry: {
+          dynamicControls: (options: Record<string, any>) => [
+            {
+              key: 'debugToggle',
+              label: options.showHeader ? 'ShowHeader defaulted on' : 'ShowHeader defaulted off',
+              type: 'toggle',
+            },
+          ],
+        },
+        options: {},
+        open: true,
+      },
+    })
+
+    expect(wrapper.text()).toContain('ShowHeader defaulted on')
+  })
+
+  it('uses registry-resolved effective options for checkbox controls', () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry: {
+          controls: [{ key: 'showTotalDelta', label: 'Show total delta', type: 'toggle' }],
+          resolveOptions: () => ({ showTotalDelta: true }),
+        },
+        options: {},
+        open: true,
+      },
+    })
+
+    expect((wrapper.get('#opt-showTotalDelta').element as HTMLInputElement).checked).toBe(true)
+  })
 })

@@ -28,6 +28,7 @@
    - Suggestions use the currently available 1-6 week lookback window from previous weeks.
    - Clicking a visible suggestion applies that value directly into the matching target field.
    - The wizard snapshots the existing config when it opens so switching strategies during one session does not wipe the original categories/assignments.
+   - Widget-local advanced editing for the `Targets` widget now reuses this same Goals UI and routes by the current strategy, but saves only to widget-local override fields.
 6. Preferences
    - Core defaults on the left, optional recap module on the right.
    - Includes theme, all-day hours, and trend lookback.
@@ -51,3 +52,4 @@
 ## Persistence
 - Writes through `/overview/persist`.
 - Profiles (via `/overview/presets`) include widgets/tabs, theme, Deck, reporting, and targets.
+- Widget-local `Targets` overrides persist separately from the global goals config via `useLocalConfig`, `localConfig`, `localTargetsWeek`, and `localGroupsById`.

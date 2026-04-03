@@ -62,6 +62,8 @@ interface WidgetRenderContextDeps {
   colorsById: ValueRef<Record<string, string>>
   colorsByName: ValueRef<Record<string, string>>
   currentTargets: ValueRef<Record<string, number>>
+  targetsWeek: ValueRef<Record<string, number>>
+  selected: ValueRef<string[]>
   calendarTodayHours: ValueRef<Record<string, number>>
   onboardingStrategy: ValueRef<string | null>
 }
@@ -147,6 +149,8 @@ export function useWidgetRenderContext(deps: WidgetRenderContextDeps): {
     colorsById: deps.colorsById.value,
     colorsByName: deps.colorsByName.value,
     currentTargets: deps.currentTargets.value,
+    targetsWeek: deps.targetsWeek.value,
+    selected: deps.selected.value,
     calendarTodayHours: deps.calendarTodayHours.value,
     onboardingStrategy: deps.onboardingStrategy.value,
   }))

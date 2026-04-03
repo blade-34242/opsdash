@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - None yet.
 
-## 0.7.3 - 2026-04-02
+## 0.7.3 - 2026-04-03
 ### Changed
 - Current-period aggregation now splits elapsed time from upcoming time. The current week/month counts only event time up to `now` as actual work, while later events and later recurring instances stay in separate planned totals.
 - Overview widgets now surface planned time explicitly in the frontend, including `planned later` / `upcoming` hints in `Time Summary`, `Targets`, and the calendar table.
 - Current-period highlight styling is now consistent across the trend/overview widgets that mark the active week or month.
 - Widget edit options now include direct tab actions so widgets can be moved or copied to another dashboard tab without relying only on drag and drop.
 - Deck widgets are now split more clearly by intent: `Deck cards` remains the action/management widget, while the new `Deck stats` widget shows a compact week/month summary for a filtered Deck slice using shared board/stack/tag/scope filters.
+- Standard and Advanced dashboard presets now ship with `Deck stats` in their default layouts, so new dashboards expose the compact Deck summary without manual widget setup.
+- The `Targets` widget advanced editor is now strategy-aware and reuses the onboarding Goals UI for widget-local overrides, so single-goal, calendar-goal, and calendar-plus-category setups open the matching editor shape while still saving only into that widget.
+- `Time Off Trend` now switches cleanly between one horizontal row and one vertical stack instead of mixing wrapped layouts at medium widths.
 - The `Targets` widget `Never Finished · Stay Hard` mode now uses a much larger icon-only hustle badge and an inset flame frame that stays clipped inside the widget bounds.
 
 ### Fixed
@@ -19,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Fixed current day-off trend logic so future days in the active week/month are no longer counted as days off before they happen.
 - Fixed current-period KPI, target, and per-day totals so future events no longer inflate “done” values in the active range.
 - `Period Comparison` / lookback time summary now shows an in-card hint when trend lookback is set to `1`, so week/month comparison no longer fails silently when previous-period data was not requested.
+- Widget configuration controls now resolve effective defaults correctly for `Targets`, so checkboxes such as delta, badges, legend, and category visibility match the rendered widget state instead of appearing unchecked until toggled twice.
 
 ## 0.7.2 - 2026-03-25
 ### Added

@@ -76,7 +76,9 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.config.totalHours).toBe(12)
     expect(props.summary.total.targetHours).toBe(12)
     expect(props.summary.total.actualHours).toBe(6)
-    expect(props.groups).toBeNull()
+    expect(Array.isArray(props.groups)).toBe(true)
+    expect(props.groups).toHaveLength(1)
+    expect(props.groups[0].id).toBe('only')
     expect(ctx.targetsConfig.totalHours).toBe(48)
   })
 

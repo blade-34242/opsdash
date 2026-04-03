@@ -4,7 +4,16 @@
       <span>{{ titleText }}</span>
       <span v-if="lookbackLabel" class="pill">{{ lookbackLabel }}</span>
     </div>
-    <div class="dayoff-heatmap" v-if="tiles.length">
+    <div
+      v-if="tiles.length"
+      ref="heatmapEl"
+      class="dayoff-heatmap"
+      :class="{
+        'dayoff-heatmap--row': !stackTiles,
+        'dayoff-heatmap--stacked': stackTiles,
+      }"
+      :style="{ '--dayoff-tile-count': String(Math.max(1, tiles.length)) }"
+    >
       <div
         v-for="entry in tiles"
         :key="entry.offset"
@@ -25,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { formatDateRange, parseDateKey, getWeekNumber } from '../../../services/dateTime'
 
 type DayOffTrendEntry = {
@@ -143,11 +152,39 @@ const lookbackLabel = computed(() => {
 const titleText = computed(() => props.title || 'Days off trend')
 const cardStyle = computed(() => ({ background: props.cardBg || undefined }))
 const showHeader = computed(() => props.showHeader !== false)
+const heatmapEl = ref<HTMLElement | null>(null)
+const heatmapWidth = ref(0)
 
 const toneRange = computed(() => {
   const low = normalizeColor(props.toneLowColor) || '#dc2626'
   const high = normalizeColor(props.toneHighColor) || '#16a34a'
   return { low, high }
+})
+
+const stackTiles = computed(() => {
+  const width = Number(heatmapWidth.value) || 0
+  if (width <= 0) return false
+  const minInlineTileWidth = 124
+  return width < tiles.value.length * minInlineTileWidth
+})
+
+let ro: ResizeObserver | null = null
+
+function updateHeatmapWidth() {
+  heatmapWidth.value = heatmapEl.value?.clientWidth || 0
+}
+
+onMounted(async () => {
+  await nextTick()
+  updateHeatmapWidth()
+  if (typeof ResizeObserver !== 'function' || !heatmapEl.value) return
+  ro = new ResizeObserver(() => updateHeatmapWidth())
+  ro.observe(heatmapEl.value)
+})
+
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  ro = null
 })
 
 function shareLabel(value: number) {
@@ -269,6 +306,7 @@ function clamp(v: number, min: number, max: number) {
   display:flex;
   flex-direction:column;
   gap:var(--widget-gap, 10px);
+  container-type:inline-size;
 }
 .dayoff-card__header{
   display:flex;
@@ -280,8 +318,13 @@ function clamp(v: number, min: number, max: number) {
 }
 .dayoff-heatmap{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(calc(110px * var(--widget-scale, 1)), 1fr));
   gap:var(--widget-gap, 8px);
+}
+.dayoff-heatmap--row{
+  grid-template-columns:repeat(var(--dayoff-tile-count, 1), minmax(0, 1fr));
+}
+.dayoff-heatmap--stacked{
+  grid-template-columns:minmax(0, 1fr);
 }
 .dayoff-tile{
   border-radius:calc(10px * var(--widget-space, 1));

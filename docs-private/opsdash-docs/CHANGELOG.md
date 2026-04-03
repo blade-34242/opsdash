@@ -5,7 +5,7 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 ## Unreleased
 - None yet.
 
-## 0.7.3 - 2026-04-02
+## 0.7.3 - 2026-04-03
 - Current-period aggregation now splits `actual` and `planned`: the active week/month counts only time up to `now`, while later events and later recurrence instances remain in `future_hours`.
 - The frontend now shows that split visibly in `Time Summary`, `Targets`, and `Calendar Table` (`planned later`, `upcoming`, and per-category planned values).
 - The `Day off` trend for the active period now clips to the current day instead of counting future days as off in advance.
@@ -14,6 +14,11 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 - `Period Comparison` now shows a clear in-widget hint when `lookbackWeeks = 1` and no comparison data is being loaded.
 - Widget options now include direct `Move` / `Copy` actions for other dashboard tabs in addition to the existing drag-and-drop flow.
 - Deck widgets are now separated into a management-first `Deck cards` widget and a compact `Deck stats` widget. Both widgets share the same base filter language (`boards`, `stacks`, `tags`, `mine/unassigned` scope), while `Deck stats` stays bound to the current dashboard week/month context.
+- Standard and Advanced dashboard presets now include `Deck stats` in their shipped defaults (`Overview` for Standard, `Workspace` for Advanced).
+- Widget-local advanced editing for `Targets` now routes by strategy and reuses the onboarding Goals UI while saving only widget-local overrides (`useLocalConfig`, `localConfig`, `localTargetsWeek`, `localGroupsById`).
+- `Time Off Trend` now snaps to a single row or clean vertical stack based on widget width instead of falling into mixed wrapping states.
+- Widget config menus now resolve effective `Targets` defaults from the active config, so checkbox state and rendered widget state stay aligned.
+- The `Targets` widget `Never Finished · Stay Hard` mode now uses a much larger icon-only badge and an inset flame frame that stays clipped inside the widget.
 
 ## 0.7.2 - 2026-03-25
 - `Targets`-Widget erweitert um den optionalen Modus `Never Finished · Stay Hard`.

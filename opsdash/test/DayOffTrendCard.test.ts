@@ -3,6 +3,46 @@ import { describe, it, expect } from 'vitest'
 import DayOffTrendCard from '../src/components/widgets/cards/DayOffTrendCard.vue'
 
 describe('DayOffTrendCard', () => {
+  it('switches between a single row and a vertical stack based on widget width', async () => {
+    let resizeCallback: ResizeObserverCallback | null = null
+    const originalResizeObserver = globalThis.ResizeObserver
+    globalThis.ResizeObserver = class {
+      constructor(callback: ResizeObserverCallback) {
+        resizeCallback = callback
+      }
+
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    } as unknown as typeof ResizeObserver
+
+    const wrapper = mount(DayOffTrendCard, {
+      props: {
+        trend: [
+          { offset: 0, label: 'This week', from: '', to: '', totalDays: 7, daysOff: 1, daysWorked: 6 },
+          { offset: 1, label: '-1 wk', from: '', to: '', totalDays: 7, daysOff: 2, daysWorked: 5 },
+          { offset: 2, label: '-2 wk', from: '', to: '', totalDays: 7, daysOff: 3, daysWorked: 4 },
+        ],
+      },
+      attachTo: document.body,
+    })
+
+    const heatmap = wrapper.get('.dayoff-heatmap')
+
+    Object.defineProperty(heatmap.element, 'clientWidth', { configurable: true, value: 460 })
+    resizeCallback?.([{ target: heatmap.element } as ResizeObserverEntry], {} as ResizeObserver)
+    await wrapper.vm.$nextTick()
+    expect(heatmap.classes()).toContain('dayoff-heatmap--row')
+
+    Object.defineProperty(heatmap.element, 'clientWidth', { configurable: true, value: 240 })
+    resizeCallback?.([{ target: heatmap.element } as ResizeObserverEntry], {} as ResizeObserver)
+    await wrapper.vm.$nextTick()
+    expect(heatmap.classes()).toContain('dayoff-heatmap--stacked')
+
+    wrapper.unmount()
+    globalThis.ResizeObserver = originalResizeObserver
+  })
+
   it('applies custom tone colors', () => {
     const wrapper = mount(DayOffTrendCard, {
       props: {

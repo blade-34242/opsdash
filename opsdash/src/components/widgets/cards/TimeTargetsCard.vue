@@ -22,7 +22,7 @@
     <div class="targets-main">
       <div class="line total-line">
         <span class="value"><strong>{{ formatHours(total.actualHours) }}</strong> / {{ formatHours(total.targetHours) }} h</span>
-        <span v-if="config.ui.showTotalDelta && total.targetHours > 0" :class="['delta', total.deltaHours >= 0 ? 'pos' : 'neg']">
+        <span v-if="showDelta && config.ui.showTotalDelta && total.targetHours > 0" :class="['delta', total.deltaHours >= 0 ? 'pos' : 'neg']">
           Δ {{ formatSigned(total.deltaHours) }}h
         </span>
       </div>
@@ -81,7 +81,7 @@
         <div class="cat-metrics">
           <strong>{{ formatHours(cat.actualHours) }}h</strong>
           <span class="hint">/ {{ formatHours(cat.targetHours) }}h</span>
-          <span v-if="cat.targetHours > 0" :class="['delta', cat.deltaHours >= 0 ? 'pos' : 'neg']">
+          <span v-if="showDelta && cat.targetHours > 0" :class="['delta', cat.deltaHours >= 0 ? 'pos' : 'neg']">
             Δ {{ formatSigned(cat.deltaHours) }}h
           </span>
           <span v-if="cat.todayHours > 0" class="hint today-inline">
@@ -125,6 +125,7 @@ const props = withDefaults(defineProps<{
   summary: TargetsSummary
   config: TargetsConfig
   groups?: CategoryGroup[]
+  showDelta?: boolean
   showPace?: boolean
   showForecast?: boolean
   neverFinishedMode?: boolean
@@ -132,6 +133,7 @@ const props = withDefaults(defineProps<{
   title?: string
   cardBg?: string | null
 }>(), {
+  showDelta: true,
   showPace: true,
   showForecast: true,
   neverFinishedMode: false,

@@ -243,6 +243,26 @@ const PRO_TABS: WidgetTabsState = {
           version: 1,
         },
         {
+          id: 'widget-deck_stats-1768297160410',
+          type: 'deck_stats',
+          options: {
+            includeArchived: true,
+            includeCompleted: true,
+            scope: 'all',
+            mineMode: 'assignee',
+            metrics: [
+              'open_now',
+              'overdue_now',
+              'mine_open',
+              'created_in_range',
+              'completed_in_range',
+              'due_in_range',
+            ],
+          },
+          layout: { width: 'quarter', height: 'm', order: 78 },
+          version: 1,
+        },
+        {
           id: 'widget-note_snippet-1768297161989',
           type: 'note_snippet',
           options: {},

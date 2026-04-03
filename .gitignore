@@ -31,3 +31,5 @@ docker-compose*.yml
 
 AGENTS.md
 mockups/
+.codex
+.playwright-mcp/

@@ -261,6 +261,11 @@ const emit = defineEmits<{
 }>()
 
 const local = ref<Record<string, any>>({})
+const CORE_DEFAULT_OPTIONS = {
+  showHeader: true,
+  dense: false,
+  scale: 'md',
+}
 
 const coreControls = [
   { key: 'titlePrefix', label: 'Title prefix', type: 'text' },
@@ -290,7 +295,7 @@ const specificControls = computed(() => {
   const controls = props.entry?.controls || []
   const dynamic =
     typeof props.entry?.dynamicControls === 'function'
-      ? props.entry.dynamicControls(props.options || {}, props.context || {})
+      ? props.entry.dynamicControls(local.value || {}, props.context || {})
       : []
   const merged = [...controls, ...dynamic].filter((c: any) => !blockKeys.has(c.key))
   return merged
@@ -307,10 +312,14 @@ const tabTargets = computed(() =>
 const showTabActionsHint = computed(() => (props.tabs || []).length === 1)
 
 watch(
-  () => props.options,
-  (next) => {
-    const defaults = props.entry?.defaultOptions || {}
-    local.value = { ...defaults, ...(next || {}) }
+  () => [props.entry, props.options],
+  ([entry, next]) => {
+    const defaults = entry?.defaultOptions || {}
+    const resolved =
+      typeof entry?.resolveOptions === 'function'
+        ? entry.resolveOptions(next || {}, props.context || {})
+        : {}
+    local.value = { ...CORE_DEFAULT_OPTIONS, ...defaults, ...resolved, ...(next || {}) }
   },
   { immediate: true, deep: true },
 )

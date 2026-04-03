@@ -1,4 +1,4 @@
-import { buildTargetsSummary, createEmptyTargetsSummary, convertWeekToMonth } from '../targets'
+import { buildTargetsSummary, createEmptyTargetsSummary, convertWeekToMonth, type TargetsProgress, type TargetsSummary } from '../targets'
 
 import type { WidgetRenderContext } from './types'
 
@@ -39,6 +39,161 @@ export function safeBuildTargetsSummary(config: any, ctx: WidgetRenderContext) {
     console.error('[opsdash] targets widget local summary failed', err)
     return createEmptyTargetsSummary(config)
   }
+}
+
+export function buildCategoryGroups(input: {
+  config: any
+  summary: TargetsSummary
+  byCal: any[]
+  calendars: any[]
+  colorsById?: Record<string, string>
+  groupsById: Record<string, number>
+  currentTargets?: Record<string, number>
+}) {
+  const configCategories = Array.isArray(input.config?.categories) ? input.config.categories : []
+  const summaryById = new Map<string, TargetsProgress>()
+  ;(input.summary?.categories || []).forEach((category) => {
+    summaryById.set(String(category.id), category)
+  })
+
+  const categoryByGroup = new Map<number, string>()
+  const categoryLabelById: Record<string, string> = {}
+  configCategories.forEach((category: any) => {
+    const id = String(category?.id ?? '')
+    if (!id) return
+    categoryLabelById[id] = String(category?.label || id)
+    ;(Array.isArray(category?.groupIds) ? category.groupIds : []).forEach((groupId: any) => {
+      const normalized = normalizeGroupId(groupId)
+      categoryByGroup.set(normalized, id)
+    })
+  })
+
+  const categoryColors = new Map<string, string>()
+  const calendarMeta = new Map<string, { name: string; color?: string }>()
+  ;(Array.isArray(input.calendars) ? input.calendars : []).forEach((calendar: any) => {
+    const id = String(calendar?.id ?? '')
+    if (!id) return
+    const color = input.colorsById?.[id] || String(calendar?.color || '')
+    calendarMeta.set(id, {
+      name: String(calendar?.displayname || calendar?.name || id),
+      color: color || undefined,
+    })
+  })
+
+  const assignmentByCalendar: Record<string, string> = {}
+  Object.keys(input.groupsById || {}).forEach((calendarId) => {
+    const normalized = normalizeGroupId(input.groupsById?.[calendarId])
+    assignmentByCalendar[calendarId] = categoryByGroup.get(normalized) || '__uncategorized__'
+  })
+
+  const rowsByCategory = new Map<string, any[]>()
+  ;(Array.isArray(input.byCal) ? input.byCal : []).forEach((row: any) => {
+    const calendarId = String(row?.id ?? row?.calendar_id ?? row?.calendar ?? '')
+    if (!calendarId) return
+    const categoryId = assignmentByCalendar[calendarId] || '__uncategorized__'
+    if (!rowsByCategory.has(categoryId)) rowsByCategory.set(categoryId, [])
+    rowsByCategory.get(categoryId)!.push({ ...row, calendarId })
+  })
+
+  const resolveCategoryColor = (categoryId: string) => {
+    if (categoryColors.has(categoryId)) return categoryColors.get(categoryId)
+    const categoryConfig = configCategories.find((category: any) => String(category?.id ?? '') === categoryId)
+    const direct = typeof categoryConfig?.color === 'string' && categoryConfig.color ? categoryConfig.color : ''
+    if (direct) {
+      categoryColors.set(categoryId, direct)
+      return direct
+    }
+    const rows = rowsByCategory.get(categoryId) || []
+    for (const row of rows) {
+      const calendarColor = calendarMeta.get(String(row.calendarId))?.color
+      if (calendarColor) {
+        categoryColors.set(categoryId, calendarColor)
+        return calendarColor
+      }
+    }
+    return undefined
+  }
+
+  const currentTargets = input.currentTargets || {}
+  const totalDaysLeft = Number(input.summary?.total?.daysLeft ?? 0)
+  const pacePercent = Number(input.summary?.total?.calendarPercent ?? 0)
+  const paceMode = input.summary?.total?.paceMode ?? input.config?.pace?.mode ?? 'days_only'
+
+  const fallbackSummary = (categoryId: string, label: string, rows: any[]): TargetsProgress => {
+    const targetHours = rows.reduce((sum, row) => {
+      const value = Number(currentTargets[String(row.calendarId)] ?? 0)
+      return Number.isFinite(value) ? sum + Math.max(0, value) : sum
+    }, 0)
+    const actualHours = rows.reduce((sum, row) => {
+      const value = Number(row?.total_hours ?? row?.hours ?? 0)
+      return Number.isFinite(value) ? sum + Math.max(0, value) : sum
+    }, 0)
+    const plannedHours = rows.reduce((sum, row) => {
+      const value = Number(row?.future_hours ?? row?.planned_hours ?? 0)
+      return Number.isFinite(value) ? sum + Math.max(0, value) : sum
+    }, 0)
+    const percent = targetHours > 0 ? Math.max(0, Math.min(100, (actualHours / targetHours) * 100)) : 0
+    const deltaHours = actualHours - targetHours
+    const remainingHours = Math.max(0, targetHours - actualHours)
+    const status: TargetsProgress['status'] =
+      targetHours <= 0 ? 'none' : percent >= 100 ? 'done' : deltaHours >= 0 ? 'on_track' : 'behind'
+    const statusLabel =
+      status === 'done' ? 'Done' : status === 'on_track' ? 'On Track' : status === 'behind' ? 'Behind' : '—'
+    const needPerDay = totalDaysLeft > 0 ? remainingHours / totalDaysLeft : 0
+
+    return {
+      id: categoryId,
+      label,
+      actualHours: round2(actualHours),
+      plannedHours: round2(plannedHours),
+      targetHours: round2(targetHours),
+      percent: round2(percent),
+      deltaHours: round2(deltaHours),
+      remainingHours: round2(remainingHours),
+      needPerDay: round2(needPerDay),
+      daysLeft: totalDaysLeft,
+      calendarPercent: round2(Math.max(0, Math.min(100, pacePercent))),
+      gap: round2(percent - pacePercent),
+      status,
+      statusLabel,
+      includeWeekend: true,
+      paceMode,
+    }
+  }
+
+  const result: Array<{
+    id: string
+    label: string
+    rows: any[]
+    summary: TargetsProgress
+    color?: string
+  }> = []
+
+  configCategories.forEach((category: any) => {
+    const categoryId = String(category?.id ?? '')
+    if (!categoryId) return
+    const rows = rowsByCategory.get(categoryId) || []
+    result.push({
+      id: categoryId,
+      label: categoryLabelById[categoryId] || categoryId,
+      rows,
+      summary: summaryById.get(categoryId) || fallbackSummary(categoryId, categoryLabelById[categoryId] || categoryId, rows),
+      color: resolveCategoryColor(categoryId),
+    })
+  })
+
+  if (rowsByCategory.has('__uncategorized__')) {
+    const uncategorizedRows = rowsByCategory.get('__uncategorized__') || []
+    result.push({
+      id: '__uncategorized__',
+      label: 'Unassigned',
+      rows: uncategorizedRows,
+      summary: fallbackSummary('__uncategorized__', 'Unassigned', uncategorizedRows),
+      color: resolveCategoryColor('__uncategorized__'),
+    })
+  }
+
+  return result
 }
 
 export function buildTitle(base: string, prefix?: string | null) {
@@ -120,4 +275,14 @@ export function prettyFilterLabel(key: string): string {
     case 'created_range_mine': return 'Created this range · Mine'
     default: return key
   }
+}
+
+function normalizeGroupId(value: any): number {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return 0
+  return Math.max(0, Math.min(9, Math.trunc(numeric)))
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100
 }
