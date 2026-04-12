@@ -12,6 +12,7 @@ const baseTitle = 'Notes'
 export const noteEditorEntry: RegistryEntry = {
   component: NoteEditorWidget,
   defaultLayout: { width: 'half', height: 'm', order: 69 },
+  heightMode: 'auto',
   label: 'Notes editor',
   baseTitle,
   configurable: true,

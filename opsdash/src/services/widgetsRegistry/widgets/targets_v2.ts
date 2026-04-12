@@ -13,6 +13,7 @@ const baseTitle = 'Targets'
 export const targetsV2Entry: RegistryEntry = {
   component: TimeTargetsCard,
   defaultLayout: { width: 'half', height: 'm', order: 18 },
+  heightMode: 'auto',
   label: 'Targets',
   baseTitle,
   configurable: true,

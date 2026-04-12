@@ -165,6 +165,7 @@ export const timeSummaryOverviewEntry: RegistryEntry = {
 export const timeSummaryLookbackEntry: RegistryEntry = {
   component: TimeSummaryCard,
   defaultLayout: { width: 'half', height: 'l', order: 19 },
+  heightMode: 'auto',
   label: lookbackTitle,
   baseTitle: lookbackTitle,
   configurable: true,

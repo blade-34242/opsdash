@@ -12,6 +12,7 @@ const baseTitle = 'Note'
 export const noteSnippetEntry: RegistryEntry = {
   component: NoteSnippetWidget,
   defaultLayout: { width: 'quarter', height: 's', order: 68 },
+  heightMode: 'auto',
   label: 'Notes snippet',
   baseTitle,
   configurable: true,

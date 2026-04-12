@@ -225,7 +225,15 @@ export function mapWidgetToComponent(def: WidgetDefinition, ctx: WidgetRenderCon
   if (!entry) return null
   const props = entry.buildProps(def, ctx) || {}
   const loading = resolveWidgetLoading(def, ctx)
-  return { component: entry.component, props, loading }
+  // Effective heightMode: per-instance override (options.heightMode) wins over
+  // the registry default. This lets the user toggle Auto/Fixed in the toolbar
+  // regardless of what the widget's default is.
+  const override = def.options?.heightMode
+  const heightMode =
+    override === 'auto' || override === 'fixed'
+      ? override
+      : (entry.heightMode || 'fixed')
+  return { component: entry.component, props, loading, heightMode }
 }
 
 export function createDashboardPreset(mode: DashboardMode): WidgetDefinition[] {

@@ -19,6 +19,7 @@ const baseTitle = 'Deck cards'
 export const deckCardsEntry: RegistryEntry = {
   component: DeckCardsWidget,
   defaultLayout: { width: 'half', height: 'm', order: 52 },
+  heightMode: 'auto',
   label: 'Deck cards',
   baseTitle,
   configurable: true,

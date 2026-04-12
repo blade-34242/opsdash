@@ -12,6 +12,7 @@ const baseTitle = 'Category Mix Trend'
 export const categoryMixTrendEntry: RegistryEntry = {
   component: CategoryMixTrendCard,
   defaultLayout: { width: 'half', height: 'm', order: 47 },
+  heightMode: 'auto',
   label: 'Category Mix Trend',
   baseTitle,
   defaultOptions: {

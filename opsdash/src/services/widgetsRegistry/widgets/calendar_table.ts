@@ -24,6 +24,7 @@ function detectCalendarTableMode(ctx: any): 'single_goal' | 'calendar_goals' | '
 export const calendarTableEntry: RegistryEntry = {
   component: CalendarTableWidget,
   defaultLayout: { width: 'full', height: 'l', order: 70 },
+  heightMode: 'auto',
   label: 'Calendar Table',
   baseTitle,
   configurable: true,

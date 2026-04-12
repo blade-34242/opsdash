@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - None yet.
 
+## 0.7.3 - 2026-04-12
+### Added
+- Introduced a per-widget `heightMode` system (`fixed` | `auto`) so variable-content widgets grow with their content instead of scrolling internally. Eight widgets now default to `auto`: `Targets`, `Period Comparison`, `Time Off Trend`, `Category Mix Trend`, `Calendar Table`, `Deck Cards`, `Notes Editor`, and `Notes Snippet`.
+- Added a ResizeObserver-based masonry layout engine to `DashboardGrid` that dynamically computes `grid-row-end: span N` for auto-height widgets, preventing overlaps with neighboring fixed-height widgets on the CSS grid.
+- Added an **Auto / Fixed** toggle button to the widget toolbar (Layout group, next to the height cycle). Clicking it writes a per-instance `options.heightMode` override that takes precedence over the registry default. When Auto is active, the S/M/L/XL height-cycle button is disabled.
+
 ## 0.7.3 - 2026-04-03
 ### Changed
 - Current-period aggregation now splits elapsed time from upcoming time. The current week/month counts only event time up to `now` as actual work, while later events and later recurring instances stay in separate planned totals.

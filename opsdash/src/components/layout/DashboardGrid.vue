@@ -11,10 +11,11 @@
   <div
     v-for="item in ordered"
     :key="item.id"
+    :ref="(el) => registerItem(item.id, el as HTMLElement | null, item.heightMode)"
     class="layout-item"
     :class="[
         widthClass(item.layout.width),
-        heightClass(item.layout.height),
+        heightClass(item.layout.height, item.heightMode),
         scaleClass(item.options),
         {
           'is-editable': editable,
@@ -41,10 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps<{
-  ordered: Array<{ id: string; component: any; props: any; layout: any; type: string; options: any; loading?: boolean }>
+  ordered: Array<{ id: string; component: any; props: any; layout: any; type: string; options: any; loading?: boolean; heightMode?: string }>
   editable?: boolean
   selectedId?: string | null
   widgetTypeList?: Array<{ type: string; label: string }>
@@ -62,6 +63,53 @@ const draggingId = ref<string | null>(null)
 const dragOrderHint = ref<number | null>(null)
 
 const widgetTypeList = computed(() => props.widgetTypeList || [])
+
+/* ── Dynamic row-span for auto-height widgets ──
+ * CSS Grid cannot measure rendered content height. For widgets with
+ * heightMode: 'auto' we observe their rendered height and compute the
+ * matching `grid-row-end: span N` so the grid reserves the right space
+ * and neighbors don't overlap.
+ */
+const GRID_ROW = 24
+const GRID_GAP = 12
+
+const observers = new Map<string, ResizeObserver>()
+
+function computeSpan(height: number): number {
+  if (!Number.isFinite(height) || height <= 0) return 1
+  return Math.max(1, Math.ceil((height + GRID_GAP) / (GRID_ROW + GRID_GAP)))
+}
+
+function applyAutoSpan(el: HTMLElement) {
+  const rect = el.getBoundingClientRect()
+  const span = computeSpan(rect.height)
+  el.style.gridRowEnd = `span ${span}`
+}
+
+function registerItem(id: string, el: HTMLElement | null, heightMode?: string) {
+  // Clean up any previous observer for this id (element may have been replaced)
+  const existing = observers.get(id)
+  if (existing) {
+    existing.disconnect()
+    observers.delete(id)
+  }
+  if (!el) return
+  if (heightMode !== 'auto') {
+    el.style.gridRowEnd = ''
+    return
+  }
+  // Initial measurement (after layout) and continuous tracking via RO.
+  applyAutoSpan(el)
+  if (typeof ResizeObserver === 'undefined') return
+  const ro = new ResizeObserver(() => applyAutoSpan(el))
+  ro.observe(el)
+  observers.set(id, ro)
+}
+
+onBeforeUnmount(() => {
+  observers.forEach((ro) => ro.disconnect())
+  observers.clear()
+})
 
 const layoutRows = computed(() => {
   const rows: Array<{ items: Array<{ id: string; layout: any; type: string; options: any; span: number; start: number }> }> = []
@@ -98,7 +146,8 @@ function widthToSpan(width: string) {
   return 4
 }
 
-function heightClass(height: string) {
+function heightClass(height: string, heightMode?: string) {
+  if (heightMode === 'auto') return 'h-auto'
   switch (height) {
     case 's': return 'h-s'
     case 'l': return 'h-l'
@@ -291,6 +340,18 @@ function onDragEnd() {
   min-height:0;
   height:100%;
   overflow:auto;
+}
+/* Auto-height widgets grow with their content — no internal scroll,
+   widget height is driven by the component's natural size. */
+.layout-item.h-auto{
+  overflow:visible;
+  align-self:start;
+  height:auto;
+  grid-row-end:auto;
+}
+.layout-item.h-auto > *{
+  height:auto;
+  overflow:visible;
 }
 .w-quarter{ grid-column: span 1; }
 .w-half{ grid-column: span 2; }

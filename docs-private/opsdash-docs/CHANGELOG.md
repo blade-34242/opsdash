@@ -5,6 +5,11 @@ This file is a short internal log. Full release notes live in the repo root `CHA
 ## Unreleased
 - None yet.
 
+## 0.7.3 - 2026-04-12
+- Added `heightMode: 'fixed' | 'auto'` to `RegistryEntry`. Eight widgets default to `auto` (Targets, Lookback, Time Off Trend, Category Mix Trend, Calendar Table, Deck Cards, Notes Editor, Notes Snippet); charts and fixed-row widgets stay `fixed`.
+- `DashboardGrid` now uses a `ResizeObserver` to measure auto-height widget content and sets `grid-row-end: span N` dynamically, eliminating overlaps on the CSS grid masonry layout.
+- Widget toolbar gets an **Auto / Fixed** toggle button (Layout group). User override writes `options.heightMode` per widget instance — resolution order: instance override → registry default → `'fixed'`. Height-cycle button greys out when Auto is active.
+
 ## 0.7.3 - 2026-04-03
 - Current-period aggregation now splits `actual` and `planned`: the active week/month counts only time up to `now`, while later events and later recurrence instances remain in `future_hours`.
 - The frontend now shows that split visibly in `Time Summary`, `Targets`, and `Calendar Table` (`planned later`, `upcoming`, and per-category planned values).

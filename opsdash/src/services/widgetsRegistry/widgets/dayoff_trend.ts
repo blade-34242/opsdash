@@ -12,6 +12,7 @@ const baseTitle = 'Time Off Trend'
 export const dayOffTrendEntry: RegistryEntry = {
   component: DayOffTrendCard,
   defaultLayout: { width: 'quarter', height: 's', order: 45 },
+  heightMode: 'auto',
   label: 'Time Off Trend',
   baseTitle,
   configurable: true,

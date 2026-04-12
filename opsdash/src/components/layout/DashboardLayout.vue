@@ -102,7 +102,7 @@ const ordered = computed(() => {
       const options = def.options || {}
       return { ...mapped, id: def.id, layout: def.layout, type: def.type, options }
     })
-    .filter(Boolean) as Array<{ id: string; component: any; props: any; layout: any; type: string; options: any; loading?: boolean }>
+    .filter(Boolean) as Array<{ id: string; component: any; props: any; layout: any; type: string; options: any; loading?: boolean; heightMode?: string }>
 })
 
 const selectedItem = computed(() => ordered.value.find((w) => w.id === selectedId.value) || null)

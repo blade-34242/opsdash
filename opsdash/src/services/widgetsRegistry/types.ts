@@ -1,5 +1,6 @@
 export type WidgetSize = 'quarter' | 'half' | 'full'
 export type WidgetHeight = 's' | 'm' | 'l' | 'xl'
+export type WidgetHeightMode = 'fixed' | 'auto'
 export type DashboardMode = 'quick' | 'standard' | 'pro'
 
 export interface WidgetDefinition {
@@ -103,6 +104,13 @@ export interface RegistryEntry {
   buildProps: WidgetRenderer
   resolveOptions?: (options: Record<string, any>, ctx?: WidgetRenderContext) => Record<string, any>
   defaultLayout: WidgetDefinition['layout']
+  /**
+   * How the widget's vertical size is determined.
+   * - 'fixed' (default): uses the height bucket (s/m/l/xl) from defaultLayout.
+   * - 'auto': ignores the height bucket and grows with content (height: fit-content).
+   *   The layout grid reserves no fixed row span, and the widget will not scroll internally.
+   */
+  heightMode?: WidgetHeightMode
   label?: string
   baseTitle?: string
   supportsColors?: boolean

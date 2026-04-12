@@ -21,7 +21,14 @@
             <button type="button" class="ghost" title="Move earlier" @click="$emit('move', 'up')">←</button>
             <button type="button" class="ghost" title="Move later" @click="$emit('move', 'down')">→</button>
             <button type="button" class="ghost" title="Cycle width" @click="$emit('cycle-width')">{{ widthLabel(selectedItem.layout.width) }}</button>
-            <button type="button" class="ghost" title="Cycle height" @click="$emit('cycle-height')">{{ heightLabel(selectedItem.layout.height) }}</button>
+            <button type="button" class="ghost" :disabled="isAutoHeight" :class="{ 'is-disabled': isAutoHeight }" title="Cycle height" @click="$emit('cycle-height')">{{ heightLabel(selectedItem.layout.height) }}</button>
+            <button
+              type="button"
+              class="ghost"
+              :class="{ 'is-active': isAutoHeight }"
+              :title="isAutoHeight ? 'Switch to fixed height' : 'Switch to auto height (grow with content)'"
+              @click="$emit('edit-options', selectedItem.id, 'heightMode', isAutoHeight ? 'fixed' : 'auto')"
+            >{{ isAutoHeight ? 'Auto' : 'Fixed' }}</button>
           </div>
         </div>
         <div class="toolbar-group toolbar-group--appearance">
@@ -117,7 +124,7 @@ const CORE_DEFAULT_OPTIONS = {
 
 const props = defineProps<{
   editable?: boolean
-  selectedItem: null | { id: string; layout: any; type: string; options: any; props: any }
+  selectedItem: null | { id: string; layout: any; type: string; options: any; props: any; heightMode?: string }
   openOptionsId: string | null
   presetLabel?: string | null
   context: WidgetRenderContext
@@ -138,6 +145,11 @@ defineEmits<{
   (e: 'move-to-tab', id: string, tabId: string): void
   (e: 'duplicate-to-tab', id: string, tabId: string): void
 }>()
+
+const isAutoHeight = computed(() => {
+  if (!props.selectedItem) return false
+  return props.selectedItem.heightMode === 'auto'
+})
 
 const selectedItemTitle = computed(() => {
   const title = (props.selectedItem?.props as any)?.title || ''
@@ -469,5 +481,17 @@ function heightLabel(height: string) {
 .widget-toolbar .ghost:hover {
   background: var(--tb-btn-hover-bg);
   border-color: var(--tb-btn-hover-border);
+}
+
+.ghost.is-active {
+  background: color-mix(in oklab, var(--color-primary, #2563eb), transparent 82%);
+  border-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
+}
+
+.ghost.is-disabled {
+  opacity: 0.38;
+  pointer-events: none;
 }
 </style>
