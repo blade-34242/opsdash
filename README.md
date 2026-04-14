@@ -2,7 +2,9 @@
 
 ![Nextcloud Server Tests](https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/actions/workflows/server-tests.yml/badge.svg)
 
-Opsdash turns your Nextcloud calendar data into a practical operations dashboard: what happened, what is on target, and where your time is drifting.
+Opsdash is an independent third-party app that turns Nextcloud Calendar data into a practical operations dashboard: what happened, what is on target, and where your time is drifting.
+
+Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintained by Nextcloud GmbH or the Nextcloud project.
 
 ## 🚀 Feature Rundown
 - 📅 **Dashboard** – KPIs for week/month, busiest days, averages, weekend share, top categories, longest events, and multi-tab layouts.
@@ -12,7 +14,7 @@ Opsdash turns your Nextcloud calendar data into a practical operations dashboard
 - 🧠 **Notes** – edit “This week/month”, view “Last week/month”, and optionally surface notes in cards.
 - 🧩 **Onboarding wizard & profiles** – guided setup, rerun onboarding, and save/load/delete/export/import profile presets.
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
-- 🔐 **Nextcloud-native** – same session, same permissions, CSRF-protected writes, no external API calls.
+- 🔐 **Runs inside Nextcloud** – same session, same permissions, CSRF-protected writes, no external API calls.
 - 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
 - 📨 **Report tab (preview)** – configure weekly/monthly digest preferences and reminder behavior.
 - 📐 **Widget sizing controls** – per-widget width/height plus scale/dense options for layout tuning.
@@ -33,13 +35,15 @@ Opsdash turns your Nextcloud calendar data into a practical operations dashboard
 | ![Calendar Table Light](img/opsdash-calendar-table-light.png) | ![Calendar Table Dark](img/opsdash-calendar-table-dark.png) |
 
 ## Compatibility
+Opsdash supports Nextcloud installations, but it is an independent third-party app and not an official Nextcloud app.
+
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
 | `master` | 30-32 | 0.7.3 |
 | `release/0.5.x` | 30-32 | Store-ready line |
 
 ## Install
-Install from the Nextcloud App Store (when published) or place `opsdash` in `custom_apps/` and enable it:
+Install from the Nextcloud App Store as a third-party app (when published) or place `opsdash` in `custom_apps/` and enable it:
 
 ```bash
 occ app:enable opsdash

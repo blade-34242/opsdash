@@ -2,8 +2,10 @@
 <info>
   <id>opsdash</id>
   <name>Operational Dashboard</name>
-  <summary>Nextcloud calendar operations dashboard with KPIs, pacing, and trends</summary>
-  <description><![CDATA[Opsdash turns Nextcloud Calendar activity into an operational cockpit for weekly and monthly planning.
+  <summary>Third-party operational dashboard for Nextcloud Calendar</summary>
+  <description><![CDATA[Opsdash is an independent third-party app for Nextcloud Calendar that turns calendar activity into an operational cockpit for weekly and monthly planning.
+
+Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintained by Nextcloud GmbH or the Nextcloud project.
 
 Use it to answer three questions fast:
 - What happened this period?
@@ -18,7 +20,7 @@ Use it to answer three questions fast:
 - Guided onboarding for quick team setup
 - Short demo video (WEBM): https://raw.githubusercontent.com/blade34242/opsdash-operational-dashboard-nextcloud/master/img/opsdash-marketplace-demo.webm
 
-### Nextcloud-native
+### Runs inside Nextcloud
 - Runs fully inside Nextcloud (no external analytics backend)
 - Per-user configuration persisted server-side
 - CSRF-protected write endpoints and standard Nextcloud permission model

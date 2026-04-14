@@ -1,6 +1,6 @@
 {
   "name": "gellertinnovation/opsdash",
-  "description": "Operational dashboard Nextcloud app",
+  "description": "Independent third-party operational dashboard for Nextcloud Calendar",
   "type": "project",
   "license": "agpl-3.0-or-later",
   "require": {},
