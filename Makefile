@@ -5,7 +5,7 @@ DIST_DIR := $(BUILD_DIR)/dist
 APP_BUILD_DIR := $(BUILD_DIR)/$(APP_NAME)
 VERSION ?= $(shell sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' $(SRC_DIR)/appinfo/info.xml | head -n 1)
 
-.PHONY: clean deps build test appstore release
+.PHONY: clean deps build test appstore sign upload appstore-push release
 .PHONY: smoke start start31 stop status logs
 
 clean:
@@ -64,6 +64,24 @@ release:
 	bash tools/release/bump_version.sh "$(VERSION)"
 	@echo "[make] Building signed-package staging artifact for $(VERSION)"
 	$(MAKE) appstore VERSION=$(VERSION)
+
+sign:
+	@if [ -z "$(VERSION)" ]; then echo "VERSION is required (pass VERSION=x.y.z)" >&2; exit 1; fi
+	@if [ -z "$(SIGN_PRIVATE_KEY_FILE)" ]; then echo "SIGN_PRIVATE_KEY_FILE is required" >&2; exit 1; fi
+	@if [ -z "$(SIGN_CERT_FILE)" ]; then echo "SIGN_CERT_FILE is required" >&2; exit 1; fi
+	@echo "[make] Signing app package for $(VERSION)"
+	VERSION="$(VERSION)" SIGN_PRIVATE_KEY_FILE="$(SIGN_PRIVATE_KEY_FILE)" SIGN_CERT_FILE="$(SIGN_CERT_FILE)" SIGN_SERVICE="$(SIGN_SERVICE)" SIGN_CONTAINER="$(SIGN_CONTAINER)" bash tools/release/sign_app.sh
+
+upload:
+	@if [ -z "$(VERSION)" ]; then echo "VERSION is required (pass VERSION=x.y.z)" >&2; exit 1; fi
+	@echo "[make] Uploading signed package for $(VERSION)"
+	VERSION="$(VERSION)" RELEASE_TAG="$(RELEASE_TAG)" bash tools/release/upload_release.sh
+
+appstore-push:
+	@if [ -z "$(VERSION)" ]; then echo "VERSION is required (pass VERSION=x.y.z)" >&2; exit 1; fi
+	@if [ "$(APPSTORE_DRY_RUN)" != "1" ] && [ "$(APPSTORE_DRY_RUN)" != "true" ] && [ -z "$(APPSTORE_TOKEN)" ]; then echo "APPSTORE_TOKEN is required" >&2; exit 1; fi
+	@echo "[make] Publishing release to Nextcloud App Store for $(VERSION)"
+	VERSION="$(VERSION)" RELEASE_TAG="$(RELEASE_TAG)" APPSTORE_TOKEN="$(APPSTORE_TOKEN)" APPSTORE_URL="$(APPSTORE_URL)" APPSTORE_NIGHTLY="$(APPSTORE_NIGHTLY)" APPSTORE_DRY_RUN="$(APPSTORE_DRY_RUN)" DOWNLOAD_URL="$(DOWNLOAD_URL)" APP_PRIVATE_KEY_FILE="$(APP_PRIVATE_KEY_FILE)" SIGN_PRIVATE_KEY_FILE="$(SIGN_PRIVATE_KEY_FILE)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" GITHUB_TOKEN="$(GITHUB_TOKEN)" bash tools/release/appstore_push.sh
 
 appstore: clean
 	@if [ -z "$(VERSION)" ]; then echo "VERSION is required (pass VERSION=x.y.z)" >&2; exit 1; fi

@@ -22,12 +22,7 @@ opsdash/tests/.phpunit.result.cache
 opsdash/test-results/
 opsdash/playwright-report/
 build/
-docs-private/*
-!docs-private/opsdash-docs/
-docs-private/opsdash-docs/**
-!docs-private/opsdash-docs/**/*.md
-opsdash/docs-private/
-docker-compose*.yml
+.npm-cache/
 
 AGENTS.md
 mockups/
@@ -35,3 +30,5 @@ mockups/
 .playwright-mcp/
 .claude/
 reports/
+targets-auto-height-fixed.png
+toolbar-fixed-mode.png

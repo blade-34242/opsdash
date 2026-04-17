@@ -2,6 +2,8 @@
 
 Thanks for your interest in improving this app! A few guidelines:
 
+Long-form internal docs, release runbooks, and ops notes live in the sibling `opsdash-docs` and `opsdash-ops` workspace repos. Keep this repo's docs limited to contributor-facing guidance.
+
 ## Development
 - Requirements: Node.js 20+, Nextcloud 30-32.
 - Install deps: `npm ci`
@@ -16,7 +18,8 @@ Thanks for your interest in improving this app! A few guidelines:
 
 ## Commits & PRs
 - Keep PRs scoped; include tests or testing steps.
-- Update docs (API/SECURITY/CHANGELOG) when behavior changes.
+- Update app-facing docs (`README.md`, `SECURITY.md`, `CHANGELOG.md`, this file) when behavior changes.
+- Update sibling long-form docs when architecture, release, or ops workflows move.
 - Describe any performance impact and migration notes.
 
 ## Tests (recommended)

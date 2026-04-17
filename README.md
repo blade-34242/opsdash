@@ -63,6 +63,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:8092 npm run test:e2e
 
 - `make start` starts the local Nextcloud 32 dev container on `http://localhost:8092`.
 - `make start31` starts the Nextcloud 31 container on `http://localhost:8088`.
+- The checked-out app is mounted into the dev container from `./opsdash` by default. Override with `APP_SOURCE_DIR=/abs/path/to/opsdash` if you need a different source path.
 - `make status` / `make logs` help confirm the stack is up before testing.
 
 Quick smoke check:
@@ -86,7 +87,19 @@ make appstore VERSION=0.7.3
 ```
 
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  
-Sign separately with `occ integrity:sign-app`.
+Sign separately with:
+```bash
+make sign VERSION=0.7.3 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc32-dev2
+```
+Upload the signed tarball with:
+```bash
+GITHUB_TOKEN=<token> make upload VERSION=0.7.3 RELEASE_TAG=v0.7.3
+```
+Push to the Nextcloud App Store with:
+```bash
+APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.7.3.tar.gz make appstore-push VERSION=0.7.3
+```
+Long-form internal release and runbook documentation now lives in the separate `opsdash-docs` and `opsdash-ops` workspace repos. Keep this repo focused on the app, its generic release commands, and contributor-facing basics.
 
 ## Contributing
 1. Keep PRs focused.

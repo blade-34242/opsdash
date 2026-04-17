@@ -257,7 +257,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - README simplified for end users; screenshots moved under `img/`.
 - Docs moved out of the distribution package to keep releases lean.
-- Internal doc set consolidated (`DEV_WORKFLOW.md`, `TESTING.md`, `ROADMAP.md`) while legacy references now sit under `docs-private/opsdash-docs/archive/` for historical lookup.
+- Internal doc set consolidated (`DEV_WORKFLOW.md`, `TESTING.md`, `ROADMAP.md`) while legacy references now sit under the separate `opsdash-docs/archive/` repo for historical lookup.
 
 ### Fixed
 - Preset names are sanitised end-to-end (API + UI) after fuzz testing uncovered path/HTML issues.

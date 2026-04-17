@@ -1,0 +1,18 @@
+services:
+  nextcloud:
+    image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest
+    container_name: nc31-dev
+    ports:
+      - "8088:80"
+    environment:
+      # NC-Server-Tag/Branch auswählen
+      SERVER_BRANCH: v31.0.8
+    volumes:
+      # persistenter Server + Daten (verhindert erneutes Herunterladen)
+      - nc31srv2:/var/www/html
+      # Mount the checked-out app repo by default; override with APP_SOURCE_DIR if needed.
+      - ${APP_SOURCE_DIR:-./opsdash}:/var/www/html/apps-extra/opsdash
+    restart: unless-stopped
+
+volumes:
+  nc31srv2:
