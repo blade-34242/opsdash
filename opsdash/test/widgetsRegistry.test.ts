@@ -106,6 +106,93 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.summary.categories[0].actualHours).toBe(5)
   })
 
+  it('shows calendar rows for calendar goal mode', () => {
+    const entry = widgetsRegistry.targets_v2
+    const cfg = createDefaultTargetsConfig()
+    cfg.categories = []
+    cfg.ui.showCategoryBlocks = false
+
+    const def: any = { options: {} }
+    const ctx: any = {
+      onboardingStrategy: 'total_plus_categories',
+      targetsConfig: cfg,
+      targetsSummary: {
+        total: {
+          id: 'total',
+          label: 'Total',
+          actualHours: 6,
+          plannedHours: 1,
+          targetHours: 12,
+          percent: 50,
+          deltaHours: -6,
+          remainingHours: 6,
+          needPerDay: 3,
+          daysLeft: 2,
+          calendarPercent: 40,
+          gap: 10,
+          status: 'on_track',
+          statusLabel: 'On Track',
+          includeWeekend: true,
+          paceMode: 'days_only',
+        },
+        categories: [],
+        forecast: { text: '', linear: 0, momentum: 0, primaryMethod: 'linear' as const },
+      },
+      byCal: [{ id: 'cal-1', calendar: 'Primary', total_hours: 6, future_hours: 1 }],
+      calendars: [{ id: 'cal-1', displayname: 'Primary', color: '#ff0000' }],
+      currentTargets: { 'cal-1': 8 },
+      calendarTodayHours: { 'cal-1': 2 },
+    }
+
+    const props = entry.buildProps(def, ctx) as any
+
+    expect(props.config.ui.showCategoryBlocks).toBe(true)
+    expect(props.groups).toHaveLength(1)
+    expect(props.groups[0].id).toBe('cal-1')
+    expect(props.groups[0].label).toBe('Primary')
+    expect(props.groups[0].summary.targetHours).toBe(8)
+    expect(props.groups[0].todayHours).toBe(2)
+  })
+
+  it('prefers single goal mode over stale categories when strategy says total only', () => {
+    const entry = widgetsRegistry.targets_v2
+    const cfg = createDefaultTargetsConfig()
+    const def: any = { options: {} }
+    const ctx: any = {
+      onboardingStrategy: 'total_only',
+      targetsConfig: cfg,
+      targetsSummary: {
+        total: {
+          id: 'total',
+          label: 'Total',
+          actualHours: 6,
+          targetHours: 12,
+          percent: 50,
+          deltaHours: -6,
+          remainingHours: 6,
+          needPerDay: 3,
+          daysLeft: 2,
+          calendarPercent: 40,
+          gap: 10,
+          status: 'on_track',
+          statusLabel: 'On Track',
+          includeWeekend: true,
+          paceMode: 'days_only',
+        },
+        categories: cfg.categories,
+        forecast: { text: '', linear: 0, momentum: 0, primaryMethod: 'linear' as const },
+      },
+      byCal: [{ id: 'cal-1', calendar: 'Primary', total_hours: 6 }],
+      calendars: [{ id: 'cal-1', displayname: 'Primary', color: '#ff0000' }],
+      currentTargets: {},
+    }
+
+    const props = entry.buildProps(def, ctx) as any
+
+    expect(props.config.ui.showCategoryBlocks).toBe(false)
+    expect(props.groups).toEqual([])
+  })
+
   it('time summary overview applies overrides to config', () => {
     const entry = widgetsRegistry.time_summary_overview
     const baseCfg = createDefaultTargetsConfig()

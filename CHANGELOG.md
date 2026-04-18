@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - None yet.
 
+## 0.7.4 - 2026-04-18
+### Changed
+- Release preparation for 0.7.4.
+### Fixed
+- Targets widget now switches cleanly between Single Goal, Calendar Goals, and Calendar + Category Goals, and Calendar Goals no longer falls back to category rows or Unassigned.
+
 ## 0.7.3 - 2026-04-12
 ### Added
 - Introduced a per-widget `heightMode` system (`fixed` | `auto`) so variable-content widgets grow with their content instead of scrolling internally. Eight widgets now default to `auto`: `Targets`, `Period Comparison`, `Time Off Trend`, `Category Mix Trend`, `Calendar Table`, `Deck Cards`, `Notes Editor`, and `Notes Snippet`.

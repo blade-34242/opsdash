@@ -193,6 +193,10 @@ seed_deck() {
   echo "[seed] deck boards + cards"
   local app_path
   app_path=$(resolve_app_path)
+  local occ_has_seed=0
+  if php "$OCC_BIN" list | grep -q ' opsdash:seed-deck'; then
+    occ_has_seed=1
+  fi
   # Board titles + colors reused per user to keep fixtures predictable.
   local titles=(
     "Opsdash Product Delivery"
@@ -208,8 +212,12 @@ seed_deck() {
     local idx=0
     for title in "${titles[@]}"; do
       local color=${colors[$idx]:-"#2563EB"}
-      QA_USER="$user" QA_DECK_BOARD_TITLE="$title" QA_DECK_BOARD_COLOR="$color" QA_DECK_KEEP_STACKS=1 QA_OTHER_USER="$other" \
-        php "${app_path%/}/tools/seed_deck_boards.php"
+      if [ "$occ_has_seed" -eq 1 ]; then
+        QA_OTHER_USER="$other" php "$OCC_BIN" opsdash:seed-deck --user="$user" --board-title="$title" --board-color="$color" --keep-stacks
+      else
+        QA_USER="$user" QA_DECK_BOARD_TITLE="$title" QA_DECK_BOARD_COLOR="$color" QA_DECK_KEEP_STACKS=1 QA_OTHER_USER="$other" \
+          php "${app_path%/}/tools/seed_deck_boards.php"
+      fi
       idx=$((idx + 1))
     done
   }

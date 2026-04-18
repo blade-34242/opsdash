@@ -196,6 +196,121 @@ export function buildCategoryGroups(input: {
   return result
 }
 
+export function buildCalendarGroups(input: {
+  config: any
+  summary: TargetsSummary
+  byCal: any[]
+  calendars: any[]
+  colorsById?: Record<string, string>
+  currentTargets?: Record<string, number>
+  todayHoursByCalendar?: Record<string, number>
+}) {
+  const currentTargets = input.currentTargets || {}
+  const byCalRows = Array.isArray(input.byCal) ? input.byCal : []
+  const todayHoursByCalendar = input.todayHoursByCalendar || {}
+  const paceThresholds = input.config?.pace?.thresholds ?? { onTrack: -2, atRisk: -10 }
+  const includeWeekend = !!(input.config?.pace?.includeWeekendTotal ?? true)
+  const paceMode = input.summary?.total?.paceMode ?? input.config?.pace?.mode ?? 'days_only'
+  const totalDaysLeft = Number(input.summary?.total?.daysLeft ?? 0)
+  const pacePercent = Number(input.summary?.total?.calendarPercent ?? 0)
+
+  const calendarMeta = new Map<string, { label: string; color?: string }>()
+  ;(Array.isArray(input.calendars) ? input.calendars : []).forEach((calendar: any) => {
+    const id = String(calendar?.id ?? '')
+    if (!id) return
+    const color = input.colorsById?.[id] || String(calendar?.color || '')
+    calendarMeta.set(id, {
+      label: String(calendar?.displayname || calendar?.name || id),
+      color: color || undefined,
+    })
+  })
+
+  const rowsById = new Map<string, any>()
+  byCalRows.forEach((row: any) => {
+    const calendarId = String(row?.id ?? row?.calendar_id ?? row?.calendar ?? '')
+    if (!calendarId) return
+    rowsById.set(calendarId, { ...row, calendarId })
+  })
+
+  const orderedIds: string[] = []
+  const pushId = (calendarId: string) => {
+    if (!calendarId || orderedIds.includes(calendarId)) return
+    orderedIds.push(calendarId)
+  }
+
+  ;(Array.isArray(input.calendars) ? input.calendars : []).forEach((calendar: any) => {
+    const calendarId = String(calendar?.id ?? '')
+    if (!calendarId) return
+    if (Object.prototype.hasOwnProperty.call(currentTargets, calendarId) || rowsById.has(calendarId)) {
+      pushId(calendarId)
+    }
+  })
+  Object.keys(currentTargets).forEach(pushId)
+  Array.from(rowsById.keys()).forEach(pushId)
+
+  return orderedIds.map((calendarId) => {
+    const row = rowsById.get(calendarId) || { id: calendarId, calendarId, total_hours: 0, future_hours: 0 }
+    const label = calendarMeta.get(calendarId)?.label || String(row?.calendar ?? row?.name ?? calendarId)
+    const color = calendarMeta.get(calendarId)?.color || input.colorsById?.[calendarId]
+    const targetHours = Number(currentTargets[calendarId] ?? 0)
+    const actualHours = Number(row?.total_hours ?? row?.hours ?? 0)
+    const plannedHours = Number(row?.future_hours ?? row?.planned_hours ?? 0)
+    const safeTarget = Number.isFinite(targetHours) ? Math.max(0, targetHours) : 0
+    const safeActual = Number.isFinite(actualHours) ? Math.max(0, actualHours) : 0
+    const safePlanned = Number.isFinite(plannedHours) ? Math.max(0, plannedHours) : 0
+    const percent = safeTarget > 0 ? round2(Math.max(0, Math.min(100, (safeActual / safeTarget) * 100))) : 0
+    const deltaHours = round2(safeActual - safeTarget)
+    const remainingHours = round2(Math.max(0, safeTarget - safeActual))
+    const gap = round2(percent - pacePercent)
+    const status: TargetsProgress['status'] =
+      safeTarget <= 0
+        ? 'none'
+        : percent >= 100
+          ? 'done'
+          : gap >= Number(paceThresholds.onTrack ?? -2)
+            ? 'on_track'
+            : gap >= Number(paceThresholds.atRisk ?? -10)
+              ? 'at_risk'
+              : 'behind'
+    const statusLabel =
+      status === 'done'
+        ? 'Done'
+        : status === 'on_track'
+          ? 'On Track'
+          : status === 'at_risk'
+            ? 'At Risk'
+            : status === 'behind'
+              ? 'Behind'
+              : '—'
+
+    return {
+      id: calendarId,
+      label,
+      rows: [row],
+      color,
+      todayHours: Number(todayHoursByCalendar[calendarId] ?? 0),
+      summary: {
+        id: calendarId,
+        label,
+        actualHours: round2(safeActual),
+        plannedHours: round2(safePlanned),
+        targetHours: round2(safeTarget),
+        percent,
+        deltaHours,
+        remainingHours,
+        needPerDay: totalDaysLeft > 0 ? round2(remainingHours / totalDaysLeft) : 0,
+        daysLeft: totalDaysLeft,
+        calendarPercent: round2(Math.max(0, Math.min(100, pacePercent))),
+        gap,
+        status,
+        statusLabel,
+        includeWeekend,
+        paceMode,
+      } satisfies TargetsProgress,
+    }
+  })
+}
+
 export function buildTitle(base: string, prefix?: string | null) {
   if (!prefix) return base
   const trimmed = String(prefix).trim()

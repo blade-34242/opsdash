@@ -167,7 +167,7 @@ const hustleScenes = [
 ] as const
 const activeSceneIndex = computed(() => sceneTick.value % hustleScenes.length)
 const categoryGroups = computed<CategoryGroup[]>(() => {
-  if (Array.isArray(props.groups) && props.groups.length) {
+  if (Array.isArray(props.groups)) {
     return props.groups.map(group => ({
       id: group.id,
       label: group.label,

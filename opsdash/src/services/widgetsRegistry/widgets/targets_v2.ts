@@ -4,11 +4,13 @@ const TimeTargetsCard = defineAsyncComponent(() =>
   import('../../../components/widgets/cards/TimeTargetsCard.vue').then((m) => m.default),
 )
 
-import { attachUi, buildCategoryGroups, buildTitle, copyConfigForRange, safeBuildTargetsSummary } from '../helpers'
+import { attachUi, buildCalendarGroups, buildCategoryGroups, buildTitle, copyConfigForRange, safeBuildTargetsSummary } from '../helpers'
 import { clampTarget, convertWeekToMonth, createDefaultTargetsConfig } from '../../targets'
 import type { RegistryEntry } from '../types'
 
 const baseTitle = 'Targets'
+
+type TargetsDisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
 
 export const targetsV2Entry: RegistryEntry = {
   component: TimeTargetsCard,
@@ -98,8 +100,19 @@ export const targetsV2Entry: RegistryEntry = {
     const currentTargets = useLocal
       ? targetsForRange(localTargetsWeek, ctx.rangeMode)
       : (ctx.currentTargets || {})
+    const mode = detectTargetsDisplayMode({
+      strategy: useLocal ? null : ctx?.onboardingStrategy,
+      config: cfg,
+      currentTargets,
+    })
+
+    if (!Object.prototype.hasOwnProperty.call(def.options ?? {}, 'showCategoryBlocks')) {
+      cfg.ui.showCategoryBlocks = mode !== 'single_goal'
+    }
+
     const groups = useLocal
-      ? buildCategoryGroups({
+      ? buildGroupsForMode({
+          mode,
           config: cfg,
           summary,
           byCal: ctx.byCal || [],
@@ -107,8 +120,19 @@ export const targetsV2Entry: RegistryEntry = {
           colorsById: ctx.colorsById || {},
           groupsById: localGroupsById ?? ctx.groupsById ?? {},
           currentTargets,
+          todayHoursByCalendar: ctx.calendarTodayHours || {},
         })
-      : (def.props?.groups ?? ctx.groups)
+      : (def.props?.groups ?? buildGroupsForMode({
+          mode,
+          config: cfg,
+          summary,
+          byCal: ctx.byCal || [],
+          calendars: ctx.calendars || [],
+          colorsById: ctx.colorsById || {},
+          groupsById: ctx.groupsById ?? {},
+          currentTargets,
+          todayHoursByCalendar: ctx.calendarTodayHours || {},
+        }))
 
     return {
       summary,
@@ -125,6 +149,56 @@ export const targetsV2Entry: RegistryEntry = {
       cardBg: def.options?.cardBg,
     }
   },
+}
+
+function detectTargetsDisplayMode(input: {
+  strategy?: string | null
+  config?: any
+  currentTargets?: Record<string, number>
+}): TargetsDisplayMode {
+  const strategy = String(input?.strategy ?? '')
+  if (strategy === 'total_only') return 'single_goal'
+  if (strategy === 'total_plus_categories') return 'calendar_goals'
+  if (strategy === 'full_granular') return 'category_and_calendar_goals'
+
+  const categories = Array.isArray(input?.config?.categories) ? input.config.categories : []
+  if (categories.length > 0) return 'category_and_calendar_goals'
+  const currentTargets = input?.currentTargets && typeof input.currentTargets === 'object' ? input.currentTargets : {}
+  return Object.keys(currentTargets).length > 0 ? 'calendar_goals' : 'single_goal'
+}
+
+function buildGroupsForMode(input: {
+  mode: TargetsDisplayMode
+  config: any
+  summary: any
+  byCal: any[]
+  calendars: any[]
+  colorsById: Record<string, string>
+  groupsById: Record<string, number>
+  currentTargets: Record<string, number>
+  todayHoursByCalendar: Record<string, number>
+}) {
+  if (input.mode === 'single_goal') return []
+  if (input.mode === 'calendar_goals') {
+    return buildCalendarGroups({
+      config: input.config,
+      summary: input.summary,
+      byCal: input.byCal,
+      calendars: input.calendars,
+      colorsById: input.colorsById,
+      currentTargets: input.currentTargets,
+      todayHoursByCalendar: input.todayHoursByCalendar,
+    })
+  }
+  return buildCategoryGroups({
+    config: input.config,
+    summary: input.summary,
+    byCal: input.byCal,
+    calendars: input.calendars,
+    colorsById: input.colorsById,
+    groupsById: input.groupsById,
+    currentTargets: input.currentTargets,
+  })
 }
 
 function normalizeLocalGroups(input: any): Record<string, number> | null {

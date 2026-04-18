@@ -275,6 +275,59 @@ describe('TimeTargetsCard', () => {
     expect(wrapper.findAll('.targets-categories .category')).toHaveLength(0)
   })
 
+  it('does not fall back to summary categories when explicit empty groups are provided', () => {
+    const summary = {
+      total: {
+        id: 'total',
+        label: 'Total',
+        actualHours: 4,
+        targetHours: 10,
+        percent: 40,
+        deltaHours: -6,
+        remainingHours: 6,
+        needPerDay: 2,
+        daysLeft: 3,
+        calendarPercent: 33,
+        gap: 7,
+        status: 'on_track',
+        statusLabel: 'On Track',
+        includeWeekend: true,
+        paceMode: 'days_only',
+      },
+      categories: [
+        {
+          id: 'stale',
+          label: 'Stale Category',
+          actualHours: 4,
+          targetHours: 10,
+          percent: 40,
+          deltaHours: -6,
+          remainingHours: 6,
+          needPerDay: 2,
+          daysLeft: 3,
+          calendarPercent: 33,
+          gap: 7,
+          status: 'on_track',
+          statusLabel: 'On Track',
+          includeWeekend: true,
+          paceMode: 'days_only',
+        },
+      ],
+      forecast: { text: '', linear: 0, momentum: 0, primaryMethod: 'linear' as const },
+    }
+
+    const wrapper = mount(TimeTargetsCard, {
+      props: {
+        summary,
+        config: createDefaultTargetsConfig(),
+        groups: [],
+      },
+    })
+
+    expect(wrapper.findAll('.targets-categories .category')).toHaveLength(0)
+    expect(wrapper.text()).not.toContain('Stale Category')
+  })
+
   it('hides the header when showHeader is false', () => {
     const summary = {
       total: {
