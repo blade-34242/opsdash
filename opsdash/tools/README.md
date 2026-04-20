@@ -28,5 +28,5 @@ BASE=http://localhost:8088 ADMIN_USER=admin ADMIN_PASS=admin \
 Writes `tools/fixtures/load-week.json`, `load-month.json`, `deck-boards.json`.
 
 ## CI usage
-- `.github/workflows/server-tests.yml` runs `tools/seed_opsdash.sh` after starting the PHP server so Playwright always sees seeded data.
+- `.forgejo/workflows/server-tests.yml` runs `tools/seed_opsdash.sh` after starting the PHP server so Playwright always sees seeded data.
 - Keep tooling here; do not bundle in runtime artifacts or app packages.

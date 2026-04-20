@@ -18,8 +18,9 @@ DOWNLOAD_URL="${DOWNLOAD_URL:-}"
 APPSTORE_URL="${APPSTORE_URL:-https://apps.nextcloud.com/api/v1}"
 APPSTORE_NIGHTLY="${APPSTORE_NIGHTLY:-false}"
 APPSTORE_DRY_RUN="${APPSTORE_DRY_RUN:-false}"
-GITHUB_REPOSITORY_VALUE="${GITHUB_REPOSITORY:-}"
-GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+RELEASE_REPO="${RELEASE_REPO:-${GITHUB_REPOSITORY:-}}"
+RELEASE_API_BASE_URL="${RELEASE_API_BASE_URL:-${GITHUB_API_URL:-https://api.github.com}}"
+GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GH_TOKEN:-${FORGEJO_TOKEN:-}}}"
 APP_PRIVATE_KEY_FILE="${APP_PRIVATE_KEY_FILE:-${SIGN_PRIVATE_KEY_FILE:-}}"
 
 if [[ -z "$VERSION" ]]; then
@@ -47,28 +48,28 @@ if [[ "$APPSTORE_DRY_RUN" != "true" && "$APPSTORE_DRY_RUN" != "1" && -z "$APPSTO
 fi
 
 if [[ -z "$DOWNLOAD_URL" ]]; then
-  if [[ -n "$GITHUB_REPOSITORY_VALUE" ]]; then
-    release_api="https://api.github.com/repos/$GITHUB_REPOSITORY_VALUE/releases/tags/$RELEASE_TAG"
+  if [[ -n "$RELEASE_REPO" ]]; then
+    release_api="${RELEASE_API_BASE_URL%/}/repos/$RELEASE_REPO/releases/tags/$RELEASE_TAG"
     auth_args=()
     if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
       auth_args+=(-H "Authorization: token $GITHUB_TOKEN_VALUE")
     fi
 
-    release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/vnd.github+json' "$release_api")"
+    release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/json' "$release_api")"
     asset_name="$(basename "$UPLOAD_FILE")"
     DOWNLOAD_URL="$(printf '%s' "$release_json" | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
   else
     remote_url="$(git remote get-url origin 2>/dev/null || true)"
-    GITHUB_REPOSITORY_VALUE="$(printf '%s' "$remote_url" | sed -nE 's#.*github\.com[:/]([^/]+/[^/]+)(\.git)?$#\1#p')"
-    GITHUB_REPOSITORY_VALUE="${GITHUB_REPOSITORY_VALUE%.git}"
-    if [[ -n "$GITHUB_REPOSITORY_VALUE" ]]; then
-      release_api="https://api.github.com/repos/$GITHUB_REPOSITORY_VALUE/releases/tags/$RELEASE_TAG"
+    RELEASE_REPO="$(printf '%s' "$remote_url" | sed -nE 's#.*[:/]([^/]+/[^/]+)(\.git)?$#\1#p')"
+    RELEASE_REPO="${RELEASE_REPO%.git}"
+    if [[ -n "$RELEASE_REPO" ]]; then
+      release_api="${RELEASE_API_BASE_URL%/}/repos/$RELEASE_REPO/releases/tags/$RELEASE_TAG"
       auth_args=()
       if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
         auth_args+=(-H "Authorization: token $GITHUB_TOKEN_VALUE")
       fi
 
-      release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/vnd.github+json' "$release_api")"
+      release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/json' "$release_api")"
       asset_name="$(basename "$UPLOAD_FILE")"
       DOWNLOAD_URL="$(printf '%s' "$release_json" | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
     fi
@@ -76,7 +77,7 @@ if [[ -z "$DOWNLOAD_URL" ]]; then
 fi
 
 if [[ -z "$DOWNLOAD_URL" || "$DOWNLOAD_URL" == "null" ]]; then
-  fail "Unable to determine DOWNLOAD_URL. Set DOWNLOAD_URL explicitly or expose GITHUB_REPOSITORY and the release asset."
+  fail "Unable to determine DOWNLOAD_URL. Set DOWNLOAD_URL explicitly or expose RELEASE_REPO and the release asset."
 fi
 
 if [[ "$DOWNLOAD_URL" != https://* ]]; then

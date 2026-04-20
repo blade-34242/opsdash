@@ -1,0 +1,206 @@
+name: Nextcloud Server Tests
+
+on:
+  push:
+    branches:
+      - master
+      - 'release/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_NAME: opsdash
+  PLAYWRIGHT_SECOND_USER: qa
+  PLAYWRIGHT_SECOND_PASS: qa-secret
+
+jobs:
+  version-consistency:
+    runs-on: ubuntu-latest
+    container:
+      image: shivammathur/node:php-8.3-bookworm
+    steps:
+      - name: Checkout app sources
+        uses: actions/checkout@v4
+      - name: Validate version consistency
+        run: bash tools/ci/check_versions.sh
+
+  matrix-config:
+    runs-on: ubuntu-latest
+    container:
+      image: shivammathur/node:php-8.3-bookworm
+    outputs:
+      matrix: ${{ steps.load-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: load-matrix
+        run: |
+          matrix=$(node .github/scripts/render-matrix.js)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  server-tests:
+    needs: [version-consistency, matrix-config]
+    name: Nextcloud ${{ matrix.nextcloud_branch }} / PHP ${{ matrix.php_version }}
+    runs-on: ubuntu-latest
+    container:
+      image: shivammathur/node:php-${{ matrix.php_version }}-bookworm
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix-config.outputs.matrix) }}
+    steps:
+      - name: Checkout Nextcloud server
+        uses: actions/checkout@v4
+        with:
+          repository: nextcloud/server
+          ref: ${{ matrix.nextcloud_branch }}
+          submodules: true
+          path: server
+
+      - name: Checkout app sources
+        uses: actions/checkout@v4
+        with:
+          path: app-src
+
+      - name: Install system tools
+        run: |
+          apt-get update
+          apt-get install -y rsync jq composer
+
+      - name: Sync app into server tree
+        run: |
+          mkdir -p server/apps/${{ env.APP_NAME }}
+          rsync -a --delete app-src/opsdash/ server/apps/${{ env.APP_NAME }}/
+          # include top-level security scripts for CI checks
+          rsync -a app-src/tools/security/ server/apps/${{ env.APP_NAME }}/tools/security/ 2>/dev/null || true
+
+      - name: NPM install
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: npm ci
+
+      - name: NPM unit tests
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: npm run test -- --run
+
+      - name: NPM typecheck
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: npm run typecheck
+
+      - name: Build assets
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: npm run build
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ matrix.php_version }}-${{ hashFiles('server/apps/opsdash/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-${{ matrix.php_version }}-
+            ${{ runner.os }}-composer-
+
+      - name: Composer install
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: composer install
+
+      - name: Install Nextcloud
+        working-directory: server
+        run: |
+          mkdir -p data
+          php occ maintenance:install --database=sqlite --database-name=nextcloud --admin-user admin --admin-pass admin
+          php occ app:enable $APP_NAME
+
+      - name: Install Deck app (optional)
+        working-directory: server
+        run: |
+          has_deck() {
+            php occ app:list --output=json \
+              | php -r '
+                  $json = json_decode(stream_get_contents(STDIN), true);
+                  $found = false;
+                  foreach (["enabled", "disabled"] as $bucket) {
+                    if (!isset($json[$bucket]) || !is_array($json[$bucket])) continue;
+                    if (array_is_list($json[$bucket])) {
+                      if (in_array("deck", $json[$bucket], true)) { $found = true; break; }
+                    } else {
+                      if (array_key_exists("deck", $json[$bucket])) { $found = true; break; }
+                    }
+                  }
+                  exit($found ? 0 : 1);
+                '
+          }
+          if has_deck; then
+            echo "[deck] app entry already present"
+          else
+            echo "[deck] trying to install deck from app store"
+            php occ app:install deck || echo "[deck] install failed; continuing without deck"
+          fi
+          php occ app:enable deck || echo "[deck] enable failed; continuing without deck"
+          if has_deck; then
+            echo "[deck] available"
+            echo "OPSDASH_DECK_AVAILABLE=1" >> "$GITHUB_ENV"
+          else
+            echo "[deck] unavailable; Deck-dependent seeding will be skipped"
+            echo "OPSDASH_DECK_AVAILABLE=0" >> "$GITHUB_ENV"
+          fi
+
+      - name: PHPUnit
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: composer run test:unit
+
+      - name: PHP static analysis
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: composer run test:static
+
+      - name: Install Playwright deps
+        working-directory: server/apps/${{ env.APP_NAME }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Start PHP server
+        working-directory: server
+        run: |
+          php -S 127.0.0.1:8080 -t . >/tmp/php-server.log 2>&1 &
+          echo $! > /tmp/php-server.pid
+
+      - name: Seed Opsdash data (calendars + Deck)
+        working-directory: server
+        env:
+          BASE: http://127.0.0.1:8080
+          ADMIN_USER: admin
+          ADMIN_PASS: admin
+          QA_USER: ${{ env.PLAYWRIGHT_SECOND_USER }}
+          QA_PASS: ${{ env.PLAYWRIGHT_SECOND_PASS }}
+          QA2_USER: qa2
+          QA2_PASS: qa2
+        run: |
+          bash apps/${{ env.APP_NAME }}/tools/seed_opsdash.sh
+
+      - name: Playwright smoke test
+        working-directory: server/apps/${{ env.APP_NAME }}
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
+          PLAYWRIGHT_USER: admin
+          PLAYWRIGHT_PASS: admin
+          PLAYWRIGHT_SECOND_USER: ${{ env.PLAYWRIGHT_SECOND_USER }}
+          PLAYWRIGHT_SECOND_PASS: ${{ env.PLAYWRIGHT_SECOND_PASS }}
+        run: npm run test:e2e
+
+      - name: Upload Playwright results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.nextcloud_branch }}-php${{ matrix.php_version }}
+          path: server/apps/${{ env.APP_NAME }}/playwright-report
+          if-no-files-found: ignore
+
+      - name: Stop PHP server
+        if: always()
+        run: |
+          if [ -f /tmp/php-server.pid ]; then
+            kill $(cat /tmp/php-server.pid) || true
+          fi
+          rm -f /tmp/php-server.pid

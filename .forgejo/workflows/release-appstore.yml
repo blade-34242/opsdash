@@ -1,0 +1,189 @@
+name: Build And Publish Appstore Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version (x.y.z). Optional; falls back to tag/ref.'
+        required: false
+        type: string
+      push_to_appstore:
+        description: 'Push to Nextcloud App Store on manual runs.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: opsdash
+  FORGEJO_BASE_URL: ${{ github.server_url }}
+  RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
+  NEXTCLOUD_RELEASE_BRANCH: stable32
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    container:
+      image: shivammathur/node:php-8.3-bookworm
+    steps:
+      - name: Checkout app sources
+        uses: actions/checkout@v4
+
+      - name: Checkout Nextcloud server
+        uses: actions/checkout@v4
+        with:
+          repository: nextcloud/server
+          ref: ${{ env.NEXTCLOUD_RELEASE_BRANCH }}
+          submodules: true
+          path: server
+
+      - name: Install system tools
+        run: |
+          apt-get update
+          apt-get install -y rsync jq curl composer
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ github.event.inputs.version || '' }}"
+          if [ -z "$version" ]; then
+            version="${GITHUB_REF_NAME}"
+          fi
+
+          version="${version#v}"
+          if [ -z "$version" ]; then
+            echo "Unable to resolve release version" >&2
+            exit 1
+          fi
+
+          asset_name="${{ env.APP_NAME }}-${version}.tar.gz"
+          should_push="${{ github.event_name == 'push' || github.event.inputs.push_to_appstore == 'true' }}"
+          release_tag="v${version}"
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "asset_name=${asset_name}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
+          echo "should_push=${should_push}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify required release secrets
+        shell: bash
+        env:
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          APP_PUBLIC_CRT: ${{ secrets.APP_PUBLIC_CRT }}
+          APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
+          SHOULD_PUSH_APPSTORE: ${{ steps.version.outputs.should_push }}
+        run: |
+          set -euo pipefail
+
+          missing=()
+          for secret in APP_PRIVATE_KEY APP_PUBLIC_CRT; do
+            if [ -z "${!secret:-}" ]; then
+              missing+=("$secret")
+            fi
+          done
+
+          if [ "${SHOULD_PUSH_APPSTORE}" = "true" ] && [ -z "${APPSTORE_TOKEN:-}" ]; then
+            missing+=("APPSTORE_TOKEN")
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'Missing required secret(s): %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          printf '%s' "${APP_PRIVATE_KEY}" > "$tmpdir/app.key"
+          printf '%s' "${APP_PUBLIC_CRT}" > "$tmpdir/app.crt"
+
+          if ! openssl pkey -in "$tmpdir/app.key" -noout >/dev/null 2>&1; then
+            echo "APP_PRIVATE_KEY is not a valid PEM private key." >&2
+            exit 1
+          fi
+
+          if ! openssl x509 -in "$tmpdir/app.crt" -noout >/dev/null 2>&1; then
+            echo "APP_PUBLIC_CRT is not a valid PEM certificate." >&2
+            exit 1
+          fi
+
+      - name: Sync release version sources
+        run: bash tools/release/bump_version.sh "${{ steps.version.outputs.version }}"
+
+      - name: Build appstore tarball
+        run: make appstore VERSION=${{ steps.version.outputs.version }}
+
+      - name: Export signing materials from environment secrets
+        shell: bash
+        env:
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_public_crt: ${{ secrets.APP_PUBLIC_CRT }}
+        run: |
+          set -euo pipefail
+          cert_dir="$HOME/.nextcloud/certificates"
+          mkdir -p "$cert_dir"
+          php ./tools/ci/file_from_env.php "app_private_key" "$cert_dir/${{ env.APP_NAME }}.key"
+          php ./tools/ci/file_from_env.php "app_public_crt" "$cert_dir/${{ env.APP_NAME }}.crt"
+
+      - name: Sign staged app and rebuild tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          cert_dir="$HOME/.nextcloud/certificates"
+
+          php server/occ integrity:sign-app \
+            --privateKey="$cert_dir/${{ env.APP_NAME }}.key" \
+            --certificate="$cert_dir/${{ env.APP_NAME }}.crt" \
+            --path="$GITHUB_WORKSPACE/build/${{ env.APP_NAME }}"
+
+          test -f "build/${{ env.APP_NAME }}/appinfo/signature.json"
+
+          rm -f "build/dist/${{ steps.version.outputs.asset_name }}"
+          tar -czf "build/dist/${{ steps.version.outputs.asset_name }}" -C build "${{ env.APP_NAME }}"
+
+      - name: Upload package as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appstore-package-${{ steps.version.outputs.version }}
+          path: build/dist/${{ steps.version.outputs.asset_name }}
+          if-no-files-found: error
+
+      - name: Upload tarball to Forgejo release
+        id: upload_release
+        if: ${{ github.event_name == 'push' || github.event.inputs.push_to_appstore == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          bash tools/release/upload_release.sh
+
+      - name: Push to Nextcloud App Store
+        if: ${{ steps.version.outputs.should_push == 'true' }}
+        env:
+          APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
+          APP_PRIVATE_KEY_FILE: $HOME/.nextcloud/certificates/${{ env.APP_NAME }}.key
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          DOWNLOAD_URL: ${{ steps.upload_release.outputs.download_url }}
+        run: |
+          bash tools/release/appstore_push.sh
+
+      - name: Delete crt and key from local storage
+        if: always()
+        run: rm -f ~/.nextcloud/certificates/*

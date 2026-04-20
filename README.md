@@ -1,6 +1,6 @@
 # Opsdash - Operational Calendar Dashboard
 
-![Opsdash Server Tests](https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/actions/workflows/server-tests.yml/badge.svg)
+CI runs in Forgejo Actions on the Forgejo-hosted repository.
 
 Opsdash is an independent third-party app that turns Nextcloud Calendar data into a practical operations dashboard: what happened, what is on target, and where your time is drifting.
 
