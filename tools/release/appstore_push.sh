@@ -18,9 +18,9 @@ DOWNLOAD_URL="${DOWNLOAD_URL:-}"
 APPSTORE_URL="${APPSTORE_URL:-https://apps.nextcloud.com/api/v1}"
 APPSTORE_NIGHTLY="${APPSTORE_NIGHTLY:-false}"
 APPSTORE_DRY_RUN="${APPSTORE_DRY_RUN:-false}"
-RELEASE_REPO="${RELEASE_REPO:-${GITHUB_REPOSITORY:-}}"
-RELEASE_API_BASE_URL="${RELEASE_API_BASE_URL:-${GITHUB_API_URL:-https://api.github.com}}"
-GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GH_TOKEN:-${FORGEJO_TOKEN:-}}}"
+RELEASE_REPO="${RELEASE_REPO:-${FORGEJO_REPOSITORY:-}}"
+RELEASE_API_BASE_URL="${RELEASE_API_BASE_URL:-${FORGEJO_API_URL:-}}"
+RELEASE_TOKEN_VALUE="${RELEASE_TOKEN:-${FORGEJO_TOKEN:-}}"
 APP_PRIVATE_KEY_FILE="${APP_PRIVATE_KEY_FILE:-${SIGN_PRIVATE_KEY_FILE:-}}"
 
 if [[ -z "$VERSION" ]]; then
@@ -51,8 +51,8 @@ if [[ -z "$DOWNLOAD_URL" ]]; then
   if [[ -n "$RELEASE_REPO" ]]; then
     release_api="${RELEASE_API_BASE_URL%/}/repos/$RELEASE_REPO/releases/tags/$RELEASE_TAG"
     auth_args=()
-    if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
-      auth_args+=(-H "Authorization: token $GITHUB_TOKEN_VALUE")
+    if [[ -n "$RELEASE_TOKEN_VALUE" ]]; then
+      auth_args+=(-H "Authorization: token $RELEASE_TOKEN_VALUE")
     fi
 
     release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/json' "$release_api")"
@@ -65,11 +65,11 @@ if [[ -z "$DOWNLOAD_URL" ]]; then
     if [[ -n "$RELEASE_REPO" ]]; then
       release_api="${RELEASE_API_BASE_URL%/}/repos/$RELEASE_REPO/releases/tags/$RELEASE_TAG"
       auth_args=()
-      if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
-        auth_args+=(-H "Authorization: token $GITHUB_TOKEN_VALUE")
+      if [[ -n "$RELEASE_TOKEN_VALUE" ]]; then
+        auth_args+=(-H "Authorization: token $RELEASE_TOKEN_VALUE")
       fi
 
-      release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/json' "$release_api")"
+    release_json="$(curl -fsSL "${auth_args[@]}" -H 'Accept: application/json' "$release_api")"
       asset_name="$(basename "$UPLOAD_FILE")"
       DOWNLOAD_URL="$(printf '%s' "$release_json" | jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' | head -n 1)"
     fi

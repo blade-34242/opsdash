@@ -293,9 +293,6 @@
               <template v-else>
                 Operational Dashboard • v{{ pkg?.version || '0.6.0' }} • Built by Blade34242 @ Gellert Innovation
               </template>
-              <template v-if="changelogUrl">
-                • <a :href="changelogUrl" target="_blank" rel="noopener noreferrer">Changelog</a>
-              </template>
             </div>
           </div>
         </div>
@@ -969,11 +966,10 @@ const {
   ensureSidebarVisible,
 })
 
-const { iconSrc, onIconError, appVersion, changelogUrl } = useAppMeta({
+const { iconSrc, onIconError, appVersion } = useAppMeta({
   pingUrl: () => route('ping'),
   getJson,
   pkgVersion: pkg?.version ? String(pkg.version) : '',
-  fallbackChangelogUrl: 'https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/blob/master/CHANGELOG.md',
   root,
 })
 

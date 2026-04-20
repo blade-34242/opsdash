@@ -263,7 +263,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.4.5 - 2025-11-10
 ### Added
-- GitHub Actions matrix that provisions Nextcloud server branches (`stable30`, `stable31`) across PHP 8.2/8.3 and runs Vitest, PHPUnit, and Playwright.
+- CI matrix that provisions Nextcloud server branches (`stable30`, `stable31`) across PHP 8.2/8.3 and runs Vitest, PHPUnit, and Playwright.
 - Playwright flow that re-runs onboarding and saves a preset to guard main UI paths.
 - Security automation scripts (`tools/security/run_curl_checks.sh`, `import_fuzz.sh`, `preset_roundtrip.sh`, `opsdash/tools/security/run_notes_csrf.sh`).
 - `make appstore` target for reproducible packaging + signing.

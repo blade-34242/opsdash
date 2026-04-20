@@ -13,9 +13,9 @@ APP_NAME="${APP_NAME:-opsdash}"
 RELEASE_TAG="${RELEASE_TAG:-v$VERSION}"
 UPLOAD_FILE="${UPLOAD_FILE:-$ROOT_DIR/build/dist/$APP_NAME-$VERSION.tar.gz}"
 SIGNED_MARKER="${SIGNED_MARKER:-$ROOT_DIR/build/$APP_NAME/appinfo/signature.json}"
-UPLOAD_REPO="${UPLOAD_REPO:-${RELEASE_REPO:-${GITHUB_REPOSITORY:-}}}"
-RELEASE_API_BASE_URL="${RELEASE_API_BASE_URL:-${GITHUB_API_URL:-https://api.github.com}}"
-GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-${FORGEJO_TOKEN:-}}}"
+UPLOAD_REPO="${UPLOAD_REPO:-${RELEASE_REPO:-${FORGEJO_REPOSITORY:-}}}"
+RELEASE_API_BASE_URL="${RELEASE_API_BASE_URL:-${FORGEJO_API_URL:-}}"
+RELEASE_TOKEN="${RELEASE_TOKEN:-${FORGEJO_TOKEN:-}}"
 
 if [[ -z "$VERSION" ]]; then
   fail "VERSION is required (pass VERSION=x.y.z)"
@@ -44,15 +44,15 @@ if [[ -z "$UPLOAD_REPO" ]]; then
   fail "Unable to determine repository. Set UPLOAD_REPO=owner/name or configure origin."
 fi
 
-if [[ -z "$GITHUB_TOKEN" ]]; then
-  fail "GITHUB_TOKEN, GH_TOKEN, or FORGEJO_TOKEN is required for release uploads"
+if [[ -z "$RELEASE_TOKEN" ]]; then
+  fail "RELEASE_TOKEN or FORGEJO_TOKEN is required for release uploads"
 fi
 
 asset_name="$(basename "$UPLOAD_FILE")"
 asset_name_q="$(jq -rn --arg value "$asset_name" '$value|@uri')"
 api_base="${RELEASE_API_BASE_URL%/}/repos/$UPLOAD_REPO/releases"
 tag_api_base="$api_base/tags/$RELEASE_TAG"
-auth_header="Authorization: token $GITHUB_TOKEN"
+auth_header="Authorization: token $RELEASE_TOKEN"
 accept_header="Accept: application/json"
 
 release_json="$(curl -fsSL \
@@ -105,7 +105,7 @@ curl -fsSL \
 download_url="$(printf '%s' "$release_json" | jq -r --arg name "$asset_name" '.assets[]? | select(.name == $name) | .browser_download_url' | head -n 1)"
 
 if [[ -z "$download_url" || "$download_url" == "null" ]]; then
-  # Re-read the release after upload so Forgejo/GitHub can populate the asset URL.
+  # Re-read the release after upload so Forgejo can populate the asset URL.
   release_json="$(curl -fsSL \
     -H "$auth_header" \
     -H "$accept_header" \

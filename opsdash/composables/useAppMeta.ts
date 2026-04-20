@@ -4,17 +4,7 @@ interface AppMetaOptions {
   pingUrl: () => string
   getJson: (url: string, params: Record<string, unknown>) => Promise<any>
   pkgVersion?: string
-  fallbackChangelogUrl?: string
   root: ComputedRef<string>
-}
-
-function normalizeChangelogUrl(value: unknown): string {
-  const raw = String(value ?? '').trim()
-  if (!raw) return ''
-  return raw.replace(
-    'github.com/blade34242/nexcloud-operational-cal-deck-dashboard',
-    'github.com/blade34242/opsdash-operational-dashboard-nextcloud',
-  )
 }
 
 function readDataAttr(name: string): string {
@@ -48,18 +38,12 @@ export function useAppMeta(options: AppMetaOptions) {
   }
 
   const appVersion = ref<string>(readDataAttr('opsdashVersion') || (options.pkgVersion ? String(options.pkgVersion) : ''))
-  const changelogUrl = ref<string>(
-    normalizeChangelogUrl(readDataAttr('opsdashChangelog'))
-      || normalizeChangelogUrl(options.fallbackChangelogUrl),
-  )
 
   async function ensureMeta() {
-    if (appVersion.value && changelogUrl.value) return
+    if (appVersion.value) return
     try {
       const res = await options.getJson(options.pingUrl(), {})
       if (!appVersion.value && typeof res?.version === 'string') appVersion.value = res.version
-      const resolved = normalizeChangelogUrl(res?.changelog)
-      if (!changelogUrl.value && resolved) changelogUrl.value = resolved
     } catch {}
   }
 
@@ -69,6 +53,5 @@ export function useAppMeta(options: AppMetaOptions) {
     iconSrc,
     onIconError,
     appVersion,
-    changelogUrl,
   }
 }

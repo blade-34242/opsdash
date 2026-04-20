@@ -98,7 +98,7 @@ make sign VERSION=0.7.5 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT
 ```
 Upload the signed tarball with:
 ```bash
-GITHUB_TOKEN=<token> make upload VERSION=0.7.5 RELEASE_TAG=v0.7.5
+FORGEJO_TOKEN=<token> make upload VERSION=0.7.5 RELEASE_TAG=v0.7.5
 ```
 Push to the Nextcloud App Store with:
 ```bash

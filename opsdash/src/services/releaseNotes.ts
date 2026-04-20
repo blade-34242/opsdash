@@ -24,8 +24,6 @@ export interface ReleaseNotesEntry {
   showInHistory?: boolean
 }
 
-const CHANGELOG_URL = 'https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/blob/master/CHANGELOG.md'
-
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
     version: '0.7.5',
@@ -52,13 +50,6 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
         caption: 'The second preview highlights the window structure and shared onboarding-style layout.',
       },
     ],
-    actions: [
-      {
-        label: 'Open changelog',
-        type: 'link',
-        href: CHANGELOG_URL,
-      },
-    ],
     autoShow: true,
     showInHistory: true,
   },
@@ -72,13 +63,6 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'Switching between Targets layouts is now much clearer and no longer drops you into the wrong structure.',
       'Calendar Goals stays focused on calendar rows instead of unexpectedly falling back to category sections.',
       'The result is a more predictable setup flow when you adjust how planning is displayed on the dashboard.',
-    ],
-    actions: [
-      {
-        label: 'Open changelog',
-        type: 'link',
-        href: CHANGELOG_URL,
-      },
     ],
     autoShow: true,
     showInHistory: true,

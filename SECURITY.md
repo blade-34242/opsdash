@@ -9,8 +9,8 @@ If you spot something suspicious, please report it. Helpful reports make the app
 We currently support the `0.7.x` line (Nextcloud `30-32`).
 
 ## How to Report
-- **Sensitive/security-critical issue**: please use a private GitHub Security Advisory report.
-- **Non-sensitive security concern or hardening suggestion**: opening a normal GitHub issue is welcome.
+- **Sensitive/security-critical issue**: please use the private security contact below.
+- **Non-sensitive security concern or hardening suggestion**: opening a normal issue is welcome.
 - **Alternate private contact**: `opsdash-security@gellert-innovation.dev` (PGP optional).
 
 Please include:
@@ -23,6 +23,6 @@ Please include:
 ## Response Expectations
 1. Acknowledgement target: within 3 business days.
 2. Triage update target: usually within 7 days.
-3. Fix and release notes: tracked in `CHANGELOG.md` and GitHub Releases.
+3. Fix and release notes: tracked in `CHANGELOG.md` and the release notes workflow.
 
 Please avoid public disclosure of exploitable vulnerabilities until a fix is available.
