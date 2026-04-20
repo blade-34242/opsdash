@@ -47,6 +47,17 @@
       @export-config="exportSidebarConfig"
       @import-config="importSidebarConfig"
     />
+    <VersionNotesOverlay
+      v-if="activeReleaseNotesEntry"
+      :visible="releaseNotesOverlayOpen"
+      :theme="effectiveTheme"
+      :entry="activeReleaseNotesEntry"
+      :history="releaseNotesHistory"
+      :selected-version="selectedReleaseNotesVersion"
+      :is-saving="isReleaseNotesSaving"
+      @close="closeReleaseNotesOverlay"
+      @select-version="openReleaseNotesVersion"
+    />
     <NcAppContent app-name="Operational Dashboard" :show-navigation="navOpen">
       <template #navigation>
         <Sidebar
@@ -60,12 +71,15 @@
           :nav-toggle-icon="navToggleIcon"
           :dashboard-mode="dashboardMode"
           :guided-hints="guidedHints"
+          :release-notes-available="releaseNotesAvailable"
+          :release-notes-open="releaseNotesOverlayOpen"
           @load="performLoad"
           @update:range="(v)=>{ range=v as any; offset=0; performLoad() }"
           @update:offset="(v)=>{ offset=v as number; performLoad() }"
           @toggle-nav="toggleNav"
           @rerun-onboarding="openWizardFromSidebar"
           @open-profiles="profilesOverlayOpen = true"
+          @open-release-notes="openCurrentReleaseNotes"
           @open-shortcuts="(el) => openShortcuts(el)"
         />
       </template>
@@ -344,6 +358,7 @@ import { useSummaries } from '../composables/useSummaries'
 import { useBalance } from '../composables/useBalance'
 import { useThemeController } from '../composables/useThemeController'
 import { useOnboardingFlow } from '../composables/useOnboardingFlow'
+import { useVersionOverlay } from '../composables/useVersionOverlay'
 import { useRangeToolbar } from '../composables/useRangeToolbar'
 import { useConfigExportImport } from '../composables/useConfigExportImport'
 import { useDetailsToggle } from '../composables/useDetailsToggle'
@@ -358,6 +373,7 @@ import { useDashboardBoot } from '../composables/useDashboardBoot'
 import { useWidgetRenderContext } from '../composables/useWidgetRenderContext'
 import { useLayoutTabsContext } from '../composables/useLayoutTabsContext'
 import './styles/widgetTextScale.css'
+import VersionNotesOverlay from './components/overlays/VersionNotesOverlay.vue'
 // Ensure a visible version even if backend attrs are empty: use package.json as fallback
 // @ts-ignore
 import pkg from '../package.json'
@@ -953,6 +969,40 @@ const {
   ensureSidebarVisible,
 })
 
+const { iconSrc, onIconError, appVersion, changelogUrl } = useAppMeta({
+  pingUrl: () => route('ping'),
+  getJson,
+  pkgVersion: pkg?.version ? String(pkg.version) : '',
+  fallbackChangelogUrl: 'https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/blob/master/CHANGELOG.md',
+  root,
+})
+
+const releaseNotesOverlayBlocked = computed(() =>
+  onboardingWizardVisible.value || profilesOverlayOpen.value || shortcutsOpen.value,
+)
+
+const {
+  isOpen: releaseNotesOverlayOpen,
+  isSaving: isReleaseNotesSaving,
+  entries: releaseNotesHistory,
+  currentEntry: currentReleaseNotesEntry,
+  activeEntry: activeReleaseNotesEntry,
+  selectedVersion: selectedReleaseNotesVersion,
+  openCurrent: openCurrentReleaseNotes,
+  openVersion: openReleaseNotesVersion,
+  closeOverlay: closeReleaseNotesOverlay,
+} = useVersionOverlay({
+  appVersion,
+  onboardingState,
+  hasInitialLoad,
+  isBlocked: releaseNotesOverlayBlocked,
+  route: (name) => route(name),
+  postJson,
+  notifyError,
+})
+
+const releaseNotesAvailable = computed(() => Boolean(currentReleaseNotesEntry.value))
+
 const activeDayMode = ref<'active'|'all'>('active')
 const rangeLabel = computed(()=> range.value === 'month' ? 'Month' : 'Week')
 const layoutRef = ref<InstanceType<typeof DashboardLayout> | null>(null)
@@ -1168,14 +1218,6 @@ const { timeSummary, activitySummary, activityDayOffTrend } = useSummaries({
 
 const { detailsIndex, toggle: toggleDetails } = useDetailsToggle()
 function isDbg(){ return false }
-
-const { iconSrc, onIconError, appVersion, changelogUrl } = useAppMeta({
-  pingUrl: () => route('ping'),
-  getJson,
-  pkgVersion: pkg?.version ? String(pkg.version) : '',
-  fallbackChangelogUrl: 'https://github.com/blade34242/opsdash-operational-dashboard-nextcloud/blob/master/CHANGELOG.md',
-  root,
-})
 
 const {
   notesLabelPrev,

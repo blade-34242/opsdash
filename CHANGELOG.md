@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 - None yet.
 
+
+## 0.7.5 - 2026-04-20
+### Added
+- Added an in-app `What's new` overlay that can auto-open for the current release, keeps older release notes available in a history list, and can be reopened from the sidebar at any time.
+### Changed
+- Update messaging now uses the same large overlay window style as onboarding, and the Profiles panel now shares the same overlay shell.
+
+
 ## 0.7.4 - 2026-04-18
 ### Changed
 - Release preparation for 0.7.4.

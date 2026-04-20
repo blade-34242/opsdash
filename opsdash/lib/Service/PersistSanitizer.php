@@ -549,6 +549,7 @@ final class PersistSanitizer {
             'strategy' => '',
             'completed_at' => '',
             'dashboardMode' => 'standard',
+            'releaseNotesSeenVersion' => '',
         ];
     }
 

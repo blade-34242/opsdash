@@ -1,0 +1,26 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="36" fill="#F3F5EF"/>
+  <rect x="54" y="54" width="1092" height="612" rx="32" fill="#FFFFFF" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="108" y="114" width="984" height="72" rx="24" fill="#EEF3E6"/>
+  <rect x="144" y="136" width="208" height="16" rx="8" fill="#7A8F57"/>
+  <rect x="144" y="162" width="318" height="12" rx="6" fill="#B2BE9A"/>
+  <rect x="890" y="132" width="148" height="34" rx="17" fill="#DDE6CC"/>
+  <rect x="108" y="228" width="610" height="256" rx="28" fill="#FAFBF7" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="144" y="268" width="134" height="14" rx="7" fill="#7A8F57"/>
+  <rect x="144" y="306" width="392" height="18" rx="9" fill="#233225"/>
+  <rect x="144" y="338" width="448" height="14" rx="7" fill="#6C7560"/>
+  <rect x="144" y="384" width="180" height="44" rx="22" fill="#7A8F57"/>
+  <rect x="752" y="228" width="340" height="352" rx="28" fill="#FAFBF7" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="792" y="268" width="120" height="14" rx="7" fill="#7A8F57"/>
+  <rect x="792" y="312" width="260" height="70" rx="24" fill="#FFFFFF" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="816" y="336" width="86" height="12" rx="6" fill="#233225"/>
+  <rect x="816" y="358" width="196" height="10" rx="5" fill="#7B8470"/>
+  <rect x="792" y="404" width="260" height="70" rx="24" fill="#FFFFFF" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="816" y="428" width="86" height="12" rx="6" fill="#233225"/>
+  <rect x="816" y="450" width="178" height="10" rx="5" fill="#7B8470"/>
+  <rect x="792" y="496" width="260" height="70" rx="24" fill="#FFFFFF" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="816" y="520" width="86" height="12" rx="6" fill="#233225"/>
+  <rect x="816" y="542" width="204" height="10" rx="5" fill="#7B8470"/>
+  <rect x="108" y="520" width="610" height="60" rx="24" fill="#F5F8EF" stroke="#D9DFD0" stroke-width="4"/>
+  <rect x="144" y="544" width="264" height="12" rx="6" fill="#6C7560"/>
+</svg>

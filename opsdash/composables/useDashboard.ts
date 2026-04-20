@@ -27,6 +27,7 @@ export interface OnboardingState {
   needsOnboarding?: boolean
   resetRequested?: boolean
   dashboardMode?: 'quick' | 'standard' | 'pro'
+  releaseNotesSeenVersion?: string
 }
 
 interface DashboardDeps {

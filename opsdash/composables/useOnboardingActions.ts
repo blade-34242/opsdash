@@ -43,6 +43,7 @@ export interface WizardStepSavePayload {
     strategy?: StrategyDefinition['id']
     completed_at?: string
     dashboardMode?: 'quick' | 'standard' | 'pro'
+    releaseNotesSeenVersion?: string
   }
   dashboardMode?: 'quick' | 'standard' | 'pro'
 }
@@ -93,6 +94,7 @@ export function useOnboardingActions(deps: OnboardingActionDeps) {
           strategy: payload.strategy,
           dashboardMode: payload.dashboardMode,
           completed_at: new Date().toISOString(),
+          releaseNotesSeenVersion: deps.onboardingState.value?.releaseNotesSeenVersion ?? '',
         },
       }
       if (payload.widgets) {
@@ -116,6 +118,7 @@ export function useOnboardingActions(deps: OnboardingActionDeps) {
         dashboardMode: payload.dashboardMode,
         version_required: ONBOARDING_VERSION,
         resetRequested: false,
+        releaseNotesSeenVersion: deps.onboardingState.value?.releaseNotesSeenVersion ?? '',
       } as any)
       const profileName = payload.profileName?.trim()
       if (payload.saveProfile && profileName) {
@@ -170,6 +173,7 @@ export function useOnboardingActions(deps: OnboardingActionDeps) {
           dashboardMode: payload.onboarding.dashboardMode ?? deps.onboardingState.value?.dashboardMode,
           version_required: ONBOARDING_VERSION,
           resetRequested: false,
+          releaseNotesSeenVersion: payload.onboarding.releaseNotesSeenVersion ?? deps.onboardingState.value?.releaseNotesSeenVersion ?? '',
         } as any)
       }
       if (payload.dashboardMode) {
@@ -197,6 +201,7 @@ export function useOnboardingActions(deps: OnboardingActionDeps) {
           version: ONBOARDING_VERSION,
           strategy: deps.onboardingState.value?.strategy ?? 'total_only',
           completed_at: new Date().toISOString(),
+          releaseNotesSeenVersion: deps.onboardingState.value?.releaseNotesSeenVersion ?? '',
         },
       })
       await deps.reloadAfterPersist()

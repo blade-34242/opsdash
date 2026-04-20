@@ -32,6 +32,11 @@ final class PersistOnboardingSanitizer {
         if ($dashboardMode === 'quick' || $dashboardMode === 'standard' || $dashboardMode === 'pro') {
             $result['dashboardMode'] = $dashboardMode;
         }
+        $releaseNotesSeenVersion = trim((string)($state['releaseNotesSeenVersion'] ?? ''));
+        if ($releaseNotesSeenVersion !== '') {
+            $releaseNotesSeenVersion = preg_replace('/^v/i', '', $releaseNotesSeenVersion) ?? $releaseNotesSeenVersion;
+            $result['releaseNotesSeenVersion'] = substr($releaseNotesSeenVersion, 0, 32);
+        }
         return $result;
     }
 }

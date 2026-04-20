@@ -99,6 +99,22 @@
         </button>
         <button
           type="button"
+          class="sidebar-icon-btn sidebar-icon-btn--releases"
+          :class="{ active: releaseNotesOpen }"
+          title="What's new"
+          aria-label="What's new"
+          :disabled="!releaseNotesAvailable"
+          @click="emit('open-release-notes')"
+        >
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 3.25a.75.75 0 0 1 .69.46l1.61 3.85 4.15.35a.75.75 0 0 1 .43 1.31l-3.16 2.73.95 4.06a.75.75 0 0 1-1.12.8L12 14.67l-3.55 2.14a.75.75 0 0 1-1.12-.8l.95-4.06-3.16-2.73a.75.75 0 0 1 .43-1.31l4.15-.35 1.61-3.85a.75.75 0 0 1 .69-.46zm0 2.66-1.15 2.74a.75.75 0 0 1-.62.46l-2.96.25 2.25 1.95c.22.19.31.48.24.76l-.68 2.89 2.53-1.52a.75.75 0 0 1 .77 0l2.53 1.52-.68-2.89a.75.75 0 0 1 .24-.76l2.25-1.95-2.96-.25a.75.75 0 0 1-.62-.46L12 5.91z"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
           class="sidebar-icon-btn sidebar-icon-btn--profile"
           title="Profiles and backups"
           aria-label="Profiles and backups"
@@ -129,6 +145,8 @@ const props = defineProps<{
   navToggleIcon: string
   dashboardMode?: 'quick' | 'standard' | 'pro'
   guidedHints?: Partial<Record<'strategy' | 'calendars' | 'deck' | 'goals' | 'preferences' | 'dashboard' | 'review', string>>
+  releaseNotesAvailable?: boolean
+  releaseNotesOpen?: boolean
 }>()
 
 const emit = defineEmits([
@@ -137,6 +155,7 @@ const emit = defineEmits([
   'update:offset',
   'toggle-nav',
   'open-profiles',
+  'open-release-notes',
   'open-shortcuts',
   'rerun-onboarding',
 ])
@@ -261,6 +280,12 @@ const emit = defineEmits([
   background:color-mix(in oklab, var(--brand), var(--card) 70%);
   border-color:color-mix(in oklab, var(--brand), var(--line) 40%);
   box-shadow:0 8px 16px rgba(15,23,42,0.16);
+}
+
+.sidebar-icon-btn:disabled{
+  opacity:0.45;
+  cursor:default;
+  box-shadow:none;
 }
 
 .sidebar-icon-btn:focus-visible{

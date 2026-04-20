@@ -274,6 +274,7 @@ class PersistSanitizerTest extends TestCase {
     $this->assertSame('', $default['strategy']);
     $this->assertSame('', $default['completed_at']);
     $this->assertSame('standard', $default['dashboardMode']);
+    $this->assertSame('', $default['releaseNotesSeenVersion']);
 
     $filled = $this->sanitizer->cleanOnboardingState([
       'completed' => true,
@@ -281,12 +282,14 @@ class PersistSanitizerTest extends TestCase {
       'strategy' => ' full_granular ',
       'completed_at' => '2025-01-01T00:00:00Z   ',
       'dashboardMode' => 'quick',
+      'releaseNotesSeenVersion' => 'v0.7.5',
     ]);
     $this->assertTrue($filled['completed']);
     $this->assertSame(12, $filled['version']);
     $this->assertSame('full_granular', $filled['strategy']);
     $this->assertSame('2025-01-01T00:00:00Z', $filled['completed_at']);
     $this->assertSame('quick', $filled['dashboardMode']);
+    $this->assertSame('0.7.5', $filled['releaseNotesSeenVersion']);
   }
 
   public function testSanitizePresetNameStripsUnsafeCharacters(): void {

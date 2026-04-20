@@ -41,17 +41,35 @@ async function removeCalendarResource(page: Page, resourceUrl: string) {
 async function dismissOnboardingIfVisible(page: Page) {
   const dialog = page.getByRole('dialog')
   const onboardingHeading = page.getByRole('heading', { name: 'Welcome to Opsdash' })
-  if (await dialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+  if (await onboardingHeading.isVisible({ timeout: 1000 }).catch(() => false)) {
     const closeButton = dialog.getByRole('button', { name: 'Close onboarding' })
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click()
       await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
-      return
+    } else {
+      await page.locator('.onboarding-backdrop').click({ force: true })
+      await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
     }
-
-    await page.locator('.onboarding-backdrop').click({ force: true })
-    await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
   }
+  await dismissReleaseNotesIfVisible(page)
+}
+
+async function dismissReleaseNotesIfVisible(page: Page) {
+  const dialog = page.getByRole('dialog')
+  const releaseHeading = page.getByRole('heading', { name: /^Opsdash 0\.7\./ })
+  if (!(await releaseHeading.isVisible({ timeout: 1000 }).catch(() => false))) {
+    return
+  }
+
+  const closeButton = dialog.getByRole('button', { name: 'Close release notes' })
+  if (await closeButton.isVisible().catch(() => false)) {
+    await closeButton.click()
+    await expect(releaseHeading).toBeHidden({ timeout: 15000 })
+    return
+  }
+
+  await page.locator('.onboarding-backdrop').click({ force: true })
+  await expect(releaseHeading).toBeHidden({ timeout: 15000 })
 }
 
 async function openOnboardingWizardFromSidebar(page: Page) {
@@ -206,6 +224,7 @@ test('Operational Dashboard loads without console errors', async ({ page, baseUR
   })
 
   await page.goto(baseURL + '/index.php/apps/opsdash/overview')
+  await dismissReleaseNotesIfVisible(page)
   await expect(page.locator('.opsdash')).toBeVisible()
   await expect(page.getByRole('tablist', { name: 'Dashboard tabs' })).toBeVisible()
 

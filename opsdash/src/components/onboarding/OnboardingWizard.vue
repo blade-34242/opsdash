@@ -1,8 +1,11 @@
 <template>
-  <transition name="onboarding-fade">
-    <div v-if="visible" class="onboarding-overlay" role="dialog" aria-modal="true">
-      <div class="onboarding-backdrop" @click="requestClose"></div>
-      <div class="onboarding-panel" :class="`theme-${previewTheme}`" @click.stop>
+  <AppOverlayShell
+    :visible="visible"
+    :theme="previewTheme"
+    :close-on-backdrop="isClosable"
+    :close-on-esc="isClosable"
+    @close="requestClose"
+  >
         <header class="onboarding-header">
           <div class="onboarding-title">
             <h2>Welcome to Opsdash</h2>
@@ -211,14 +214,13 @@
             </NcButton>
           </template>
         </footer>
-      </div>
-    </div>
-  </transition>
+  </AppOverlayShell>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { NcButton } from '@nextcloud/vue'
+import AppOverlayShell from '../overlays/AppOverlayShell.vue'
 import OnboardingIntroStep from './OnboardingIntroStep.vue'
 import OnboardingPreferencesStep from './OnboardingPreferencesStep.vue'
 import OnboardingDeckBoardsStep from './OnboardingDeckBoardsStep.vue'

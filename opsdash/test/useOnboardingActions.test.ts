@@ -13,6 +13,7 @@ function setup(overrides: Partial<Parameters<typeof useOnboardingActions>[0]> = 
     version: 0,
     strategy: 'total_only',
     completed_at: '',
+    releaseNotesSeenVersion: '0.7.5',
   })
   const route = vi.fn().mockReturnValue('/persist')
   const postJson = vi.fn().mockResolvedValue({})
@@ -85,7 +86,7 @@ describe('useOnboardingActions', () => {
 
     expect(ctx.postJson).toHaveBeenCalledWith('/persist', expect.objectContaining({
       theme_preference: 'auto',
-      onboarding: expect.objectContaining({ completed: true }),
+      onboarding: expect.objectContaining({ completed: true, releaseNotesSeenVersion: '0.7.5' }),
     }))
     expect(ctx.reloadAfterPersist).toHaveBeenCalledTimes(1)
     expect(ctx.notifySuccess).toHaveBeenCalledWith('Onboarding saved')
@@ -150,7 +151,7 @@ describe('useOnboardingActions', () => {
     await ctx.skip()
 
     expect(ctx.postJson).toHaveBeenCalledWith('/persist', expect.objectContaining({
-      onboarding: expect.objectContaining({ completed: true }),
+      onboarding: expect.objectContaining({ completed: true, releaseNotesSeenVersion: '0.7.5' }),
     }))
     expect(ctx.reloadAfterPersist).toHaveBeenCalledTimes(1)
   })

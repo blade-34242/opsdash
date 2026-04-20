@@ -1,14 +1,11 @@
 <template>
-  <transition name="onboarding-fade">
-    <div
-      v-if="visible"
-      class="onboarding-overlay profiles-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profiles-overlay-title"
-    >
-      <div class="onboarding-backdrop" @click="emit('close')"></div>
-      <div class="onboarding-panel" :class="`theme-${theme}`" @click.stop>
+  <AppOverlayShell
+    :visible="visible"
+    :theme="theme"
+    panel-class="profiles-overlay"
+    aria-labelledby="profiles-overlay-title"
+    @close="emit('close')"
+  >
         <header class="onboarding-header profiles-overlay__header">
           <div class="onboarding-title">
             <h2 id="profiles-overlay-title">Profiles</h2>
@@ -46,12 +43,11 @@
             @import-config="(file) => emit('import-config', file)"
           />
         </main>
-      </div>
-    </div>
-  </transition>
+  </AppOverlayShell>
 </template>
 
 <script setup lang="ts">
+import AppOverlayShell from './AppOverlayShell.vue'
 import SidebarProfilesPane from '../sidebar/SidebarProfilesPane.vue'
 
 defineProps<{
