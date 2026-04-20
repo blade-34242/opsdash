@@ -9,8 +9,10 @@ All notable changes to this project will be documented in this file.
 ## 0.7.5 - 2026-04-20
 ### Added
 - Added an in-app `What's new` overlay that can auto-open for the current release, keeps older release notes available in a history list, and can be reopened from the sidebar at any time.
+- Added version-specific release-note content support with optional preview images, end-user copy, and per-release history entries starting with `0.7.4` and `0.7.5`.
 ### Changed
 - Update messaging now uses the same large overlay window style as onboarding, and the Profiles panel now shares the same overlay shell.
+- Closing the current release notes now persists a seen-version marker so the latest update opens automatically only once per user.
 
 
 ## 0.7.4 - 2026-04-18

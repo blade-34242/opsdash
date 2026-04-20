@@ -12,7 +12,8 @@ Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintai
 - ⏱️ **Current period done vs planned** – active week/month separates elapsed hours from future hours so “done” metrics stop at now and upcoming time stays clearly labeled.
 - ⚖️ **Balance** – share cards, stacked bars, relations/ratios, heatmaps, lookback trends, and daypart toggles.
 - 🧠 **Notes** – edit “This week/month”, view “Last week/month”, and optionally surface notes in cards.
-- 🧩 **Onboarding wizard & profiles** – guided setup, rerun onboarding, and save/load/delete/export/import profile presets.
+- 🧩 **Shared overlays** – onboarding, profiles, and the in-app `What's new` window now share one large overlay shell and interaction model.
+- ✨ **Release notes in-app** – new versions can auto-open a `What's new` view with short highlights, preview images, and a clickable version history from the sidebar.
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
 - 🔐 **Runs inside Nextcloud** – same session, same permissions, CSRF-protected writes, no external API calls.
 - 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
@@ -29,6 +30,10 @@ Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintai
 | Onboarding (Light) | Onboarding (Dark) |
 | --- | --- |
 | ![Onboarding Light](img/opsdash-onboarding-light.png) | ![Onboarding Dark](img/opsdash-onboarding-dark.png) |
+
+| What's New Overlay |
+| --- |
+| ![What's New Overlay](opsdash/img/release-notes/release-075-overlay-shot.png) |
 
 | Calendar Table (Light) | Calendar Table (Dark) |
 | --- | --- |
