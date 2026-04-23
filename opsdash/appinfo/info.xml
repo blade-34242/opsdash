@@ -55,7 +55,7 @@ Opsdash is built for teams that already plan in calendars and want clear executi
     </navigation>
   </navigations>
   <dependencies>
-    <nextcloud min-version="30" max-version="32"/>
+    <nextcloud min-version="30" max-version="33"/>
   </dependencies>
   <icon>app.svg</icon>
 </info>

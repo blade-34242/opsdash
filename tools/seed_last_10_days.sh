@@ -5,7 +5,7 @@
 # last 10 calendar days so the dashboard shows a believable recent history.
 #
 # Usage:
-#   BASE=http://localhost:8092 USER=admin PASS=admin ./tools/seed_last_10_days.sh
+#   BASE=http://localhost:8093 USER=admin PASS=admin ./tools/seed_last_10_days.sh
 #
 # Notes:
 # - Re-running overwrites the same UIDs for the same date/slot, so the seed is stable.
@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-BASE_URL=${BASE:-http://localhost:8092}
+BASE_URL=${BASE:-http://localhost:8093}
 USER=${USER:-admin}
 PASS=${PASS:-admin}
 DAYS=${DAYS:-10}

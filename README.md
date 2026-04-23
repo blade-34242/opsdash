@@ -44,8 +44,8 @@ Opsdash supports Nextcloud installations, but it is an independent third-party a
 
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-32 | 0.7.5 |
-| `release/0.5.x` | 30-32 | Store-ready line |
+| `master` | 30-33 | 0.7.5 |
+| `release/0.5.x` | 30-33 | Store-ready line |
 
 ## Install
 Install from the Nextcloud App Store as a third-party app (when published) or place `opsdash` in `custom_apps/` and enable it:
@@ -63,10 +63,12 @@ composer install
 npm run build
 npm run test:unit
 composer run test:unit
-PLAYWRIGHT_BASE_URL=http://localhost:8092 npm run test:e2e
+PLAYWRIGHT_BASE_URL=http://localhost:8093 npm run test:e2e
 ```
 
-- `make start` starts the local Nextcloud 32 dev container on `http://localhost:8092`.
+- `make start` starts the local Nextcloud 33 dev container on `http://localhost:8093`.
+- `make start33` starts the same Nextcloud 33 stack explicitly.
+- `make start32` starts the Nextcloud 32 container on `http://localhost:8092`.
 - `make start31` starts the Nextcloud 31 container on `http://localhost:8088`.
 - The checked-out app is mounted into the dev container from `./opsdash` by default. Override with `APP_SOURCE_DIR=/abs/path/to/opsdash` if you need a different source path.
 - `make status` / `make logs` help confirm the stack is up before testing.
@@ -94,7 +96,7 @@ make appstore VERSION=0.7.5
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  
 Sign separately with:
 ```bash
-make sign VERSION=0.7.5 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc32-dev2
+make sign VERSION=0.7.5 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
 ```
 Upload the signed tarball with:
 ```bash

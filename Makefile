@@ -6,7 +6,7 @@ APP_BUILD_DIR := $(BUILD_DIR)/$(APP_NAME)
 VERSION ?= $(shell sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' $(SRC_DIR)/appinfo/info.xml | head -n 1)
 
 .PHONY: clean deps build test appstore sign upload appstore-push release
-.PHONY: smoke start start31 stop status logs
+.PHONY: smoke start start31 start32 start33 stop status logs
 
 clean:
 	@echo "[make] Cleaning build artifacts"
@@ -22,6 +22,14 @@ build:
 	cd $(SRC_DIR) && npm run build
 
 start:
+	@echo "[make] Starting Nextcloud 33 dev stack on http://localhost:8093"
+	docker compose up -d nextcloud33
+
+start33:
+	@echo "[make] Starting Nextcloud 33 dev stack on http://localhost:8093"
+	docker compose up -d nextcloud33
+
+start32:
 	@echo "[make] Starting Nextcloud 32 dev stack on http://localhost:8092"
 	docker compose up -d nextcloud32
 
@@ -38,8 +46,8 @@ status:
 	docker compose ps
 
 logs:
-	@echo "[make] Tail logs for Nextcloud 32 dev stack"
-	docker compose logs --no-color --tail=80 nextcloud32
+	@echo "[make] Tail logs for Nextcloud 33 dev stack"
+	docker compose logs --no-color --tail=80 nextcloud33
 
 # Minimal unit tests (Vitest + PHPUnit). Playwright runs in CI against a real NC instance.
 test:
@@ -49,13 +57,13 @@ test:
 	cd $(SRC_DIR) && composer run test:unit
 
 # Docker-based smoke check against a running Nextcloud container.
-# Override defaults: `make smoke NC_CONTAINER=nc31-dev NC_USER=admin NC_PASS=admin`
+# Override defaults: `make smoke NC_CONTAINER=nc33-dev NC_USER=admin NC_PASS=admin`
 smoke:
 	@echo "[make] Smoke checking Nextcloud /overview/load"
 	NC_CONTAINER="$(NC_CONTAINER)"; \
 	NC_USER="$${NC_USER:-admin}"; \
 	NC_PASS="$${NC_PASS:-admin}"; \
-	NC_CONTAINER="$${NC_CONTAINER:-nc31-dev}"; \
+	NC_CONTAINER="$${NC_CONTAINER:-nc33-dev}"; \
 	bash $(SRC_DIR)/tools/smoke_overview_load.sh "$$NC_CONTAINER" "$$NC_USER" "$$NC_PASS"
 
 release:

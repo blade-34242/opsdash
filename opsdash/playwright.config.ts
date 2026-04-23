@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8088'
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8093'
 const username = process.env.PLAYWRIGHT_USER ?? 'admin'
 const password = process.env.PLAYWRIGHT_PASS ?? 'admin'
 

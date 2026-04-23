@@ -1,4 +1,19 @@
 services:
+  nextcloud33:
+    image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest
+    container_name: nc33-dev
+    ports:
+      - "8093:80"
+    environment:
+      # NC-Server-Tag/Branch auswählen
+      SERVER_BRANCH: v33.0.2
+    volumes:
+      # persistenter Server + Daten (verhindert erneutes Herunterladen)
+      - nc33srv:/var/www/html
+      # Mount the checked-out app repo by default; override with APP_SOURCE_DIR if needed.
+      - ${APP_SOURCE_DIR:-./opsdash}:/var/www/html/apps-extra/opsdash
+    restart: unless-stopped
+
   nextcloud31:
     image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest
     container_name: nc31-dev
@@ -30,5 +45,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  nc33srv:
   nc31srv2:
   nc32srv2:
