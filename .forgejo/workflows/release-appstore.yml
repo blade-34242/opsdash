@@ -46,7 +46,7 @@ jobs:
       - name: Install system tools
         run: |
           apt-get update
-          apt-get install -y rsync jq curl composer
+          apt-get install -y rsync jq curl composer python3
 
       - name: Resolve release version
         id: version
