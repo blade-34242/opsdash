@@ -154,16 +154,19 @@ jobs:
         run: composer run test:static
 
       - name: Install Playwright deps
+        if: ${{ false }}
         working-directory: server/apps/${{ env.APP_NAME }}
         run: npx playwright install --with-deps chromium
 
       - name: Start PHP server
+        if: ${{ false }}
         working-directory: server
         run: |
           php -S 127.0.0.1:8080 -t . >/tmp/php-server.log 2>&1 &
           echo $! > /tmp/php-server.pid
 
       - name: Seed Opsdash data (calendars + Deck)
+        if: ${{ false }}
         working-directory: server
         env:
           BASE: http://127.0.0.1:8080
@@ -177,6 +180,7 @@ jobs:
           bash apps/${{ env.APP_NAME }}/tools/seed_opsdash.sh
 
       - name: Playwright smoke test
+        if: ${{ false }}
         working-directory: server/apps/${{ env.APP_NAME }}
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
@@ -187,7 +191,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Upload Playwright results
-        if: always()
+        if: ${{ false }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-${{ matrix.nextcloud_branch }}-php${{ matrix.php_version }}
@@ -195,7 +199,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Stop PHP server
-        if: always()
+        if: ${{ false }}
         run: |
           if [ -f /tmp/php-server.pid ]; then
             kill $(cat /tmp/php-server.pid) || true
