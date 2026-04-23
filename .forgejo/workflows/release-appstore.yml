@@ -27,7 +27,7 @@ env:
   APP_NAME: opsdash
   FORGEJO_BASE_URL: ${{ github.server_url }}
   RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
-  NEXTCLOUD_RELEASE_BRANCH: stable32
+  NEXTCLOUD_RELEASE_BRANCH: stable33
 
 jobs:
   build_and_publish:
@@ -80,6 +80,7 @@ jobs:
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
           APP_PUBLIC_CRT: ${{ secrets.APP_PUBLIC_CRT }}
           APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           SHOULD_PUSH_APPSTORE: ${{ steps.version.outputs.should_push }}
         run: |
           set -euo pipefail
@@ -93,6 +94,10 @@ jobs:
 
           if [ "${SHOULD_PUSH_APPSTORE}" = "true" ] && [ -z "${APPSTORE_TOKEN:-}" ]; then
             missing+=("APPSTORE_TOKEN")
+          fi
+
+          if [ "${SHOULD_PUSH_APPSTORE}" = "true" ] && [ -z "${RELEASE_TOKEN:-}" ]; then
+            missing+=("RELEASE_TOKEN")
           fi
 
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -160,7 +165,7 @@ jobs:
         id: upload_release
         if: ${{ github.event_name == 'push' || github.event.inputs.push_to_appstore == 'true' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
           VERSION: ${{ steps.version.outputs.version }}
@@ -173,6 +178,7 @@ jobs:
         env:
           APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
           APP_PRIVATE_KEY_FILE: $HOME/.nextcloud/certificates/${{ env.APP_NAME }}.key
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_API_BASE_URL: ${{ github.server_url }}/api/v1
           VERSION: ${{ steps.version.outputs.version }}
