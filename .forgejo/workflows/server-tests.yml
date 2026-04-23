@@ -53,14 +53,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.matrix-config.outputs.matrix) }}
     steps:
-      - name: Checkout Nextcloud server
-        uses: actions/checkout@v4
-        with:
-          repository: nextcloud/server
-          github-server-url: https://github.com
-          ref: ${{ matrix.nextcloud_branch }}
-          submodules: true
-          path: server
+      - name: Clone Nextcloud server
+        run: |
+          git clone --depth=1 --branch "${{ matrix.nextcloud_branch }}" \
+            https://github.com/nextcloud/server.git server
 
       - name: Checkout app sources
         uses: actions/checkout@v4

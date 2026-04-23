@@ -38,14 +38,10 @@ jobs:
       - name: Checkout app sources
         uses: actions/checkout@v4
 
-      - name: Checkout Nextcloud server
-        uses: actions/checkout@v4
-        with:
-          repository: nextcloud/server
-          github-server-url: https://github.com
-          ref: ${{ env.NEXTCLOUD_RELEASE_BRANCH }}
-          submodules: true
-          path: server
+      - name: Clone Nextcloud server
+        run: |
+          git clone --depth=1 --branch "${{ env.NEXTCLOUD_RELEASE_BRANCH }}" \
+            https://github.com/nextcloud/server.git server
 
       - name: Install system tools
         run: |
