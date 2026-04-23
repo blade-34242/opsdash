@@ -57,6 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: nextcloud/server
+          github-server-url: https://github.com
           ref: ${{ matrix.nextcloud_branch }}
           submodules: true
           path: server
