@@ -160,13 +160,6 @@ jobs:
           rm -f "build/dist/${{ steps.version.outputs.asset_name }}"
           tar -czf "build/dist/${{ steps.version.outputs.asset_name }}" -C build "${{ env.APP_NAME }}"
 
-      - name: Upload package as workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: appstore-package-${{ steps.version.outputs.version }}
-          path: build/dist/${{ steps.version.outputs.asset_name }}
-          if-no-files-found: error
-
       - name: Upload tarball to Forgejo release
         id: upload_release
         if: ${{ github.event_name == 'push' || github.event.inputs.push_to_appstore == 'true' }}
