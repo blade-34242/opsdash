@@ -46,7 +46,7 @@ jobs:
       - name: Install system tools
         run: |
           apt-get update
-          apt-get install -y rsync jq curl composer python3 php8.3-gd
+          apt-get install -y rsync jq curl composer python3 php8.3-gd php8.3-sqlite3
 
       - name: Resolve release version
         id: version
