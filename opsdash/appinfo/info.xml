@@ -18,7 +18,6 @@ Use it to answer three questions fast:
 - Balance/trend widgets for period-over-period comparisons
 - Notes, presets, and profile export/import for repeatable reporting
 - Guided onboarding for quick team setup
-- Short demo video (WEBM): https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-demo-1920x1080.webm
 
 ### Runs inside Nextcloud
 - Runs fully inside Nextcloud (no external analytics backend)
@@ -42,10 +41,11 @@ Opsdash is built for teams that already plan in calendars and want clear executi
   <bootstrap>OCA\Opsdash\AppInfo\Application</bootstrap>
   <category>tools</category>
   <category>dashboard</category>
-  <screenshot small-thumbnail="https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-01-single-goal-light.png">https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-01-single-goal-light.png</screenshot>
-  <screenshot small-thumbnail="https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-02-calendar-goals-dark.png">https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-02-calendar-goals-dark.png</screenshot>
-  <screenshot small-thumbnail="https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-03-category-goals-light.png">https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-03-category-goals-light.png</screenshot>
-  <screenshot small-thumbnail="https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-04-onboarding-dark.png">https://file493.gellert-innovation.com/downloads/opsdash-public/opsdash-marketplace-04-onboarding-dark.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-01-single-goal-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-01-single-goal-light.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-02-calendar-goals-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-02-calendar-goals-dark.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-03-category-goals-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-03-category-goals-light.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-04-onboarding-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-04-onboarding-dark.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-demo-960w.gif">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-demo-960w.gif</screenshot>
   <navigations>
     <navigation>
       <name>Operational Dashboard</name>
