@@ -90,7 +90,7 @@ if [[ -n "$existing_asset_id" ]]; then
     -X DELETE \
     -H "$auth_header" \
     -H "$accept_header" \
-    "${RELEASE_API_BASE_URL%/}/repos/$UPLOAD_REPO/releases/assets/$existing_asset_id" >/dev/null
+    "${RELEASE_API_BASE_URL%/}/repos/$UPLOAD_REPO/releases/$release_id/assets/$existing_asset_id" >/dev/null
 fi
 
 info "Uploading $UPLOAD_FILE to $UPLOAD_REPO release $RELEASE_TAG"
