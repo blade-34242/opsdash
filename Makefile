@@ -111,8 +111,14 @@ appstore: clean
 	  $(APP_BUILD_DIR)/.vscode $(APP_BUILD_DIR)/.idea \
 	  $(APP_BUILD_DIR)/.github $(APP_BUILD_DIR)/tools \
 	  $(APP_BUILD_DIR)/docker-compose*.yml $(APP_BUILD_DIR)/Dockerfile \
-	  $(APP_BUILD_DIR)/src $(APP_BUILD_DIR)/docs $(APP_BUILD_DIR)/docs-private
-	rm -f $(APP_BUILD_DIR)/package-lock.json $(APP_BUILD_DIR)/pnpm-lock.yaml $(APP_BUILD_DIR)/yarn.lock
+	  $(APP_BUILD_DIR)/src $(APP_BUILD_DIR)/docs $(APP_BUILD_DIR)/docs-private \
+	  $(APP_BUILD_DIR)/composables
+	rm -f $(APP_BUILD_DIR)/package-lock.json $(APP_BUILD_DIR)/pnpm-lock.yaml $(APP_BUILD_DIR)/yarn.lock \
+	  $(APP_BUILD_DIR)/playwright.config.ts $(APP_BUILD_DIR)/tsconfig.json \
+	  $(APP_BUILD_DIR)/vite.config.ts $(APP_BUILD_DIR)/vitest.config.ts \
+	  $(APP_BUILD_DIR)/phpstan.neon.dist \
+	  $(APP_BUILD_DIR)/vendor/bin/.phpunit.result.cache \
+	  $(APP_BUILD_DIR)/vendor/composer/tmp-*
 	@echo "[make] Creating tarball"
 	mkdir -p $(DIST_DIR)
 	tar -czf $(DIST_DIR)/$(APP_NAME)-$(VERSION).tar.gz -C $(BUILD_DIR) $(APP_NAME)
