@@ -162,7 +162,6 @@ jobs:
 
       - name: Upload tarball to Forgejo release
         id: upload_release
-        if: ${{ github.event_name == 'push' || github.event.inputs.push_to_appstore == 'true' }}
         env:
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           RELEASE_REPO: ${{ github.repository }}
