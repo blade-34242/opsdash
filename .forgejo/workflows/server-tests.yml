@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Clone Nextcloud server
         run: |
-          git clone --depth=1 --branch "${{ matrix.nextcloud_branch }}" \
+          git clone --depth=1 --recurse-submodules --shallow-submodules --branch "${{ matrix.nextcloud_branch }}" \
             https://github.com/nextcloud/server.git server
 
       - name: Checkout app sources

@@ -40,7 +40,7 @@ jobs:
 
       - name: Clone Nextcloud server
         run: |
-          git clone --depth=1 --branch "${{ env.NEXTCLOUD_RELEASE_BRANCH }}" \
+          git clone --depth=1 --recurse-submodules --shallow-submodules --branch "${{ env.NEXTCLOUD_RELEASE_BRANCH }}" \
             https://github.com/nextcloud/server.git server
 
       - name: Install system tools
