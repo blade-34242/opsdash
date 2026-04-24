@@ -36,7 +36,7 @@ Opsdash is built for teams that already plan in calendars and want clear executi
   <website>https://help.nextcloud.com/search?q=opsdash</website>
   <discussion>https://help.nextcloud.com/search?q=opsdash</discussion>
   <bugs>https://help.nextcloud.com/search?q=opsdash</bugs>
-  <repository>ssh://git@127.0.0.1:2222/blade34242/opsdash.git</repository>
+  <repository>https://forgejodev.gellert-innovation.com/blade34242/opsdash-app</repository>
   <namespace>Opsdash</namespace>
   <bootstrap>OCA\Opsdash\AppInfo\Application</bootstrap>
   <category>tools</category>
