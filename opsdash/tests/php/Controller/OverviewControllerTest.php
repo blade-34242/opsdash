@@ -458,6 +458,8 @@ class OverviewControllerTest extends TestCase {
 }
 
 final class OverviewControllerInputStream {
+  public $context;
+
   private int $index = 0;
   private static string $input = '';
 

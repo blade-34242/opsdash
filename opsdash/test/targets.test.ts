@@ -21,7 +21,7 @@ describe('targets helpers', () => {
   it('computes progress percent with bounds', () => {
     expect(progressPercent(10, 20)).toBe(50)
     expect(progressPercent(0, 0)).toBe(0)
-    expect(progressPercent(30, 20)).toBe(100)
+    expect(progressPercent(30, 20)).toBe(150)
     expect(progressPercent(-5 as unknown as number, 10)).toBe(0)
   })
 

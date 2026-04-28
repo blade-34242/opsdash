@@ -144,6 +144,54 @@ class PersistControllerTest extends TestCase {
     $this->assertSame([], $data['read']);
   }
 
+  public function testPersistDoesNotDowngradeReleaseNotesSeenVersion(): void {
+    $user = $this->createMock(IUser::class);
+    $user->method('getUID')->willReturn('admin');
+    $this->userSession->method('getUser')->willReturn($user);
+
+    $this->request->method('getHeader')->willReturn('token');
+    $this->request->method('passesCSRFCheck')->willReturn(true);
+    $this->config->method('getUserValue')->willReturnCallback(
+      static function (string $uid, string $appName, string $key, string $default = ''): string {
+        if ($key === 'onboarding_state') {
+          return '{"completed":true,"version":1,"strategy":"total_only","completed_at":"2026-04-01T00:00:00Z","dashboardMode":"standard","releaseNotesSeenVersion":"0.7.5"}';
+        }
+        return $default;
+      },
+    );
+
+    $savedOnboarding = null;
+    $this->config->method('setUserValue')->willReturnCallback(
+      static function (string $uid, string $appName, string $key, string $value) use (&$savedOnboarding): void {
+        if ($key === 'onboarding_state') {
+          $savedOnboarding = json_decode($value, true);
+        }
+      },
+    );
+
+    $payload = '{"onboarding":{"completed":true,"version":1,"strategy":"total_only","completed_at":"2026-04-01T00:00:00Z","dashboardMode":"standard","releaseNotesSeenVersion":"0.7.4"}}';
+    PersistControllerInputStream::setInput($payload);
+    $hadPhpWrapper = in_array('php', stream_get_wrappers(), true);
+    if ($hadPhpWrapper) {
+      stream_wrapper_unregister('php');
+    }
+    stream_wrapper_register('php', PersistControllerInputStream::class);
+
+    try {
+      $response = $this->controller->persist();
+    } finally {
+      if ($hadPhpWrapper) {
+        stream_wrapper_restore('php');
+      } else {
+        stream_wrapper_unregister('php');
+      }
+    }
+
+    $this->assertSame(Http::STATUS_OK, $response->getStatus());
+    $this->assertSame('0.7.5', $response->getData()['onboarding_saved']['releaseNotesSeenVersion']);
+    $this->assertSame('0.7.5', $savedOnboarding['releaseNotesSeenVersion']);
+  }
+
   public function testPersistRejectsOversizedPayload(): void {
     $user = $this->createMock(IUser::class);
     $user->method('getUID')->willReturn('admin');
@@ -176,6 +224,8 @@ class PersistControllerTest extends TestCase {
 }
 
 final class PersistControllerInputStream {
+  public $context;
+
   private int $index = 0;
   private static string $input = '';
 

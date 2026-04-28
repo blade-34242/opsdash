@@ -116,8 +116,7 @@ export function progressPercent(actual: number, target: number): number {
   if (!Number.isFinite(act)) return 0
   const ratio = (act / tgt) * 100
   if (!Number.isFinite(ratio)) return 0
-  const bounded = Math.max(0, Math.min(100, ratio))
-  return Math.round(bounded * 100) / 100
+  return clampPct(ratio)
 }
 
 export function buildTargetsSummary(input: BuildTargetsSummaryInput): TargetsSummary {

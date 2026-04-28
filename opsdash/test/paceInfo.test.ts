@@ -54,8 +54,8 @@ describe('progressPercent', () => {
     expect(progressPercent(5, NaN)).toBe(0)
   })
 
-  it('caps values between 0 and 100', () => {
-    expect(progressPercent(50, 40)).toBe(100)
+  it('allows over-target values and floors negative progress at 0', () => {
+    expect(progressPercent(50, 40)).toBe(125)
     expect(progressPercent(-5, 10)).toBe(0)
   })
 })

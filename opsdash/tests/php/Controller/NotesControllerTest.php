@@ -248,6 +248,8 @@ class NotesControllerTest extends TestCase {
   }
 }
 final class NotesControllerInputStream {
+  public $context;
+
   private int $index = 0;
   private static string $input = '';
 

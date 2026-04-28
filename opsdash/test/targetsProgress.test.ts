@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { computePaceInfo } from '../src/services/targets/progress'
+import { computePaceInfo, progressPercent } from '../src/services/targets/progress'
 
 describe('targets progress helpers', () => {
   beforeEach(() => {
@@ -34,5 +34,9 @@ describe('targets progress helpers', () => {
     expect(pace.elapsedEligible).toBeCloseTo(1, 4)
     expect(pace.daysLeft).toBeCloseTo(4, 4)
     expect(pace.calendarPercent).toBeCloseTo(20, 2)
+  })
+
+  it('keeps over-target percentages above 200%', () => {
+    expect(progressPercent(25, 10)).toBe(250)
   })
 })

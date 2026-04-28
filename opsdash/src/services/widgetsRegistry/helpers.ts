@@ -132,7 +132,7 @@ export function buildCategoryGroups(input: {
       const value = Number(row?.future_hours ?? row?.planned_hours ?? 0)
       return Number.isFinite(value) ? sum + Math.max(0, value) : sum
     }, 0)
-    const percent = targetHours > 0 ? Math.max(0, Math.min(100, (actualHours / targetHours) * 100)) : 0
+    const percent = targetHours > 0 ? clampTargetPercent((actualHours / targetHours) * 100) : 0
     const deltaHours = actualHours - targetHours
     const remainingHours = Math.max(0, targetHours - actualHours)
     const status: TargetsProgress['status'] =
@@ -258,7 +258,7 @@ export function buildCalendarGroups(input: {
     const safeTarget = Number.isFinite(targetHours) ? Math.max(0, targetHours) : 0
     const safeActual = Number.isFinite(actualHours) ? Math.max(0, actualHours) : 0
     const safePlanned = Number.isFinite(plannedHours) ? Math.max(0, plannedHours) : 0
-    const percent = safeTarget > 0 ? round2(Math.max(0, Math.min(100, (safeActual / safeTarget) * 100))) : 0
+    const percent = safeTarget > 0 ? round2(clampTargetPercent((safeActual / safeTarget) * 100)) : 0
     const deltaHours = round2(safeActual - safeTarget)
     const remainingHours = round2(Math.max(0, safeTarget - safeActual))
     const gap = round2(percent - pacePercent)
@@ -400,4 +400,9 @@ function normalizeGroupId(value: any): number {
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
+}
+
+function clampTargetPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(999, value))
 }

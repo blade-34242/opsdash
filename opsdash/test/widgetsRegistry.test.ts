@@ -154,6 +154,45 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.groups[0].todayHours).toBe(2)
   })
 
+  it('keeps over-target calendar row percentages above 200%', () => {
+    const entry = widgetsRegistry.targets_v2
+    const cfg = createDefaultTargetsConfig()
+    cfg.categories = []
+
+    const props = entry.buildProps({ options: {} } as any, {
+      onboardingStrategy: 'total_plus_categories',
+      targetsConfig: cfg,
+      targetsSummary: {
+        total: {
+          id: 'total',
+          label: 'Total',
+          actualHours: 25,
+          plannedHours: 0,
+          targetHours: 10,
+          percent: 250,
+          deltaHours: 15,
+          remainingHours: 0,
+          needPerDay: 0,
+          daysLeft: 0,
+          calendarPercent: 100,
+          gap: 150,
+          status: 'done',
+          statusLabel: 'Done',
+          includeWeekend: true,
+          paceMode: 'days_only',
+        },
+        categories: [],
+        forecast: { text: '', linear: 0, momentum: 0, primaryMethod: 'linear' as const },
+      },
+      byCal: [{ id: 'cal-1', calendar: 'Primary', total_hours: 25 }],
+      calendars: [{ id: 'cal-1', displayname: 'Primary', color: '#ff0000' }],
+      currentTargets: { 'cal-1': 10 },
+    }) as any
+
+    expect(props.groups[0].summary.percent).toBe(250)
+    expect(props.groups[0].summary.gap).toBe(150)
+  })
+
   it('prefers single goal mode over stale categories when strategy says total only', () => {
     const entry = widgetsRegistry.targets_v2
     const cfg = createDefaultTargetsConfig()

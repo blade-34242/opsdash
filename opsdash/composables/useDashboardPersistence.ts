@@ -14,6 +14,7 @@ import {
   type ReportingConfig,
 } from '../src/services/reporting'
 import { normalizeWidgetTabs, createDefaultWidgetTabs } from '../src/services/widgetsRegistry'
+import { compareReleaseVersions, normalizeReleaseVersion } from '../src/services/releaseNotes'
 import type { OnboardingState } from './useDashboard'
 
 interface DashboardPersistenceDeps {
@@ -125,9 +126,12 @@ export function useDashboardPersistence(deps: DashboardPersistenceDeps) {
         if (deps.onboardingState) {
           const nextOnboarding = result.onboarding_read ?? result.onboarding_saved
           if (nextOnboarding && typeof nextOnboarding === 'object') {
+            const currentSeenVersion = normalizeReleaseVersion(deps.onboardingState.value?.releaseNotesSeenVersion ?? '')
+            const incomingSeenVersion = normalizeReleaseVersion(nextOnboarding.releaseNotesSeenVersion ?? '')
             deps.onboardingState.value = {
               ...(deps.onboardingState.value || {}),
               ...nextOnboarding,
+              releaseNotesSeenVersion: pickLatestReleaseVersion(currentSeenVersion, incomingSeenVersion),
             } as OnboardingState
           }
         }
@@ -162,6 +166,14 @@ function normalizeThemePreference(value: any): ThemePreference | null {
     return value
   }
   return null
+}
+
+function pickLatestReleaseVersion(currentVersion: string, incomingVersion: string): string {
+  if (!currentVersion) return incomingVersion
+  if (!incomingVersion) return currentVersion
+  return compareReleaseVersions(currentVersion, incomingVersion) >= 0
+    ? incomingVersion
+    : currentVersion
 }
 
 function mergeIncomingTargetsConfig(

@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 - None yet.
 
 
+
+## 0.7.6 - 2026-04-27
+### Changed
+- Release preparation for 0.7.6.
+- Added end-user release-note content for 0.7.6 so the in-app `What's new` panel explains the update.
+### Fixed
+- The in-app `What's new` button is available for 0.7.6 and the release panel now stays dismissed after the current version has been seen, even if other dashboard saves finish later.
+- Targets progress now preserves over-target percentages above 200% in summaries, calendar/category rows, and the visible widget progress bar.
+
+
 ## 0.7.5 - 2026-04-20
 ### Added
 - Added an in-app `What's new` overlay that can auto-open for the current release, keeps older release notes available in a history list, and can be reopened from the sidebar at any time.

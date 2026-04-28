@@ -11,9 +11,34 @@ async function dismissOnboardingIfVisible(page: Page) {
       return
     }
 
-    await page.locator('.onboarding-backdrop').click({ force: true })
+    await markOnboardingComplete(page)
+    await page.reload({ waitUntil: 'networkidle' })
     await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
   }
+}
+
+async function markOnboardingComplete(page: Page) {
+  await page.evaluate(async () => {
+    const token = (window as any).OC?.requestToken || (window as any).oc_requesttoken || ''
+    await fetch('/index.php/apps/opsdash/overview/persist', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { requesttoken: token } : {}),
+      },
+      body: JSON.stringify({
+        onboarding: {
+          completed: true,
+          version: 1,
+          strategy: 'total_only',
+          completed_at: new Date().toISOString(),
+          dashboardMode: 'standard',
+          releaseNotesSeenVersion: '0.7.6',
+        },
+      }),
+    })
+  })
 }
 
 test('must-pass: overview shell renders', async ({ page, baseURL }) => {

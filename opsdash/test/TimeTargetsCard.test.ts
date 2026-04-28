@@ -195,6 +195,52 @@ describe('TimeTargetsCard', () => {
     expect(wrapper.find('.today-chip').exists()).toBe(false)
   })
 
+  it('shows target percentages above 200%', () => {
+    const catSummary = {
+      id: 'work',
+      label: 'Work',
+      actualHours: 25,
+      plannedHours: 0,
+      targetHours: 10,
+      percent: 250,
+      deltaHours: 15,
+      remainingHours: 0,
+      needPerDay: 0,
+      daysLeft: 0,
+      calendarPercent: 100,
+      gap: 150,
+      status: 'done',
+      statusLabel: 'Done',
+      includeWeekend: true,
+      paceMode: 'days_only',
+    }
+
+    const summary = {
+      total: catSummary,
+      categories: [catSummary],
+      forecast: { text: '', linear: 0, momentum: 0, primaryMethod: 'linear' as const },
+    }
+
+    const wrapper = mount(TimeTargetsCard, {
+      props: {
+        summary,
+        config: createDefaultTargetsConfig(),
+        groups: [
+          {
+            id: 'work',
+            label: 'Work',
+            summary: catSummary,
+            color: '#00679e',
+            rows: [],
+          },
+        ],
+      },
+    })
+
+    expect(wrapper.text()).toContain('250%')
+    expect(wrapper.find('.fill').attributes('style')).toContain('width: 250%')
+  })
+
   it('hides today overlay and inline today text when todayHours is zero', () => {
     const catSummary = {
       id: 'work',

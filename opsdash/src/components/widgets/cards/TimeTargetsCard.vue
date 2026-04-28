@@ -244,13 +244,13 @@ function formatHours(value: number): string {
 }
 
 function buildDisplayProgress(summary: TargetsProgress, mode: 'badge' | 'pace') {
-  const rawPercent = clamp(summary.percent, 0, 200)
+  const rawPercent = clamp(summary.percent, 0, 999)
   const isEndless = neverFinishedMode.value && summary.targetHours > 0 && rawPercent >= 80
   if (!isEndless) {
     return {
       percent: rawPercent,
       percentText: rawPercent.toFixed(0),
-      progress: clamp(rawPercent, 0, 200),
+      progress: clamp(rawPercent, 0, 999),
       badgeLabel: summary.statusLabel,
       paceLabel: summary.statusLabel,
       statusClass: statusClass(summary.status),

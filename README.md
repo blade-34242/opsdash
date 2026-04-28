@@ -8,12 +8,12 @@ Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintai
 
 ## 🚀 Feature Rundown
 - 📅 **Dashboard** – KPIs for week/month, busiest days, averages, weekend share, top categories, longest events, and multi-tab layouts.
-- 🎯 **Targets & pacing** – per-calendar and per-category goals, pace hints, trend context, and forecast signals.
+- 🎯 **Targets & pacing** – per-calendar and per-category goals, pace hints, trend context, forecast signals, and over-target progress beyond 200%.
 - ⏱️ **Current period done vs planned** – active week/month separates elapsed hours from future hours so “done” metrics stop at now and upcoming time stays clearly labeled.
 - ⚖️ **Balance** – share cards, stacked bars, relations/ratios, heatmaps, lookback trends, and daypart toggles.
 - 🧠 **Notes** – edit “This week/month”, view “Last week/month”, and optionally surface notes in cards.
 - 🧩 **Shared overlays** – onboarding, profiles, and the in-app `What's new` window now share one large overlay shell and interaction model.
-- ✨ **Release notes in-app** – new versions can auto-open a `What's new` view with short highlights, preview images, and a clickable version history from the sidebar.
+- ✨ **Release notes in-app** – new versions can auto-open a `What's new` view with short highlights, preview images, a clickable version history, and remembered dismissal per app version.
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
 - 🔐 **Runs inside Nextcloud** – same session, same permissions, CSRF-protected writes, no external API calls.
 - 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
@@ -44,7 +44,7 @@ Opsdash supports Nextcloud installations, but it is an independent third-party a
 
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-33 | 0.7.5 |
+| `master` | 30-33 | 0.7.6 |
 | `release/0.5.x` | 30-33 | Store-ready line |
 
 ## Install
@@ -80,7 +80,7 @@ make smoke
 
 ## Packaging
 ```bash
-make release VERSION=0.7.5
+make release VERSION=0.7.6
 ```
 
 One-step release helper:
@@ -90,21 +90,21 @@ One-step release helper:
 
 Manual packaging only:
 ```bash
-make appstore VERSION=0.7.5
+make appstore VERSION=0.7.6
 ```
 
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  
 Sign separately with:
 ```bash
-make sign VERSION=0.7.5 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
+make sign VERSION=0.7.6 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
 ```
 Upload the signed tarball with:
 ```bash
-FORGEJO_TOKEN=<token> make upload VERSION=0.7.5 RELEASE_TAG=v0.7.5
+FORGEJO_TOKEN=<token> make upload VERSION=0.7.6 RELEASE_TAG=v0.7.6
 ```
 Push to the Nextcloud App Store with:
 ```bash
-APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.7.5.tar.gz make appstore-push VERSION=0.7.5
+APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.7.6.tar.gz make appstore-push VERSION=0.7.6
 ```
 Long-form internal release and runbook documentation now lives in the separate `opsdash-docs` and `opsdash-ops` workspace repos. Keep this repo focused on the app, its generic release commands, and contributor-facing basics.
 

@@ -26,6 +26,21 @@ export interface ReleaseNotesEntry {
 
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
+    version: '0.7.6',
+    date: '2026-04-27',
+    title: 'What’s new now stays dismissed',
+    teaser: 'The release update panel now remembers when you have already seen the latest version.',
+    summary: 'This small update makes the in-app release notes less repetitive. After you close the latest update, Opsdash keeps it out of your way until a newer version is available.',
+    highlights: [
+      'The latest update panel now appears only once for each app version.',
+      'Closing the panel is remembered more reliably across refreshes and dashboard saves.',
+      'Targets now show real over-goal progress above 200%, so very strong weeks no longer look capped.',
+      'You can still open release notes manually from the sidebar whenever you want to review what changed.',
+    ],
+    autoShow: true,
+    showInHistory: true,
+  },
+  {
     version: '0.7.5',
     date: '2026-04-20',
     title: 'Updates now get their own in-app spotlight',

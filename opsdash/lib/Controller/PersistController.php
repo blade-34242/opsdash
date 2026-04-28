@@ -147,6 +147,7 @@ final class PersistController extends Controller {
             $didMutate = true;
         } elseif (array_key_exists('onboarding', $data)) {
             $cleanOnboarding = $this->persistSanitizer->cleanOnboardingState($data['onboarding']);
+            $cleanOnboarding = $this->mergeExistingReleaseNotesSeenVersion($uid, $cleanOnboarding);
             if ($resp = $this->writeUserJsonValue($uid, self::CONFIG_ONBOARDING, $cleanOnboarding, 'onboarding')) {
                 return $resp;
             }
@@ -240,6 +241,54 @@ final class PersistController extends Controller {
             'widgets_saved' => $widgetsSaved,
             'widgets_read' => $widgetsRead,
         ], Http::STATUS_OK);
+    }
+
+    /**
+     * Keep older in-flight dashboard saves from erasing a release-note dismissal.
+     *
+     * @param array<string,mixed> $incoming
+     * @return array<string,mixed>
+     */
+    private function mergeExistingReleaseNotesSeenVersion(string $uid, array $incoming): array {
+        $existing = $this->userConfigService->readOnboardingState($this->appName, $uid);
+        $existingVersion = $this->normalizeReleaseVersion((string)($existing['releaseNotesSeenVersion'] ?? ''));
+        $incomingVersion = $this->normalizeReleaseVersion((string)($incoming['releaseNotesSeenVersion'] ?? ''));
+
+        if ($existingVersion !== '' && (
+            $incomingVersion === ''
+            || $this->compareReleaseVersions($existingVersion, $incomingVersion) > 0
+        )) {
+            $incoming['releaseNotesSeenVersion'] = $existingVersion;
+        }
+
+        return $incoming;
+    }
+
+    private function normalizeReleaseVersion(string $version): string {
+        return preg_replace('/^v/i', '', trim($version)) ?? trim($version);
+    }
+
+    private function compareReleaseVersions(string $left, string $right): int {
+        $leftParts = $this->releaseVersionParts($left);
+        $rightParts = $this->releaseVersionParts($right);
+        $length = max(count($leftParts), count($rightParts));
+        for ($index = 0; $index < $length; $index++) {
+            $delta = ($leftParts[$index] ?? 0) <=> ($rightParts[$index] ?? 0);
+            if ($delta !== 0) {
+                return $delta;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @return array<int,int>
+     */
+    private function releaseVersionParts(string $version): array {
+        return array_map(
+            static fn(string $part): int => is_numeric($part) ? (int)$part : 0,
+            explode('.', $this->normalizeReleaseVersion($version)),
+        );
     }
 
     /**

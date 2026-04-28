@@ -243,6 +243,37 @@ describe('useDashboardPersistence', () => {
     expect(onboardingState.value.dashboardMode).toBe('quick')
   })
 
+  it('does not downgrade release notes seen version from stale save read-back', async () => {
+    const onboardingState = ref<any>({
+      completed: true,
+      version: 1,
+      strategy: 'total_only',
+      completed_at: '2026-04-01T00:00:00.000Z',
+      dashboardMode: 'standard',
+      releaseNotesSeenVersion: '0.7.5',
+    })
+    const postJson = vi.fn().mockResolvedValue({
+      onboarding_read: {
+        completed: true,
+        version: 1,
+        strategy: 'total_only',
+        completed_at: '2026-04-01T00:00:00.000Z',
+        dashboardMode: 'standard',
+        releaseNotesSeenVersion: '0.7.4',
+      },
+    })
+
+    const { queueSave } = createPersistence({
+      postJson,
+      onboardingState,
+    })
+
+    queueSave(false)
+    await vi.runOnlyPendingTimersAsync()
+
+    expect(onboardingState.value.releaseNotesSeenVersion).toBe('0.7.5')
+  })
+
   it('replays persist response fixture without dropping UI flags', async () => {
     const postJson = vi.fn().mockResolvedValue(persistFixture)
     const themePref = ref<'auto' | 'light' | 'dark'>('auto')

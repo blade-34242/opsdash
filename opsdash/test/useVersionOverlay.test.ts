@@ -27,7 +27,7 @@ describe('useVersionOverlay', () => {
 
     expect(overlay.isOpen.value).toBe(true)
     expect(overlay.activeEntry.value?.version).toBe('0.7.5')
-    expect(overlay.entries.value.map((entry) => entry.version)).toEqual(['0.7.5', '0.7.4'])
+    expect(overlay.entries.value.map((entry) => entry.version)).toEqual(['0.7.6', '0.7.5', '0.7.4'])
   })
 
   it('marks the current version as seen when the current release closes', async () => {
