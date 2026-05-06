@@ -167,4 +167,45 @@ describe('WidgetOptionsMenu', () => {
 
     expect((wrapper.get('#opt-showTotalDelta').element as HTMLInputElement).checked).toBe(true)
   })
+
+  it('renders ColorPickerPopover for color controls and emits change on pick', async () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry: { controls: [{ key: 'trendColor', label: 'Trend color', type: 'color' }] },
+        options: { trendColor: '#2563EB' },
+        open: true,
+      },
+    })
+
+    // find the picker for trendColor specifically (not the core cardBg one)
+    const pickers = wrapper.findAllComponents({ name: 'ColorPickerPopover' })
+    const trendPicker = pickers.find((p) => p.props('modelValue') === '#2563EB')
+    expect(trendPicker).toBeTruthy()
+
+    await trendPicker!.vm.$emit('update:modelValue', '#F97316')
+    const emissions = wrapper.emitted('change') ?? []
+    expect(emissions.at(-1)).toEqual(['trendColor', '#F97316'])
+  })
+
+  it('renders ColorPickerPopover for each colorlist entry and emits updated array', async () => {
+    const wrapper = mount(WidgetOptionsMenu, {
+      props: {
+        entry: { controls: [{ key: 'palette', label: 'Palette', type: 'colorlist' }] },
+        options: { palette: ['#ff0000', '#00ff00'] },
+        open: true,
+      },
+    })
+
+    // core controls add a cardBg picker; find the palette pickers by their values
+    const pickers = wrapper.findAllComponents({ name: 'ColorPickerPopover' })
+    const palettePickers = pickers.filter((p) => ['#ff0000', '#00ff00'].includes(p.props('modelValue') as string))
+    expect(palettePickers).toHaveLength(2)
+
+    await palettePickers[0].vm.$emit('update:modelValue', '#0000ff')
+    const emissions = wrapper.emitted('change') ?? []
+    const last = emissions.at(-1) as [string, string[]]
+    expect(last[0]).toBe('palette')
+    expect(last[1][0]).toBe('#0000ff')
+    expect(last[1][1]).toBe('#00ff00')
+  })
 })

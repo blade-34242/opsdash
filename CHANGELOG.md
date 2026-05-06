@@ -18,6 +18,15 @@ All notable changes to this project will be documented in this file.
 - **`WidgetPreview.vue`**: new component for distinct widget previews in the Add Widget grid.
 - **BalanceIndex score in history**: each balance history entry now includes a computed `index` float (0–1) alongside categories and shares, supporting both category and calendar basis.
 - **Toolbar width/height groups**: width and height controls in the inline edit toolbar are collapsed into expandable group buttons, reducing visual clutter.
+- **Pro preset updated**: `pro` dashboard layout now reflects current production config — Overview tab has `targets_v2`, `time_summary_overview`, `deck_stats`, `balance_index` (basis: both, 6-week lookback), and `dayoff_trend`. Table tab adds `time_summary_lookback`. Workspace tab keeps notes and deck cards.
+- **Widget name chip**: selected widget chip in the edit toolbar now shows the widget type label small above an inline name input — type and custom name always visible together.
+- **Color group in toolbar**: card background color is now an inline expandable group (like Width/Height/Scale) with 7 theme-aware preset swatches, a reset-to-default option, and a rainbow custom picker. Light mode shows pastel tones, dark mode shows deep saturated backgrounds.
+- **`ColorPickerPopover.vue`**: shared color picker component used in Onboarding and Sidebar Targets — swatch grid + custom color input, scoped CSS, click-away and Esc to close. Replaces two previously duplicated inline implementations.
+### Fixed
+- **Widget move/copy from inline config**: Move and Copy tab actions in the inline `WidgetOptionsMenu` were silently no-ops — the widget `id` was not being passed to the handler. Fixed by injecting the selected widget id at the call site in `App.vue`.
+- **`WidgetOptionsMenu` color controls**: `type: 'color'` and `type: 'colorlist'` controls now use `ColorPickerPopover` instead of the raw native `<input type="color">`.
+### Changed
+- **Color picker consolidation**: removed two duplicated inline color popover implementations (Onboarding, Sidebar Targets) in favour of the shared `ColorPickerPopover.vue`. Removed ~80 lines of duplicate global CSS.
 
 
 ## 0.7.7 - 2026-05-01

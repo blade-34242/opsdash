@@ -33,48 +33,12 @@
       </div>
       <article v-for="cat in categories" :key="cat.id" class="category-card">
         <header class="category-card__header">
-          <div class="color-field" data-color-popover>
-            <button
-              type="button"
-              class="color-button"
-              :aria-expanded="openColorId === cat.id"
-              :aria-label="`Choose color for ${cat.label}`"
-              @click.stop="toggleColorPopover(cat.id)"
-            >
-              <span class="category-color-indicator" :style="{ backgroundColor: resolvedColor(cat) }" aria-hidden="true" />
-              <span>Color</span>
-            </button>
-            <div
-              v-if="openColorId === cat.id"
-              class="color-popover"
-              :id="`onboarding-color-popover-${cat.id}`"
-              tabindex="-1"
-              @keydown.esc.prevent="closeColorPopover()"
-            >
-              <div class="swatch-grid" role="group" aria-label="Preset colors">
-                <button
-                  v-for="swatch in categoryColorPalette"
-                  :key="`${cat.id}-swatch-${swatch}`"
-                  type="button"
-                  class="color-swatch"
-                  :class="{ active: resolvedColor(cat) === swatch }"
-                  :style="{ backgroundColor: swatch }"
-                  :aria-label="`Use color ${swatch}`"
-                  @click="applyColor(cat.id, swatch)"
-                />
-              </div>
-              <label class="custom-color">
-                <span>Custom</span>
-                <input
-                  class="color-input"
-                  type="color"
-                  :value="resolvedColor(cat)"
-                  aria-label="Pick custom color"
-                  @input="onColorInput(cat.id, ($event.target as HTMLInputElement).value)"
-                />
-              </label>
-            </div>
-          </div>
+          <ColorPickerPopover
+            :model-value="resolvedColor(cat)"
+            :palette="categoryColorPalette"
+            :aria-label="`Choose color for ${cat.label}`"
+            @update:model-value="(color) => applyColor(cat.id, color)"
+          />
           <input
             class="category-name"
             type="text"
@@ -168,6 +132,7 @@
 <script setup lang="ts">
 import { NcButton } from '@nextcloud/vue'
 import type { CalendarSummary, CategoryDraft } from '../../services/onboarding'
+import ColorPickerPopover from '../ColorPickerPopover.vue'
 
 defineProps<{
   categoriesEnabled: boolean
@@ -200,12 +165,8 @@ defineProps<{
   setCategoryPaceMode: (id: string, value: CategoryDraft['paceMode']) => void
   toggleCategoryWeekend: (id: string, checked: boolean) => void
   assignCalendar: (calId: string, categoryId: string) => void
-  openColorId: string | null
-  toggleColorPopover: (id: string) => void
-  closeColorPopover: () => void
   categoryColorPalette: string[]
   resolvedColor: (cat: { color?: string | null }) => string
   applyColor: (id: string, value: string) => void
-  onColorInput: (id: string, value: string) => void
 }>()
 </script>

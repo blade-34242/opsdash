@@ -212,9 +212,18 @@
                     <div class="itb">
 
                     <!-- Selected widget chip (far left) -->
-                    <div v-if="inlineSelectedItem" class="sel-chip">
+                    <div v-if="inlineSelectedItem" class="sel-chip sel-chip--named">
                       <div class="sel-dot" />
-                      {{ inlineSelectedItemTitle }}
+                      <div class="sel-chip__body">
+                        <div class="sel-chip__type">{{ inlineSelectedItemType }}</div>
+                        <input
+                          type="text"
+                          class="sel-chip__name"
+                          :value="selectedTitlePrefix"
+                          :placeholder="inlineSelectedItemType"
+                          @input="setSelectedOption('titlePrefix', ($event.target as HTMLInputElement).value)"
+                        />
+                      </div>
                     </div>
                     <div v-else class="sel-chip sel-chip--empty">
                       <div class="sel-dot sel-dot--empty" />
@@ -312,16 +321,41 @@
 
                     <div class="vsep" />
 
-                    <!-- Color swatch -->
-                    <label class="ic color-btn" title="Card background color">
-                      <div class="color-swatch" :style="{ background: selectedCardBg }" />
-                      <input type="color" class="color-input-hidden" :value="selectedCardBg" :disabled="!inlineSelectedItem" @input="setSelectedOption('cardBg', ($event.target as HTMLInputElement).value)" />
-                      <span class="ic-lbl">Color</span>
-                    </label>
-
-                    <!-- Title prefix input -->
-                    <div class="name-input">
-                      <input type="text" class="name-input__field" :value="selectedTitlePrefix" :disabled="!inlineSelectedItem" placeholder="Name…" @input="setSelectedOption('titlePrefix', ($event.target as HTMLInputElement).value)" />
+                    <!-- Color group -->
+                    <div class="ic-group" :class="{ open: inlineGroupOpen === 'color' }">
+                      <button class="ic ic-group__trigger" type="button" :class="{ on: inlineGroupOpen === 'color' }" :disabled="!inlineSelectedItem" title="Card background color" @click="toggleInlineGroup('color')">
+                        <span class="ic-color-dot" :class="{ 'ic-color-dot--none': !selectedCardBg }" :style="selectedCardBg ? { background: selectedCardBg } : {}" />
+                        <span class="ic-lbl">Color</span>
+                      </button>
+                      <div v-if="inlineGroupOpen === 'color'" class="ic-group__rail ic-group__rail--color">
+                        <!-- Reset / no color -->
+                        <button
+                          type="button"
+                          class="ic-color-swatch ic-color-reset"
+                          :class="{ on: !selectedCardBg }"
+                          title="Default background"
+                          @click.stop="() => { setSelectedOption('cardBg', null); inlineGroupOpen = null }"
+                        />
+                        <!-- Palette -->
+                        <button
+                          v-for="color in CARD_BG_PALETTE"
+                          :key="color"
+                          type="button"
+                          class="ic-color-swatch"
+                          :class="{ on: selectedCardBg?.toUpperCase() === color.toUpperCase() }"
+                          :style="{ background: color }"
+                          :title="color"
+                          @click.stop="() => { setSelectedOption('cardBg', color); inlineGroupOpen = null }"
+                        />
+                        <!-- Custom -->
+                        <label class="ic-color-custom" title="Custom color">
+                          <input
+                            type="color"
+                            :value="selectedCardBg ?? '#ffffff'"
+                            @change.stop="(e) => { setSelectedOption('cardBg', (e.target as HTMLInputElement).value); inlineGroupOpen = null }"
+                          />
+                        </label>
+                      </div>
                     </div>
 
                     <!-- Widget config (WidgetOptionsMenu) -->
@@ -338,8 +372,8 @@
                         @toggle="(nextOpen) => { inlineOptionsOpen = nextOpen }"
                         @open-advanced="handleOpenAdvancedFromInline"
                         @change="(key, val) => setSelectedOption(key, val)"
-                        @move-to-tab="handleMoveWidgetToTab"
-                        @duplicate-to-tab="handleDuplicateWidgetToTab"
+                        @move-to-tab="(tabId) => handleMoveWidgetToTab(inlineSelectedItem!.id, tabId)"
+                        @duplicate-to-tab="(tabId) => handleDuplicateWidgetToTab(inlineSelectedItem!.id, tabId)"
                       />
                       <button v-else class="ic" type="button" disabled title="Widget configuration">
                         <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
@@ -1705,13 +1739,24 @@ const inlineSelectedItemTitle = computed(() => {
   return inlineSelectedItem.value.options?.titlePrefix || entry?.label || inlineSelectedItem.value.type
 })
 
+const inlineSelectedItemType = computed(() => {
+  if (!inlineSelectedItem.value) return ''
+  const entry = availableWidgetTypesForStrategy.value.find((e: any) => e.type === inlineSelectedItem.value!.type)
+  return entry?.label || inlineSelectedItem.value.type
+})
+
 const selectedWidth = computed(() => inlineSelectedItem.value?.layout?.width ?? null)
 const selectedHeight = computed(() => inlineSelectedItem.value?.layout?.height ?? null)
 const isAutoHeight = computed(() => inlineSelectedItem.value?.options?.heightMode === 'auto')
-const selectedCardBg = computed(() => inlineSelectedItem.value?.options?.cardBg ?? '#ffffff')
+const selectedCardBg = computed(() => inlineSelectedItem.value?.options?.cardBg ?? null)
 const selectedTitlePrefix = computed(() => inlineSelectedItem.value?.options?.titlePrefix ?? '')
 const selectedScale = computed(() => inlineSelectedItem.value?.options?.scale ?? inlineSelectedItem.value?.options?.textSize ?? 'md')
-const inlineGroupOpen = ref<null | 'width' | 'height' | 'scale'>(null)
+const CARD_BG_PALETTE = computed(() =>
+  effectiveTheme.value === 'dark'
+    ? ['#1e293b', '#1e3a5f', '#2d1b69', '#14532d', '#451a03', '#4c0519', '#f8fafc']
+    : ['#ffffff', '#DBEAFE', '#EDE9FE', '#DCFCE7', '#FEF3C7', '#FFE4E6', '#1E293B'],
+)
+const inlineGroupOpen = ref<null | 'width' | 'height' | 'scale' | 'color'>(null)
 
 function setSelectedOption(key: string, value: any) {
   if (!inlineSelectedItem.value) return
@@ -1738,7 +1783,7 @@ function setInlineScale(target: 'sm' | 'md' | 'lg' | 'xl') {
   setSelectedOption('scale', target)
 }
 
-function toggleInlineGroup(group: 'width' | 'height' | 'scale') {
+function toggleInlineGroup(group: 'width' | 'height' | 'scale' | 'color') {
   if (!inlineSelectedItem.value) return
   inlineGroupOpen.value = inlineGroupOpen.value === group ? null : group
 }

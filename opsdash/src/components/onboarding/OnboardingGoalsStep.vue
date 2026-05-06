@@ -245,15 +245,13 @@
                       </div>
                     </label>
 
-                    <label class="field goal-field-stack goal-color-stack goal-color-stack--inline goal-action-block">
+                    <div class="field goal-field-stack goal-color-stack goal-color-stack--inline goal-action-block">
                       <span class="label">Color</span>
-                      <input
-                        class="goal-color-input"
-                        type="color"
-                        :value="resolvedColor(cat)"
-                        @input="onColorInput(cat.id, ($event.target as HTMLInputElement).value)"
+                      <ColorPickerPopover
+                        :model-value="resolvedColor(cat)"
+                        @update:model-value="(color) => onColorInput(cat.id, color)"
                       />
-                    </label>
+                    </div>
 
                     <label class="field goal-checkbox goal-action-block">
                       <span class="label">Weekend</span>
@@ -464,6 +462,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { CalendarSummary, CategoryDraft, StrategyDefinition } from '../../services/onboarding'
+import ColorPickerPopover from '../ColorPickerPopover.vue'
 
 const props = defineProps<{
   selectedStrategy: StrategyDefinition['id']

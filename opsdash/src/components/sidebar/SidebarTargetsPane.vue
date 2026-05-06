@@ -106,52 +106,12 @@
           <span>Weekend</span>
         </label>
         <div class="field color-field">
-          <div
-            class="color-trigger-wrapper"
-            data-color-popover
-            @click.stop
-          >
-            <button
-              type="button"
-              class="color-button"
-              :aria-expanded="openColorId === cat.id"
-              :aria-label="`Choose color for ${cat.label}`"
-              @click="toggleColorPopover(cat.id)"
-            >
-              <span class="cat-color-indicator" :style="{ backgroundColor: resolvedColor(cat) }" aria-hidden="true" />
-              <span>Color</span>
-            </button>
-            <div
-              v-if="openColorId === cat.id"
-              class="color-popover"
-              :id="`opsdash-color-popover-${cat.id}`"
-              tabindex="-1"
-              @keydown.esc.prevent="closeColorPopover()"
-            >
-              <div class="swatch-grid" role="group" aria-label="Preset colors">
-                <button
-                  v-for="swatch in colorPalette"
-                  :key="`${cat.id}-swatch-${swatch}`"
-                  type="button"
-                  class="color-swatch"
-                  :class="{ active: resolvedColor(cat) === swatch }"
-                  :style="{ backgroundColor: swatch }"
-                  :aria-label="`Use color ${swatch}`"
-                  @click="applyColor(cat.id, swatch)"
-                />
-              </div>
-              <label class="custom-color">
-                <span>Custom</span>
-                <input
-                  class="color-input"
-                  type="color"
-                  :value="resolvedColor(cat)"
-                  aria-label="Pick custom color"
-                  @input="onColorInput(cat.id, ($event.target as HTMLInputElement).value)"
-                />
-              </label>
-            </div>
-          </div>
+          <ColorPickerPopover
+            :model-value="resolvedColor(cat)"
+            :palette="colorPalette"
+            :aria-label="`Choose color for ${cat.label}`"
+            @update:model-value="(color) => emit('set-category-color', { id: cat.id, color })"
+          />
         </div>
       </div>
     </div>
@@ -279,8 +239,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRefs, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, toRefs } from 'vue'
 import { NcButton } from '@nextcloud/vue'
+import ColorPickerPopover from '../ColorPickerPopover.vue'
 import type { TargetsConfig } from '../../services/targets'
 
 type InputMessage = { text: string; tone: 'error' | 'warning' }
@@ -339,39 +300,6 @@ const emit = defineEmits<{
 
 const defaultColor = computed(() => sanitizeColor(colorPalette.value?.[0]) ?? '#2563EB')
 
-const openColorId = ref<string | null>(null)
-
-function handleClickAway(event: MouseEvent) {
-  const target = event.target as HTMLElement | null
-  if (!target?.closest('[data-color-popover]')) {
-    closeColorPopover()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickAway)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickAway)
-})
-
-function toggleColorPopover(id: string) {
-  if (openColorId.value === id) {
-    closeColorPopover()
-    return
-  }
-  openColorId.value = id
-  nextTick(() => {
-    const el = document.getElementById(`opsdash-color-popover-${id}`)
-    el?.focus()
-  })
-}
-
-function closeColorPopover() {
-  openColorId.value = null
-}
-
 function sanitizeColor(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
@@ -387,11 +315,6 @@ function sanitizeColor(value: unknown): string | null {
 
 function resolvedColor(cat: { color?: string | null }): string {
   return sanitizeColor(cat?.color) ?? defaultColor.value
-}
-
-function onColorInput(id: string, value: string) {
-  const color = sanitizeColor(value) ?? defaultColor.value
-  emit('set-category-color', { id, color })
 }
 
 function applyColor(id: string, value: string) {

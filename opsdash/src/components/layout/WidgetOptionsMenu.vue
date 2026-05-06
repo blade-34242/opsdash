@@ -49,11 +49,9 @@
             />
           </template>
           <template v-else-if="control.type === 'color'">
-            <input
-              :id="`opt-${control.key}`"
-              type="color"
-              :value="valueFor(control.key) || '#ffffff'"
-              @input="onText(control.key, $event)"
+            <ColorPickerPopover
+              :model-value="valueFor(control.key) || '#ffffff'"
+              @update:model-value="(v) => emit('change', control.key, v)"
             />
           </template>
         </div>
@@ -98,26 +96,19 @@
             />
           </template>
           <template v-else-if="control.type === 'color'">
-            <input
-              :id="`opt-${control.key}`"
-              type="color"
-              :value="valueFor(control.key) || '#ffffff'"
-              @input="onText(control.key, $event)"
+            <ColorPickerPopover
+              :model-value="valueFor(control.key) || '#ffffff'"
+              @update:model-value="(v) => emit('change', control.key, v)"
             />
           </template>
           <template v-else-if="control.type === 'colorlist'">
             <div class="colorlist">
-              <div
+              <ColorPickerPopover
                 v-for="(col, idx) in paletteValue(control.key)"
                 :key="`${control.key}-${idx}`"
-                class="colorlist__item"
-              >
-                <input
-                  type="color"
-                  :value="col"
-                  @input="onPalette(control.key, idx, $event)"
-                />
-              </div>
+                :model-value="col"
+                @update:model-value="(v) => onPaletteColor(control.key, idx, v)"
+              />
               <button type="button" class="ghost sm" @click="addPalette(control.key)">+</button>
             </div>
           </template>
@@ -249,6 +240,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
+import ColorPickerPopover from '../ColorPickerPopover.vue'
 
 const triggerRef = ref<HTMLElement | null>(null)
 const popStyle = ref<Record<string, string>>({})
@@ -444,6 +436,11 @@ function paletteValue(key: string) {
 }
 function onPalette(key: string, idx: number, event: Event) {
   const value = (event.target as HTMLInputElement).value
+  const arr = [...paletteValue(key)]
+  arr[idx] = value
+  emit('change', key, arr)
+}
+function onPaletteColor(key: string, idx: number, value: string) {
   const arr = [...paletteValue(key)]
   arr[idx] = value
   emit('change', key, arr)
