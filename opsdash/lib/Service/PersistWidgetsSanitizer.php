@@ -7,6 +7,9 @@ final class PersistWidgetsSanitizer {
     private const MAX_WIDGET_TABS = 10;
     private const MAX_WIDGETS_PER_TAB = 50;
     private const MAX_WIDGETS_TOTAL = 100;
+    private const MAX_ID_LIST_COUNT = 100;
+    private const MAX_ID_LEN = 128;
+    private const MAX_TEXT_LEN = 128;
 
     private const ALLOWED_TYPES = [
         'activity_schedule' => true,
@@ -29,6 +32,223 @@ final class PersistWidgetsSanitizer {
         'time_summary_overview' => true,
         'time_summary_v2' => true,
     ];
+
+    private const FORECAST_MODES = ['off', 'total', 'calendar', 'category'];
+    private const FILTER_MODES = ['category', 'calendar'];
+    private const LABEL_MODES = ['date', 'period', 'compact', 'offset'];
+    private const HISTORY_VIEWS = ['timeline', 'accordion'];
+
+    private ?PersistSanitizer $persistSanitizer = null;
+
+    /**
+     * Per-widget option schemas.
+     * Format: 'key' => ['t' => type, ...constraints]
+     * Types: bool, select, number, color, text, id_list, targets_config, targets_map
+     *
+     * @return array<string, array<string, array<string,mixed>>>
+     */
+    private static function optionSchemas(): array {
+        $FORECAST = ['t' => 'select', 'v' => self::FORECAST_MODES];
+        $FILTER_MODE = ['t' => 'select', 'v' => self::FILTER_MODES];
+        $LABEL_MODE = ['t' => 'select', 'v' => self::LABEL_MODES];
+        $BOOL = ['t' => 'bool'];
+        $COLOR = ['t' => 'color'];
+        $ID_LIST = ['t' => 'id_list'];
+        $TEXT = ['t' => 'text'];
+
+        return [
+            'balance_index' => [
+                'showConfig'     => $BOOL,
+                'showTrend'      => $BOOL,
+                'showMessages'   => $BOOL,
+                'showCurrent'    => $BOOL,
+                'reverseOrder'   => $BOOL,
+                'messageDensity' => ['t' => 'select', 'v' => ['few', 'normal', 'many']],
+                'indexBasis'     => ['t' => 'select', 'v' => ['off', 'category', 'calendar', 'both']],
+                'labelMode'      => $LABEL_MODE,
+                'noticeAbove'    => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
+                'noticeBelow'    => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
+                'warnAbove'      => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
+                'warnBelow'      => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
+                'warnIndex'      => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
+                'trendColor'     => $COLOR,
+            ],
+            'calendar_table' => [
+                'calendarFilter' => $ID_LIST,
+                'compact'        => $BOOL,
+            ],
+            'category_mix_trend' => [
+                'density'          => ['t' => 'select', 'v' => ['normal', 'dense']],
+                'squareCells'      => $BOOL,
+                'reverseOrder'     => $BOOL,
+                'showBadge'        => $BOOL,
+                'labelMode'        => $LABEL_MODE,
+                'colorMode'        => ['t' => 'select', 'v' => ['label', 'hybrid', 'share', 'trend']],
+                'trendIndicator'   => ['t' => 'select', 'v' => ['none', 'symbol', 'delta', 'both']],
+                'shareLowColor'    => $COLOR,
+                'shareHighColor'   => $COLOR,
+                'toneLowColor'     => $COLOR,
+                'toneHighColor'    => $COLOR,
+                'filterMode'       => $FILTER_MODE,
+                'filterIds'        => $ID_LIST,
+            ],
+            'chart_dow' => [
+                'showLabels'   => $BOOL,
+                'compact'      => $BOOL,
+                'reverseOrder' => $BOOL,
+                'forecastMode' => $FORECAST,
+                'filterMode'   => $FILTER_MODE,
+                'filterIds'    => $ID_LIST,
+            ],
+            'chart_hod' => [
+                'showLegend'   => $BOOL,
+                'showHint'     => $BOOL,
+                'compact'      => $BOOL,
+                'reverseOrder' => $BOOL,
+                'lookbackMode' => ['t' => 'select', 'v' => ['stacked', 'overlay']],
+                'filterMode'   => $FILTER_MODE,
+                'filterIds'    => $ID_LIST,
+            ],
+            'chart_per_day' => [
+                'showLabels'   => $BOOL,
+                'compact'      => $BOOL,
+                'reverseOrder' => $BOOL,
+                'forecastMode' => $FORECAST,
+                'filterMode'   => $FILTER_MODE,
+                'filterIds'    => $ID_LIST,
+            ],
+            'chart_pie' => [
+                'showLegend' => $BOOL,
+                'showLabels' => $BOOL,
+                'compact'    => $BOOL,
+                'filterMode' => $FILTER_MODE,
+                'filterIds'  => $ID_LIST,
+            ],
+            'chart_stacked' => [
+                'showLegend'   => $BOOL,
+                'showLabels'   => $BOOL,
+                'compact'      => $BOOL,
+                'forecastMode' => $FORECAST,
+                'filterMode'   => $FILTER_MODE,
+                'filterIds'    => $ID_LIST,
+            ],
+            'dayoff_trend' => [
+                'reverseOrder'    => $BOOL,
+                'labelMode'       => $LABEL_MODE,
+                'interpretation'  => ['t' => 'select', 'v' => ['more_off_positive', 'more_off_warning']],
+                'toneLowColor'    => $COLOR,
+                'toneHighColor'   => $COLOR,
+            ],
+            'deck_cards' => [
+                'allowMine'       => $BOOL,
+                'includeArchived' => $BOOL,
+                'includeCompleted'=> $BOOL,
+                'showCount'       => $BOOL,
+                'autoScroll'      => $BOOL,
+                'boardIds'        => $ID_LIST,
+                'stackIds'        => $ID_LIST,
+                'filters'         => $ID_LIST,
+                'autoTagSelection'=> $ID_LIST,
+                'intervalSeconds' => ['t' => 'number', 'min' => 3.0, 'max' => 10.0],
+                'minFilterCount'  => ['t' => 'number', 'min' => 0.0, 'max' => 999.0],
+                'defaultFilter'   => $TEXT,
+            ],
+            'deck_stats' => [
+                'includeArchived' => $BOOL,
+                'includeCompleted'=> $BOOL,
+                'boardIds'        => $ID_LIST,
+                'stackIds'        => $ID_LIST,
+                'metrics'         => $ID_LIST,
+                'scope'           => ['t' => 'select', 'v' => ['all', 'mine', 'unassigned']],
+                'mineMode'        => ['t' => 'select', 'v' => ['assignee', 'creator', 'both']],
+            ],
+            'note_editor' => [
+                'prevLabel' => $TEXT,
+                'currLabel' => $TEXT,
+            ],
+            'note_snippet' => [],
+            'targets_v2' => [
+                'showLegend'             => $BOOL,
+                'showDelta'              => $BOOL,
+                'showForecast'           => $BOOL,
+                'showPace'               => $BOOL,
+                'neverFinishedMode'      => $BOOL,
+                'showToday'              => $BOOL,
+                'showTotalDelta'         => $BOOL,
+                'showNeedPerDay'         => $BOOL,
+                'showCategoryBlocks'     => $BOOL,
+                'badges'                 => $BOOL,
+                'includeWeekendToggle'   => $BOOL,
+                'includeZeroDaysInStats' => $BOOL,
+                'useLocalConfig'         => $BOOL,
+                'localConfig'            => ['t' => 'targets_config'],
+                'localGroupsById'        => ['t' => 'targets_map'],
+                'localTargetsWeek'       => ['t' => 'targets_map'],
+                'localTargetsMonth'      => ['t' => 'targets_map'],
+            ],
+            'text_block' => [
+                'content' => ['t' => 'text', 'maxlen' => 4096],
+            ],
+            'time_summary_lookback' => [
+                'showTotal'              => $BOOL,
+                'showAverage'            => $BOOL,
+                'showMedian'             => $BOOL,
+                'showBusiest'            => $BOOL,
+                'showWorkday'            => $BOOL,
+                'showWeekend'            => $BOOL,
+                'showWeekendShare'       => $BOOL,
+                'showCalendarSummary'    => $BOOL,
+                'showTopCategory'        => $BOOL,
+                'showToday'              => $BOOL,
+                'showActivity'           => $BOOL,
+                'showActivityDetails'    => $BOOL,
+                'showHistoryCoreMetrics' => $BOOL,
+                'showDelta'              => $BOOL,
+                'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
+                'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
+            ],
+            'time_summary_overview' => [
+                'showTotal'              => $BOOL,
+                'showAverage'            => $BOOL,
+                'showMedian'             => $BOOL,
+                'showBusiest'            => $BOOL,
+                'showWorkday'            => $BOOL,
+                'showWeekend'            => $BOOL,
+                'showWeekendShare'       => $BOOL,
+                'showCalendarSummary'    => $BOOL,
+                'showTopCategory'        => $BOOL,
+                'showToday'              => $BOOL,
+                'showActivity'           => $BOOL,
+                'showActivityDetails'    => $BOOL,
+                'showHistoryCoreMetrics' => $BOOL,
+                'showDelta'              => $BOOL,
+                'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
+                'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
+            ],
+            'time_summary_v2' => [
+                'showTotal'              => $BOOL,
+                'showAverage'            => $BOOL,
+                'showMedian'             => $BOOL,
+                'showBusiest'            => $BOOL,
+                'showWorkday'            => $BOOL,
+                'showWeekend'            => $BOOL,
+                'showWeekendShare'       => $BOOL,
+                'showCalendarSummary'    => $BOOL,
+                'showTopCategory'        => $BOOL,
+                'showToday'              => $BOOL,
+                'showActivity'           => $BOOL,
+                'showActivityDetails'    => $BOOL,
+                'showHistoryCoreMetrics' => $BOOL,
+                'showDelta'              => $BOOL,
+                'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
+                'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
+            ],
+            'activity_schedule' => [],
+        ];
+    }
+
+    public function __construct() {
+    }
 
     /**
      * @param mixed $value
@@ -96,6 +316,7 @@ final class PersistWidgetsSanitizer {
         if (!is_array($value)) {
             return [];
         }
+        $schemas = self::optionSchemas();
         $cleaned = [];
         foreach ($value as $item) {
             if ($totalWidgets >= self::MAX_WIDGETS_TOTAL || count($cleaned) >= $limit) {
@@ -115,7 +336,8 @@ final class PersistWidgetsSanitizer {
             $height = ($heightRaw === 's' || $heightRaw === 'l' || $heightRaw === 'xl') ? $heightRaw : 'm';
             $orderRaw = $layout['order'] ?? 0;
             $order = is_numeric($orderRaw) ? (float)$orderRaw : 0.0;
-            $options = (isset($item['options']) && is_array($item['options'])) ? $item['options'] : [];
+            $rawOptions = (isset($item['options']) && is_array($item['options'])) ? $item['options'] : [];
+            $options = $this->sanitizeOptions($rawOptions, $schemas[$type] ?? []);
             $cleaned[] = [
                 'id' => $id !== '' ? $id : sprintf('widget-%s-%d', $type, count($cleaned) + 1),
                 'type' => $type,
@@ -130,5 +352,147 @@ final class PersistWidgetsSanitizer {
             $totalWidgets += 1;
         }
         return $cleaned;
+    }
+
+    /**
+     * @param array<string,mixed> $raw
+     * @param array<string,array<string,mixed>> $schema
+     * @return array<string,mixed>
+     */
+    private function sanitizeOptions(array $raw, array $schema): array {
+        $out = [];
+        foreach ($schema as $key => $spec) {
+            if (!array_key_exists($key, $raw)) {
+                continue;
+            }
+            $val = $raw[$key];
+            $type = (string)($spec['t'] ?? '');
+            $sanitized = match ($type) {
+                'bool'           => (bool)$val,
+                'select'         => $this->sanitizeSelect($val, (array)($spec['v'] ?? [])),
+                'number'         => $this->sanitizeNumber($val, (float)($spec['min'] ?? 0), (float)($spec['max'] ?? PHP_INT_MAX)),
+                'color'          => $this->sanitizeHexColor($val),
+                'text'           => $this->sanitizeText($val, (int)($spec['maxlen'] ?? self::MAX_TEXT_LEN)),
+                'id_list'        => $this->sanitizeIdList($val),
+                'targets_config' => $this->sanitizeTargetsConfig($val),
+                'targets_map'    => $this->sanitizeTargetsMap($val),
+                default          => null,
+            };
+            if ($sanitized !== null) {
+                $out[$key] = $sanitized;
+            }
+        }
+        return $out;
+    }
+
+    private function sanitizeSelect(mixed $val, array $allowed): ?string {
+        $v = (string)$val;
+        return in_array($v, $allowed, true) ? $v : null;
+    }
+
+    private function sanitizeNumber(mixed $val, float $min, float $max): ?float {
+        if (!is_numeric($val)) {
+            return null;
+        }
+        $f = (float)$val;
+        if (!is_finite($f)) {
+            return null;
+        }
+        return max($min, min($max, $f));
+    }
+
+    private function sanitizeHexColor(mixed $val): ?string {
+        if (!is_string($val)) {
+            return null;
+        }
+        $v = trim($val);
+        if ($v === '') {
+            return null;
+        }
+        if (preg_match('/^#([0-9a-fA-F]{6})$/', $v, $m)) {
+            return strtoupper('#' . $m[1]);
+        }
+        if (preg_match('/^#([0-9a-fA-F]{3})$/', $v, $m)) {
+            $r = $m[1][0];
+            $g = $m[1][1];
+            $b = $m[1][2];
+            return strtoupper('#' . $r . $r . $g . $g . $b . $b);
+        }
+        return null;
+    }
+
+    private function sanitizeText(mixed $val, int $maxLen): ?string {
+        if (!is_string($val) && !is_numeric($val)) {
+            return null;
+        }
+        $s = trim((string)$val);
+        if ($s === '') {
+            return null;
+        }
+        return mb_substr($s, 0, $maxLen);
+    }
+
+    /**
+     * @return array<int,string>|null
+     */
+    private function sanitizeIdList(mixed $val): ?array {
+        if (!is_array($val)) {
+            return null;
+        }
+        $out = [];
+        foreach ($val as $item) {
+            $s = substr(trim((string)$item), 0, self::MAX_ID_LEN);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+            if (count($out) >= self::MAX_ID_LIST_COUNT) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function sanitizeTargetsConfig(mixed $val): ?array {
+        if (!is_array($val)) {
+            return null;
+        }
+        return $this->getPersistSanitizer()->cleanTargetsConfig($val);
+    }
+
+    /**
+     * Sanitize a flat map of ID → numeric value (used for localTargetsWeek/Month and localGroupsById).
+     *
+     * @return array<string,float>|null
+     */
+    private function sanitizeTargetsMap(mixed $val): ?array {
+        if (!is_array($val)) {
+            return null;
+        }
+        $out = [];
+        foreach ($val as $k => $v) {
+            $key = substr(trim((string)$k), 0, self::MAX_ID_LEN);
+            if ($key === '' || !is_numeric($v)) {
+                continue;
+            }
+            $out[$key] = round((float)$v, 2);
+            if (count($out) >= self::MAX_ID_LIST_COUNT) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    private function getPersistSanitizer(): PersistSanitizer {
+        // Avoid a DI recursion loop: PersistSanitizer owns PersistWidgetsSanitizer,
+        // so this sanitizer must not request PersistSanitizer in its constructor.
+        $this->persistSanitizer ??= new PersistSanitizer(
+            null,
+            new self(),
+            null,
+        );
+        return $this->persistSanitizer;
     }
 }

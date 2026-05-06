@@ -279,6 +279,68 @@ class PersistSanitizerTest extends TestCase {
     $this->assertSame('note_editor', $result[0]['type']);
   }
 
+  public function testSanitizeWidgetOptionsPerSchema(): void {
+    $result = $this->sanitizer->sanitizeWidgets([
+      [
+        'type' => 'targets_v2',
+        'id' => 'w1',
+        'options' => [
+          'showLegend' => 1,
+          'showDelta' => 0,
+          'localConfig' => [
+            'totalHours' => 20000,
+            'categories' => [
+              [
+                'id' => 'work',
+                'label' => 'Work',
+                'targetHours' => 12000,
+                'includeWeekend' => true,
+                'paceMode' => 'time_aware',
+                'groupIds' => [1, 99],
+              ],
+            ],
+          ],
+          'localTargetsWeek' => [
+            'work' => '14.236',
+            'bad' => 'nope',
+          ],
+          'extraKey' => '<script>',
+        ],
+      ],
+      [
+        'type' => 'category_mix_trend',
+        'id' => 'w2',
+        'options' => [
+          'colorMode' => 'hybrid',
+          'trendIndicator' => 'bogus',
+          'filterIds' => ['alpha', '', 'beta'],
+          'shareLowColor' => '#abc',
+          'shareHighColor' => 'javascript:alert(1)',
+          'unexpected' => true,
+        ],
+      ],
+    ]);
+
+    $this->assertCount(2, $result);
+
+    $targetsOptions = $result[0]['options'];
+    $this->assertTrue($targetsOptions['showLegend']);
+    $this->assertFalse($targetsOptions['showDelta']);
+    $this->assertArrayNotHasKey('extraKey', $targetsOptions);
+    $this->assertSame(10000.0, $targetsOptions['localConfig']['totalHours']);
+    $this->assertSame(10000.0, $targetsOptions['localConfig']['categories'][0]['targetHours']);
+    $this->assertSame([1], $targetsOptions['localConfig']['categories'][0]['groupIds']);
+    $this->assertSame(['work' => 14.24], $targetsOptions['localTargetsWeek']);
+
+    $trendOptions = $result[1]['options'];
+    $this->assertSame('hybrid', $trendOptions['colorMode']);
+    $this->assertArrayNotHasKey('trendIndicator', $trendOptions);
+    $this->assertSame(['alpha', 'beta'], $trendOptions['filterIds']);
+    $this->assertSame('#AABBCC', $trendOptions['shareLowColor']);
+    $this->assertArrayNotHasKey('shareHighColor', $trendOptions);
+    $this->assertArrayNotHasKey('unexpected', $trendOptions);
+  }
+
   public function testCleanOnboardingState(): void {
     $default = $this->sanitizer->cleanOnboardingState(null);
     $this->assertFalse($default['completed']);
