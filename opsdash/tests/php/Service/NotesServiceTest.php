@@ -63,7 +63,7 @@ class NotesServiceTest extends TestCase {
     $this->assertSame('history 3', $result['notes']['history'][2]['content']);
   }
 
-  public function testSaveNotesTruncatesAndEscapes(): void {
+  public function testSaveNotesTruncatesAndStoresRaw(): void {
     $config = $this->createMock(IConfig::class);
     $calendar = $this->createMock(CalendarAccessService::class);
     $logger = $this->createMock(LoggerInterface::class);
@@ -80,7 +80,10 @@ class NotesServiceTest extends TestCase {
         'opsdash',
         'week-2025-03-10',
         $this->callback(function (string $value): bool {
-          return str_contains($value, '&lt;script&gt;') && strlen($value) >= 32768;
+          // Content must be stored raw (no entity encoding) and truncated to 32768 bytes.
+          return str_contains($value, '<script>')
+            && !str_contains($value, '&lt;')
+            && strlen($value) === 32768;
         })
       );
 

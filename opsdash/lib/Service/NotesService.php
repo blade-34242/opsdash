@@ -60,7 +60,6 @@ class NotesService {
         if (strlen($content) > 32768) {
             $content = substr($content, 0, 32768);
         }
-        $content = htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
         $userTz = $this->calendarAccess->resolveUserTimezone($uid);
         $weekStart = $this->calendarAccess->resolveUserWeekStart($uid);
