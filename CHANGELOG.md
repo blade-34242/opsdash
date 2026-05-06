@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - **Widget move/copy from inline config**: Move and Copy tab actions in the inline `WidgetOptionsMenu` were silently no-ops — the widget `id` was not being passed to the handler. Fixed by injecting the selected widget id at the call site in `App.vue`.
 - **`WidgetOptionsMenu` color controls**: `type: 'color'` and `type: 'colorlist'` controls now use `ColorPickerPopover` instead of the raw native `<input type="color">`.
 ### Changed
+- **Edit bar refinement**: layout editing now uses a quieter left-aligned two-row header. Row 1 is tabs only; Row 2 groups `Editing layout · no date navigation`, `Add widget`, and `Done editing`. The whole app bar floats on scroll (previously only the widget toolbar row floated). The `editing-pill` indicator is removed. The widget group toolbar row remains below unchanged.
 - **Color picker consolidation**: removed two duplicated inline color popover implementations (Onboarding, Sidebar Targets) in favour of the shared `ColorPickerPopover.vue`. Removed ~80 lines of duplicate global CSS.
 
 

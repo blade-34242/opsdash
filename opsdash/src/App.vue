@@ -101,7 +101,16 @@
             </div>
 
             <!-- ── App bar: unified browse + edit surface ── -->
-            <div ref="appBarRef" class="app-bar" :class="{ 'app-bar--editing': isLayoutEditing }">
+            <div
+              ref="appBarSlotRef"
+              class="app-bar-slot"
+              :style="itbFloating && appBarHeight ? { minHeight: `${appBarHeight}px` } : undefined"
+            >
+            <div
+              ref="appBarRef"
+              class="app-bar"
+              :class="{ 'app-bar--editing': isLayoutEditing, 'app-bar--floating': itbFloating }"
+            >
 
               <!-- ══ BROWSE MODE ══ -->
               <template v-if="!isLayoutEditing">
@@ -164,7 +173,7 @@
 
               <!-- ══ EDIT MODE (hard split) ══ -->
               <template v-else>
-                <!-- Row 1: tabs + mode pill + Done -->
+                <!-- Row 1: tabs only -->
                 <div class="bar-row">
                   <div class="tab-strip" role="tablist" aria-label="Dashboard tabs">
                     <div v-for="tab in layoutTabs" :key="tab.id" class="tab-item">
@@ -200,15 +209,18 @@
                     </div>
                     <button type="button" class="tab tab--add" @click="addTab()">+ Tab</button>
                   </div>
+                </div>
+
+                <!-- Row 2: edit context + actions -->
+                <div class="bar-row sep bar-row--edit-actions">
                   <span class="mode-hint">Editing layout · no date navigation</span>
-                  <div class="bar-flex1" />
-                  <span class="editing-pill">Layout mode</span>
+                  <button class="btn-ghost btn-ghost--primary" type="button" @click="showAddWidgetModal = true">Add widget</button>
                   <button class="btn-done" type="button" @click="toggleLayoutEditing">Done editing</button>
                 </div>
 
-                <!-- Row 2: inline widget controls -->
-                <div class="itb-row-slot" :style="itbFloating && itbRowHeight ? { minHeight: `${itbRowHeight}px` } : undefined">
-                  <div ref="itbRowRef" class="bar-row sep itb-row" :class="{ 'itb-row--floating': itbFloating }">
+                <!-- Row 3: inline widget controls -->
+                <div ref="itbRowSlotRef" class="itb-row-slot">
+                  <div ref="itbRowRef" class="bar-row sep itb-row">
                     <div class="itb">
 
                     <!-- Selected widget chip (far left) -->
@@ -402,22 +414,12 @@
                       <span class="ic-lbl">Remove</span>
                     </button>
 
-                    <div class="bar-flex1" />
-
-                    <!-- Add widget (far right) -->
-                    <div class="vsep" />
-                    <button class="ic-add" type="button" @click="showAddWidgetModal = true">
-                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                        <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                      </svg>
-                      Add widget
-                    </button>
-
                     </div>
                   </div>
                 </div>
               </template>
 
+            </div>
             </div>
             <div
               v-if="tabContext.open"
@@ -775,8 +777,10 @@ const showAddWidgetModal = ref(false)
 const inlineOptionsOpen = ref(false)
 const lastLoadedAt = ref<Date | null>(null)
 const itbFloating = ref(false)
+const appBarSlotRef = ref<HTMLElement | null>(null)
 const appBarRef = ref<HTMLElement | null>(null)
 const itbRowRef = ref<HTMLElement | null>(null)
+const itbRowSlotRef = ref<HTMLElement | null>(null)
 let teardownItbScroll: null | (() => void) = null
 
 function setupItbScroll() {
@@ -806,20 +810,28 @@ function setupItbScroll() {
 
 import { nextTick, onMounted, watch } from 'vue'
 const itbRowHeight = ref(0)
+const appBarHeight = ref(0)
 let itbFloatThreshold = 0
 
 function measureItbRow(container: HTMLElement) {
+  const appBar = appBarRef.value
+  const appBarSlot = appBarSlotRef.value
   const row = itbRowRef.value
-  if (!row) {
+  const slot = itbRowSlotRef.value
+  if (!row || !appBar) {
     itbRowHeight.value = 0
+    appBarHeight.value = 0
     itbFloatThreshold = 0
     return
   }
   const floatTopOffset = getItbFloatTopOffset()
   const rowRect = row.getBoundingClientRect()
+  const appBarRect = appBar.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
+  const thresholdRect = (appBarSlot ?? slot ?? row).getBoundingClientRect()
   itbRowHeight.value = Math.ceil(rowRect.height)
-  itbFloatThreshold = Math.max(0, rowRect.top - containerRect.top + container.scrollTop - floatTopOffset)
+  appBarHeight.value = Math.ceil(appBarRect.height)
+  itbFloatThreshold = Math.max(0, thresholdRect.top - containerRect.top + container.scrollTop - floatTopOffset)
 }
 
 function getItbFloatTopOffset() {
@@ -834,6 +846,7 @@ watch(isLayoutEditing, async (editing) => {
   if (!editing) {
     itbFloating.value = false
     itbRowHeight.value = 0
+    appBarHeight.value = 0
     return
   }
   await nextTick()

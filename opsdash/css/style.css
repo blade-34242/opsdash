@@ -2022,6 +2022,18 @@
   background:linear-gradient(180deg, color-mix(in oklab, var(--brand), transparent 96%), var(--card));
   border-color:color-mix(in oklab, var(--brand), var(--line) 48%);
 }
+#opsdash .app-bar.app-bar--floating{
+  position:fixed;
+  top:calc(var(--header-height, 50px) + 12px);
+  left:calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap));
+  right:16px;
+  z-index:120;
+  box-shadow:0 12px 34px rgba(15,23,42,.18), 0 3px 10px rgba(15,23,42,.10);
+  backdrop-filter:blur(14px);
+}
+#opsdash.opsdash-theme-dark .app-bar.app-bar--floating{
+  box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
+}
 
 /* Floating widget config row only */
 /* ── Bar rows ── */
@@ -2042,30 +2054,10 @@
   position:relative;
   background:color-mix(in oklab, var(--card), transparent 2%);
 }
-#opsdash .itb-row.itb-row--floating{
-  position:fixed;
-  top:calc(var(--header-height, 50px) + 12px);
-  left:calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap));
-  right:16px;
-  z-index:120;
-  background:linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%);
-  border:1px solid color-mix(in oklab,var(--brand),var(--line) 50%);
-  border-radius:14px;
-  box-shadow:0 12px 34px rgba(15,23,42,.18), 0 3px 10px rgba(15,23,42,.10);
-  backdrop-filter:blur(14px);
-  padding:8px 16px;
-}
-#opsdash.opsdash-theme-dark .itb-row.itb-row--floating{
-  background:linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(2,6,23,0.98) 100%);
-  border-color:color-mix(in oklab, var(--brand), transparent 30%);
-  box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
-}
-#opsdash .itb-row.itb-row--floating .bar-flex1{ display:none; }
-#opsdash .itb-row.itb-row--floating .vsep{ height:22px; }
 #opsdash .bar-flex1{ flex:1 !important; min-width:0; }
 
 @media (max-width: 1100px){
-  #opsdash .itb-row.itb-row--floating{
+  #opsdash .app-bar.app-bar--floating{
     top:calc(var(--header-height, 50px) + 10px);
     left:12px;
     right:12px;
@@ -2223,6 +2215,14 @@
   display:inline-flex;align-items:center;
 }
 #opsdash .btn-ghost:hover{ background:rgba(0,0,0,.05); }
+#opsdash .btn-ghost--primary{
+  border-color:color-mix(in oklab,var(--brand),transparent 78%);
+  color:var(--brand);
+  background:color-mix(in oklab,var(--brand),transparent 92%);
+}
+#opsdash .btn-ghost--primary:hover{
+  background:color-mix(in oklab,var(--brand),transparent 86%);
+}
 
 /* ── Done editing button ── */
 #opsdash .btn-done{
@@ -2235,26 +2235,16 @@
 }
 #opsdash .btn-done:hover{ filter:brightness(1.08); }
 
-/* ── Editing mode pill ── */
-#opsdash .editing-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  height:28px;border-radius:999px;padding:0 12px;
-  border:1px solid color-mix(in oklab,var(--brand),transparent 78%);
-  color:var(--brand);
-  background:color-mix(in oklab,var(--brand),transparent 93%);
-  font-size:11px;font-weight:900;flex-shrink:0;
-}
-#opsdash .editing-pill::before{
-  content:"";width:7px;height:7px;border-radius:50%;
-  background:var(--brand);
-  box-shadow:0 0 0 3px color-mix(in oklab,var(--brand),transparent 82%);
-  flex-shrink:0;
-}
-
 /* ── Mode band ── */
 #opsdash .mode-hint{
   font-size:11px;color:var(--brand);font-weight:600;
   opacity:.7;white-space:nowrap;align-self:center;padding-left:10px;
+}
+#opsdash .bar-row--edit-actions{
+  gap:10px;
+}
+#opsdash .bar-row--edit-actions .mode-hint{
+  padding-left:0;
 }
 
 /* ── Inline toolbar ── */
