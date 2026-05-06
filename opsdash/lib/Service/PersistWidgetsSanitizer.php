@@ -8,6 +8,28 @@ final class PersistWidgetsSanitizer {
     private const MAX_WIDGETS_PER_TAB = 50;
     private const MAX_WIDGETS_TOTAL = 100;
 
+    private const ALLOWED_TYPES = [
+        'activity_schedule' => true,
+        'balance_index' => true,
+        'calendar_table' => true,
+        'category_mix_trend' => true,
+        'chart_dow' => true,
+        'chart_hod' => true,
+        'chart_per_day' => true,
+        'chart_pie' => true,
+        'chart_stacked' => true,
+        'dayoff_trend' => true,
+        'deck_cards' => true,
+        'deck_stats' => true,
+        'note_editor' => true,
+        'note_snippet' => true,
+        'targets_v2' => true,
+        'text_block' => true,
+        'time_summary_lookback' => true,
+        'time_summary_overview' => true,
+        'time_summary_v2' => true,
+    ];
+
     /**
      * @param mixed $value
      * @return array<string,mixed>|array<int,array<string,mixed>>
@@ -83,7 +105,7 @@ final class PersistWidgetsSanitizer {
                 continue;
             }
             $type = substr(trim((string)($item['type'] ?? '')), 0, 64);
-            if ($type === '') {
+            if ($type === '' || !isset(self::ALLOWED_TYPES[$type])) {
                 continue;
             }
             $id = substr(trim((string)($item['id'] ?? '')), 0, 64);

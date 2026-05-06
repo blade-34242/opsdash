@@ -267,6 +267,18 @@ class PersistSanitizerTest extends TestCase {
     $this->assertLessThanOrEqual(100, $total);
   }
 
+  public function testSanitizeWidgetsRejectsUnknownType(): void {
+    $result = $this->sanitizer->sanitizeWidgets([
+      ['type' => 'unknown_widget', 'id' => 'w1'],
+      ['type' => '../../evil', 'id' => 'w2'],
+      ['type' => '<script>alert(1)</script>', 'id' => 'w3'],
+      ['type' => 'note_editor', 'id' => 'w4'],
+    ]);
+
+    $this->assertCount(1, $result, 'Only known widget types should be kept');
+    $this->assertSame('note_editor', $result[0]['type']);
+  }
+
   public function testCleanOnboardingState(): void {
     $default = $this->sanitizer->cleanOnboardingState(null);
     $this->assertFalse($default['completed']);
