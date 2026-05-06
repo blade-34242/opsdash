@@ -370,6 +370,78 @@ class PersistSanitizerTest extends TestCase {
     $this->assertTrue($result[0]['options']['showLegend']);
   }
 
+  public function testSanitizeWidgetOptionsDropsXssPayloads(): void {
+    $result = $this->sanitizer->sanitizeWidgets([
+      [
+        'type' => 'note_editor',
+        'id' => 'w1',
+        'options' => [
+          'prevLabel' => '<script>alert(1)</script>',
+          'currLabel' => str_repeat('a', 300),
+          'injected'  => '<img src=x onerror=alert(1)>',
+        ],
+      ],
+      [
+        'type' => 'balance_index',
+        'id' => 'w2',
+        'options' => [
+          'trendColor'  => 'javascript:alert(1)',
+          'noticeAbove' => 99.9,
+          'noticeBelow' => -5.0,
+          'injected'    => 'DROP TABLE users',
+        ],
+      ],
+    ]);
+
+    $this->assertCount(2, $result);
+
+    $noteOpts = $result[0]['options'];
+    // prevLabel stored as raw text — XSS tags passed through as text (Vue escapes at render).
+    $this->assertStringContainsString('script', $noteOpts['prevLabel']);
+    // currLabel truncated to MAX_TEXT_LEN (128).
+    $this->assertSame(128, mb_strlen($noteOpts['currLabel']));
+    // Unknown keys dropped.
+    $this->assertArrayNotHasKey('injected', $noteOpts);
+
+    $balanceOpts = $result[1]['options'];
+    // Non-hex color rejected.
+    $this->assertArrayNotHasKey('trendColor', $balanceOpts);
+    // Numbers clamped to [0, 1].
+    $this->assertSame(1.0, $balanceOpts['noticeAbove']);
+    $this->assertSame(0.0, $balanceOpts['noticeBelow']);
+    // Unknown keys dropped.
+    $this->assertArrayNotHasKey('injected', $balanceOpts);
+  }
+
+  public function testSanitizeWidgetOptionsDeckNumbersAndSelects(): void {
+    $result = $this->sanitizer->sanitizeWidgets([
+      [
+        'type' => 'deck_cards',
+        'id' => 'w1',
+        'options' => [
+          'intervalSeconds' => 1,
+          'minFilterCount'  => 9999,
+          'defaultFilter'   => 'open_all',
+          'scope'           => 'evil',
+          'boardIds'        => ['board1', '', 'board2', 42],
+          'autoScroll'      => '1',
+          'allowMine'       => false,
+        ],
+      ],
+    ]);
+
+    $this->assertCount(1, $result);
+    $opts = $result[0]['options'];
+
+    $this->assertSame(3.0, $opts['intervalSeconds'], 'Below min clamped to 3');
+    $this->assertSame(999.0, $opts['minFilterCount'], 'Above max clamped to 999');
+    $this->assertSame('open_all', $opts['defaultFilter']);
+    $this->assertArrayNotHasKey('scope', $opts, 'Unknown key for this type dropped');
+    $this->assertSame(['board1', 'board2', '42'], $opts['boardIds'], 'Empty strings dropped, ints cast');
+    $this->assertTrue($opts['autoScroll'], 'Truthy string cast to bool');
+    $this->assertFalse($opts['allowMine']);
+  }
+
   public function testCleanOnboardingState(): void {
     $default = $this->sanitizer->cleanOnboardingState(null);
     $this->assertFalse($default['completed']);
