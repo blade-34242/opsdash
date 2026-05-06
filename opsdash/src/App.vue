@@ -57,6 +57,7 @@
       :is-saving="isReleaseNotesSaving"
       @close="closeReleaseNotesOverlay"
       @select-version="openReleaseNotesVersion"
+      @action="handleReleaseNotesAction"
     />
     <NcAppContent app-name="Operational Dashboard" :show-navigation="navOpen">
       <template #navigation>
@@ -1285,6 +1286,15 @@ const {
 })
 
 const releaseNotesAvailable = computed(() => Boolean(currentReleaseNotesEntry.value))
+
+function handleReleaseNotesAction(type: string) {
+  if (type === 'reload') {
+    // applyDashboardPreset updates local widget state reactively and queues
+    // a server save (debounced). Do NOT call performLoad() here — it would
+    // race the debounced save and overwrite the reset with stale server data.
+    applyDashboardPreset(dashboardMode.value)
+  }
+}
 
 const activeDayMode = ref<'active'|'all'>('active')
 const rangeLabel = computed(()=> range.value === 'month' ? 'Month' : 'Week')

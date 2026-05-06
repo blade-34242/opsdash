@@ -41,7 +41,7 @@
         <section v-if="entry.images?.length" class="version-notes-overlay__section">
           <div class="version-notes-overlay__section-head">
             <h4>Preview</h4>
-            <span class="version-notes-overlay__section-label">Optional images</span>
+            <span class="version-notes-overlay__section-label">Screenshots</span>
           </div>
           <div class="version-notes-overlay__images">
             <a
@@ -58,6 +58,21 @@
                 <span v-if="image.caption">{{ image.caption }}</span>
               </div>
             </a>
+          </div>
+          <div v-if="reloadActions.length" class="version-notes-overlay__apply-block">
+            <div class="version-notes-overlay__apply-text">
+              <strong>Want the new layout right now?</strong>
+              This release ships with an updated default dashboard. Clicking the button below resets your current tab to the default layout for your selected dashboard profile — no manual rebuilding needed.
+            </div>
+            <button
+              v-for="action in reloadActions"
+              :key="`${entry.version}-${action.label}`"
+              type="button"
+              class="version-notes-overlay__reload-btn"
+              @click="emit('action', action.type)"
+            >
+              {{ action.label }}
+            </button>
           </div>
         </section>
       </section>
@@ -90,9 +105,9 @@
     <footer class="onboarding-footer version-notes-overlay__footer">
       <div class="version-notes-overlay__footer-note">
         The latest release opens first. Older updates stay available here whenever you want to look back.
-        <div v-if="entry.actions?.length" class="version-notes-overlay__link-row">
+        <div v-if="linkActions.length" class="version-notes-overlay__link-row">
           <a
-            v-for="action in entry.actions"
+            v-for="action in linkActions"
             :key="`${entry.version}-${action.label}`"
             class="version-notes-overlay__link"
             :href="action.href"
@@ -117,7 +132,7 @@ import { NcButton } from '@nextcloud/vue'
 import AppOverlayShell from './AppOverlayShell.vue'
 import type { ReleaseNotesEntry } from '../../services/releaseNotes'
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   theme: 'light' | 'dark'
   entry: ReleaseNotesEntry
@@ -129,7 +144,11 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'select-version', version: string): void
+  (e: 'action', type: string): void
 }>()
+
+const linkActions = computed(() => (props.entry.actions ?? []).filter(a => a.type === 'link'))
+const reloadActions = computed(() => (props.entry.actions ?? []).filter(a => a.type === 'reload'))
 
 const formatter = computed(() => new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
@@ -235,6 +254,22 @@ function formatDate(value: string) {
   color: var(--color-text);
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.version-notes-overlay__link--action {
+  appearance: none;
+  font-family: inherit;
+  font-size: inherit;
+  border-color: color-mix(in oklab, var(--brand), var(--color-border) 40%);
+  background: color-mix(in oklab, var(--brand), transparent 82%);
+  color: var(--brand);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.version-notes-overlay__link--action:hover {
+  background: color-mix(in oklab, var(--brand), transparent 72%);
+  border-color: color-mix(in oklab, var(--brand), var(--color-border) 22%);
 }
 
 .version-notes-overlay__section {
@@ -368,6 +403,60 @@ function formatDate(value: string) {
   gap: 12px;
   color: var(--color-text-light);
   line-height: 1.5;
+}
+
+
+.version-notes-overlay__apply-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--brand), transparent 94%);
+  border: 1px solid color-mix(in oklab, var(--brand), transparent 78%);
+}
+
+.version-notes-overlay__apply-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-light);
+}
+
+.version-notes-overlay__apply-text strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.version-notes-overlay__reload-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in oklab, var(--brand), transparent 48%);
+  background: color-mix(in oklab, var(--brand), transparent 88%);
+  color: var(--brand);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.version-notes-overlay__reload-btn:hover {
+  background: color-mix(in oklab, var(--brand), transparent 78%);
+  border-color: color-mix(in oklab, var(--brand), transparent 24%);
+  transform: translateY(-1px);
+}
+
+.version-notes-overlay__reload-btn:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 900px) {

@@ -7,8 +7,8 @@ export interface ReleaseNotesImage {
 
 export interface ReleaseNotesAction {
   label: string
-  type: 'link'
-  href: string
+  type: 'link' | 'reload'
+  href?: string
 }
 
 export interface ReleaseNotesEntry {
@@ -25,6 +25,34 @@ export interface ReleaseNotesEntry {
 }
 
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
+  {
+    version: '0.8.0',
+    date: '2026-05-06',
+    title: 'Smarter balance tracking, cleaner editing',
+    teaser: 'The Balance widget now tracks your score over time, the editing bar got a big polish, and the whole dashboard is safer under the hood.',
+    summary: 'Version 0.8.0 brings visible improvements to how Opsdash shows balance trends over time, makes layout editing feel more organised, and quietly tightens up a lot of behind-the-scenes behaviour.',
+    highlights: [
+      'The editing bar is now cleaner and better organised: tabs stay on their own row, and the Add widget and Done editing buttons sit together in a quieter second row below.',
+      'Widget controls in the toolbar (Width, Height, Color) are now grouped into compact expandable sections, so the bar stays readable even when many options are available.',
+      'A shared color picker is now used consistently across the whole app — in calendar goals, targets, and widget customisation.',
+    ],
+    images: [
+      {
+        src: resolveReleaseImagePath('release-notes/release-080-composite.png'),
+        alt: 'Opsdash 0.8.0 — sidebar, browse bar, and edit bar side by side',
+        title: 'Sidebar · Browse bar · Edit bar',
+        caption: 'Left: the sidebar with your dashboard profile and quick-setup links. Right top: the clean browse bar. Right bottom: the new two-row edit bar with tabs on row 1 and actions on row 2.',
+      },
+    ],
+    actions: [
+      {
+        label: '↻ Reset to default layout',
+        type: 'reload',
+      },
+    ],
+    autoShow: true,
+    showInHistory: true,
+  },
   {
     version: '0.7.6',
     date: '2026-04-27',
