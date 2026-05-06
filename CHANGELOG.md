@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 - None yet.
 
 
-## 0.8.0 - 2026-05-05
+## 0.8.0 - 2026-05-06
 ### Added
 - **Edit toolbar redesign (V3)**: sidebar-aware combined bar — single row when sidebar open, two-row bar when collapsed. Floating edit bar sticks below the Nextcloud header on scroll via `--header-height`.
 - **Height L and XL** buttons added to the inline widget toolbar.
@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - **Add Widget Modal**: "Add without closing" action, `↵`/`Esc` keyboard shortcuts, per-widget CSS preview thumbnails (9 distinct variants).
 - **Widget categories**: all 16 widget types declare `category` (`Time` / `Charts` / `Tasks` / `Notes`). Modal filters by category tab.
 - **`WidgetPreview.vue`**: new component for distinct widget previews in the Add Widget grid.
+- **BalanceIndex score in history**: each balance history entry now includes a computed `index` float (0–1) alongside categories and shares, supporting both category and calendar basis.
+- **Toolbar width/height groups**: width and height controls in the inline edit toolbar are collapsed into expandable group buttons, reducing visual clutter.
 
 
 ## 0.7.7 - 2026-05-01
