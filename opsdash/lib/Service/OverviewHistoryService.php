@@ -27,8 +27,12 @@ final class OverviewHistoryService {
      * @param \DateTimeZone $userTz
      * @param float $allDayHours
      * @param array<string,array{id:string,label:string}> $categoryMeta
+     * @param array<string,mixed> $targetsConfig
+     * @param array<string,float|int|string> $targetsWeek
+     * @param array<string,float|int|string> $targetsMonth
+     * @param array<string,string> $idToName
      * @param int $weekStart
-     * @return array<int, array{offset:int,label:string,categories:array<int,array{id:string,label:string,share:float}>}>
+     * @return array<int, array{offset:int,label:string,categories:array<int,array{id:string,label:string,share:float}>,index:float}>
      */
     public function buildBalanceHistory(
         string $range,
@@ -42,6 +46,10 @@ final class OverviewHistoryService {
         \DateTimeZone $userTz,
         float $allDayHours,
         array $categoryMeta,
+        array $targetsConfig,
+        array $targetsWeek,
+        array $targetsMonth,
+        array $idToName,
         int $weekStart = 1,
     ): array {
         $history = [];
@@ -68,6 +76,11 @@ final class OverviewHistoryService {
                 categoryTotals: $rangeTotals['totals'],
                 totalHours: $rangeTotals['total'],
                 categoryMeta: $categoryMeta,
+                targetsConfig: $targetsConfig,
+                targetsWeek: $targetsWeek,
+                targetsMonth: $targetsMonth,
+                byCalTotals: $rangeTotals['byCal'],
+                idToName: $idToName,
             );
         }
 
@@ -286,7 +299,7 @@ final class OverviewHistoryService {
      * @param array<int, object> $calendars
      * @param array<string,array{id:string,label:string}> $categoryMeta
      * @param callable(string): string $mapCalToCategory
-     * @return array{totals: array<string,float>, total: float, events: int, daysSeen: string[]}
+     * @return array{totals: array<string,float>, total: float, events: int, daysSeen: string[], byCal: array<string,float>}
      */
     private function collectRangeCategoryTotals(
         \DateTimeImmutable $from,
@@ -308,6 +321,7 @@ final class OverviewHistoryService {
         $totalHours = 0.0;
         $eventCount = 0;
         $daysSeen = [];
+        $byCalTotals = [];
 
         $collect = $this->eventsCollector->collect(
             principal: $principal,
@@ -350,6 +364,7 @@ final class OverviewHistoryService {
             $calId = (string)($row['calendar_id'] ?? ($row['calendar'] ?? ''));
             $catId = $mapCalToCategory($calId);
             $categoryTotals[$catId] = ($categoryTotals[$catId] ?? 0.0) + $eventHours;
+            $byCalTotals[$calId] = ($byCalTotals[$calId] ?? 0.0) + $eventHours;
             $totalHours += $eventHours;
             $eventCount++;
         }
@@ -359,6 +374,7 @@ final class OverviewHistoryService {
             'total' => $totalHours,
             'events' => $eventCount,
             'daysSeen' => $captureDays ? array_keys($daysSeen) : [],
+            'byCal' => $byCalTotals,
         ];
     }
 
@@ -459,6 +475,11 @@ final class OverviewHistoryService {
     /**
      * @param array<string,float> $categoryTotals
      * @param array<string,array{id:string,label:string}> $categoryMeta
+     * @param array<string,mixed> $targetsConfig
+     * @param array<string,float|int|string> $targetsWeek
+     * @param array<string,float|int|string> $targetsMonth
+     * @param array<string,float> $byCalTotals
+     * @param array<string,string> $idToName
      */
     private function buildTrendHistoryEntry(
         string $range,
@@ -466,6 +487,11 @@ final class OverviewHistoryService {
         array $categoryTotals,
         float $totalHours,
         array $categoryMeta,
+        array $targetsConfig,
+        array $targetsWeek,
+        array $targetsMonth,
+        array $byCalTotals,
+        array $idToName,
     ): array {
         $categories = [];
         foreach ($categoryMeta as $catId => $meta) {
@@ -480,7 +506,127 @@ final class OverviewHistoryService {
             'offset' => $offsetStep,
             'label' => $this->formatTrendHistoryLabel($range, $offsetStep),
             'categories' => $categories,
+            'index' => round($this->computeBalanceIndexForHistory(
+                range: $range,
+                totalHours: $totalHours,
+                categoryTotals: $categoryTotals,
+                byCalTotals: $byCalTotals,
+                targetsConfig: $targetsConfig,
+                targetsWeek: $targetsWeek,
+                targetsMonth: $targetsMonth,
+                categoryMeta: $categoryMeta,
+                idToName: $idToName,
+            ), 3),
         ];
+    }
+
+    /**
+     * @param array<string,float> $categoryTotals
+     * @param array<string,float> $byCalTotals
+     * @param array<string,mixed> $targetsConfig
+     * @param array<string,float|int|string> $targetsWeek
+     * @param array<string,float|int|string> $targetsMonth
+     * @param array<string,array{id:string,label:string}> $categoryMeta
+     * @param array<string,string> $idToName
+     */
+    private function computeBalanceIndexForHistory(
+        string $range,
+        float $totalHours,
+        array $categoryTotals,
+        array $byCalTotals,
+        array $targetsConfig,
+        array $targetsWeek,
+        array $targetsMonth,
+        array $categoryMeta,
+        array $idToName,
+    ): float {
+        if ($totalHours <= 0) {
+            return 0.0;
+        }
+
+        $balanceConfig = is_array($targetsConfig['balance'] ?? null) ? $targetsConfig['balance'] : [];
+        $basis = (string)(($balanceConfig['index'] ?? [])['basis'] ?? 'category');
+        if ($basis === 'off') {
+            return 0.0;
+        }
+
+        $expectedShares = [];
+        $buckets = [];
+        $useCategories = ($basis === 'category' || $basis === 'both');
+        $useCalendars = ($basis === 'calendar' || $basis === 'both');
+
+        if ($useCategories) {
+            $catTargets = is_array($targetsConfig['categories'] ?? null) ? $targetsConfig['categories'] : [];
+            $targetSum = 0.0;
+            foreach ($catTargets as $cat) {
+                if (!is_array($cat)) {
+                    continue;
+                }
+                $id = (string)($cat['id'] ?? '');
+                $tgt = (float)($cat['targetHours'] ?? 0.0);
+                if ($id === '' || $tgt <= 0) {
+                    continue;
+                }
+                $expectedShares['cat:' . $id] = $tgt;
+                $targetSum += $tgt;
+            }
+            if ($targetSum > 0) {
+                foreach ($expectedShares as $key => $value) {
+                    if (str_starts_with($key, 'cat:')) {
+                        $expectedShares[$key] = $value / $targetSum;
+                    }
+                }
+            }
+            foreach ($categoryMeta as $catId => $meta) {
+                $buckets[] = [
+                    'id' => 'cat:' . $catId,
+                    'label' => $meta['label'],
+                    'share' => ($categoryTotals[$catId] ?? 0.0) / $totalHours,
+                ];
+                $expectedShares['cat:' . $catId] = (float)($expectedShares['cat:' . $catId] ?? 0.0);
+            }
+        }
+
+        if ($useCalendars) {
+            $targetMap = $range === 'month' ? $targetsMonth : $targetsWeek;
+            $targetSum = 0.0;
+            foreach ($targetMap as $calId => $targetVal) {
+                $t = (float)$targetVal;
+                if ($t <= 0) {
+                    continue;
+                }
+                $expectedShares['cal:' . (string)$calId] = $t;
+                $targetSum += $t;
+            }
+            if ($targetSum > 0) {
+                foreach ($expectedShares as $key => $value) {
+                    if (str_starts_with($key, 'cal:')) {
+                        $expectedShares[$key] = $value / $targetSum;
+                    }
+                }
+            }
+            foreach ($byCalTotals as $calId => $hours) {
+                $buckets[] = [
+                    'id' => 'cal:' . $calId,
+                    'label' => $idToName[$calId] ?? $calId,
+                    'share' => $hours / $totalHours,
+                ];
+                $expectedShares['cal:' . $calId] = (float)($expectedShares['cal:' . $calId] ?? 0.0);
+            }
+        }
+
+        if ($buckets === []) {
+            return 0.0;
+        }
+
+        $maxDeviationAbs = 0.0;
+        foreach ($buckets as $bucket) {
+            $actual = (float)$bucket['share'];
+            $expected = (float)($expectedShares[$bucket['id']] ?? 0.0);
+            $maxDeviationAbs = max($maxDeviationAbs, abs($actual - $expected));
+        }
+
+        return max(0.0, min(1.0, 1.0 - $maxDeviationAbs));
     }
 
     private function formatTrendHistoryLabel(string $range, int $offsetStep): string {

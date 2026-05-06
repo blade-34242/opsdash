@@ -345,6 +345,9 @@ class TargetsService {
         if (in_array($basis, ['off', 'category', 'calendar', 'both'], true)) {
             $result['index']['basis'] = $basis;
         }
+        if (!$result['useCategoryMapping'] && $result['index']['basis'] === 'category') {
+            $result['index']['basis'] = 'calendar';
+        }
 
         if (isset($cfg['thresholds']) && is_array($cfg['thresholds'])) {
             $thr = $cfg['thresholds'];

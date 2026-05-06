@@ -2378,6 +2378,36 @@
   border:0;cursor:pointer;appearance:none;
 }
 #opsdash .ic svg{ width:20px;height:20px; }
+#opsdash .ic-group{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
+#opsdash .ic-group__trigger{
+  border:1px solid color-mix(in oklab,var(--brand),transparent 82%);
+  background:color-mix(in oklab,var(--brand),transparent 96%);
+}
+#opsdash .ic-group.open .ic-group__trigger{
+  background:color-mix(in oklab,var(--brand),transparent 90%);
+  color:var(--brand);
+}
+#opsdash .ic-group__rail{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px;
+  border-radius:12px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 82%);
+  background:color-mix(in oklab,var(--brand),transparent 96%);
+  box-shadow:0 4px 14px rgba(15,23,42,.08);
+}
+#opsdash .ic-sub{
+  width:40px;
+  height:40px;
+  border-radius:9px;
+}
+#opsdash .ic-sub svg{ width:18px;height:18px; }
 #opsdash .ic:hover:not(:disabled){ background:rgba(0,0,0,.06); }
 #opsdash .ic.on{
   background:color-mix(in oklab,var(--brand),transparent 90%);

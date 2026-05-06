@@ -66,7 +66,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { createDefaultBalanceConfig } from '../../../services/targets/config'
-import { computeIndexForShares } from '../../../services/balanceIndex'
 import { addDaysUtc, addMonthsUtc, endOfMonthUtc, formatDateKey, formatDateRange, getWeekNumber, parseDateKey } from '../../../services/dateTime'
 
 const props = withDefaults(defineProps<{
@@ -129,6 +128,14 @@ const historyByOffset = computed(() => {
   historyRaw.value.forEach((entry: any, idx: number) => {
     const rawOffset = Number(entry?.offset ?? entry?.step)
     const offset = Number.isFinite(rawOffset) && rawOffset > 0 ? Math.round(rawOffset) : idx + 1
+    const precomputedIndex = Number(entry?.index)
+    if (Number.isFinite(precomputedIndex)) {
+      byOffset.set(offset, {
+        index: Math.max(0, Math.min(1, precomputedIndex)),
+        label: entry?.label || '',
+      })
+      return
+    }
     const shares: Record<string, number> = {}
     if (Array.isArray(entry?.categories)) {
       entry.categories.forEach((cat: any) => {
@@ -149,7 +156,7 @@ const historyByOffset = computed(() => {
         shares[key] = shares[key] / totalAfter
       })
     }
-    const index = computeIndexForShares({ shares, targets, basis })
+    const index = computeIndexForSharesFallback({ shares, targets, basis })
     byOffset.set(offset, { index, label: entry?.label || '' })
   })
   return byOffset
@@ -244,6 +251,36 @@ const indexTitle = computed(() => {
   if (currentIndex.value == null) return ''
   return `Balance index ${currentIndex.value.toFixed(2)}`
 })
+
+const computeIndexForSharesFallback = (opts: {
+  shares: Record<string, number>
+  targets: Array<{ id: string; targetHours: number }>
+  basis?: string
+}) => {
+  const basis = opts.basis || 'category'
+  if (basis === 'off') return 0
+  const targetMap: Record<string, number> = {}
+  const totalTarget = opts.targets?.length
+    ? opts.targets.reduce((acc, cat) => acc + (cat.targetHours ?? 0), 0)
+    : 0
+  if (basis !== 'calendar' && totalTarget > 0) {
+    opts.targets.forEach((cat) => {
+      targetMap[String(cat.id)] = (cat.targetHours ?? 0) / totalTarget
+    })
+  }
+
+  const keys = new Set<string>([...Object.keys(opts.shares || {}), ...Object.keys(targetMap)])
+  if (keys.size === 0) return 0
+
+  let maxDeviation = 0
+  keys.forEach((key) => {
+    const actual = Number(opts.shares?.[key] ?? 0)
+    const expected = basis === 'calendar' ? (1 / keys.size) : (targetMap[key] ?? 0)
+    maxDeviation = Math.max(maxDeviation, Math.abs(actual - expected))
+  })
+
+  return Math.max(0, Math.min(1, Number((1 - maxDeviation).toFixed(2))))
+}
 
 const formatIndex = (val?: number) => {
   return Number.isFinite(val) ? (val as number).toFixed(2) : '—'

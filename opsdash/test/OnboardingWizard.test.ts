@@ -433,6 +433,8 @@ describe('OnboardingWizard', () => {
     const widgetTypes = (payload?.widgets?.tabs || []).flatMap((tab: any) => (tab.widgets || []).map((widget: any) => widget.type))
     expect(widgetTypes).not.toContain('category_mix_trend')
     expect(widgetTypes).toContain('balance_index')
+    expect(payload?.targetsConfig?.balance?.useCategoryMapping).toBe(false)
+    expect(payload?.targetsConfig?.balance?.index?.basis).toBe('calendar')
   })
 
   it('keeps category mix trend for calendar plus category goals', async () => {

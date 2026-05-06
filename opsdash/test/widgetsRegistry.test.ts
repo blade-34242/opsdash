@@ -274,6 +274,27 @@ describe('widgetsRegistry targets_v2', () => {
     expect(entry.defaultOptions?.noticeAbove).toBeCloseTo(0.15)
   })
 
+  it('balance_index falls back to calendar basis when category mapping is disabled', () => {
+    const entry = widgetsRegistry.balance_index
+    const cfg = createDefaultTargetsConfig()
+    cfg.balance.useCategoryMapping = false
+    cfg.balance.index.basis = 'category'
+    const def: any = {
+      options: { indexBasis: 'category' },
+      layout: {},
+      type: 'balance_index',
+      id: 'w-balance-calendar-fallback',
+      version: 1,
+    }
+    const ctx: any = {
+      targetsConfig: cfg,
+      balanceConfig: cfg.balance,
+      balanceOverview: { trend: { history: [], delta: [], badge: '' }, categories: [], relations: [], warnings: [], index: 0 },
+    }
+    const props = entry.buildProps(def, ctx) as any
+    expect(props.indexBasis).toBe('calendar')
+  })
+
   it('balance_index propagates trend color and background', () => {
     const entry = widgetsRegistry.balance_index
     const def: any = {

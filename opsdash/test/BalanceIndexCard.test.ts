@@ -166,4 +166,25 @@ describe('BalanceIndexCard', () => {
     expect(blocks[0].classes()).not.toContain('current')
     expect(blocks[blocks.length - 1].classes()).toContain('current')
   })
+
+  it('uses precomputed history index values for calendar basis', () => {
+    const wrapper = mount(BalanceIndexCard, {
+      props: {
+        overview: {
+          index: 0.83,
+          trendHistory: [
+            { offset: 2, label: '-2 wk', index: 0.41, categories: [{ id: 'work', share: 100 }] },
+            { offset: 1, label: '-1 wk', index: 0.67, categories: [{ id: 'work', share: 100 }] },
+          ],
+        },
+        targetsCategories: [{ id: 'work', targetHours: 10 }],
+        indexBasis: 'calendar',
+        showTrend: true,
+        showCurrent: true,
+        lookbackWeeks: 2,
+      },
+    })
+
+    expect(wrapper.findAll('.trend-value').map((node) => node.text())).toEqual(['0.41', '0.67', '0.83'])
+  })
 })

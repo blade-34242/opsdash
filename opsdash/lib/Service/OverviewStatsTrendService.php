@@ -26,6 +26,10 @@ final class OverviewStatsTrendService {
      *   mapCalToCategory: callable,
      *   allDayHours: float,
      *   categoryMeta: array<string, array{id: string, label: string}>,
+     *   targetsConfig: array<string, mixed>,
+     *   targetsWeek: array<string, mixed>,
+     *   targetsMonth: array<string, mixed>,
+     *   idToName: array<string, string>,
      *   analysisTo?: \DateTimeImmutable
      * } $context
      * @return array{dayOffTrend: array<int, array<string, mixed>>, balanceHistory: array<int, array<string, mixed>>}
@@ -78,6 +82,10 @@ final class OverviewStatsTrendService {
             $userTz,
             $allDayHours,
             $categoryMeta,
+            $context['targetsConfig'],
+            $context['targetsWeek'],
+            $context['targetsMonth'],
+            $context['idToName'],
             $weekStart,
         );
 

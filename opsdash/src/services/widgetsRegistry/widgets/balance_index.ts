@@ -99,7 +99,10 @@ export const balanceIndexEntry: RegistryEntry = {
       warnBelow: numberOr(cfg?.thresholds?.warnBelow, def.options?.warnBelow),
       warnIndex: numberOr(cfg?.thresholds?.warnIndex, def.options?.warnIndex),
     }
-    const indexBasis = def.options?.indexBasis || cfg?.index?.basis || 'category'
+    const requestedBasis = def.options?.indexBasis || cfg?.index?.basis || 'category'
+    const indexBasis = cfg?.useCategoryMapping === false && requestedBasis === 'category'
+      ? 'calendar'
+      : requestedBasis
     const trendColor = typeof def.options?.trendColor === 'string' && def.options?.trendColor.trim()
       ? def.options.trendColor.trim()
       : '#2563EB'

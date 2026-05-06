@@ -196,6 +196,7 @@ export function buildStrategyResult(
     cfg.ui.showCalendarCharts = true
     cfg.balance.categories = []
     cfg.balance.useCategoryMapping = false
+    cfg.balance.index.basis = 'calendar'
     return {
       selected,
       targetsConfig: normalizeTargetsConfig(cfg),

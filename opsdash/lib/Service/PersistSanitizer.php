@@ -284,6 +284,9 @@ final class PersistSanitizer {
         $basis = (string)($cfg['index']['basis'] ?? $base['index']['basis']);
         $allowedBasis = ['off', 'category', 'calendar', 'both'];
         $result['index']['basis'] = in_array($basis, $allowedBasis, true) ? $basis : 'category';
+        if (!$result['useCategoryMapping'] && $result['index']['basis'] === 'category') {
+            $result['index']['basis'] = 'calendar';
+        }
 
         if (isset($cfg['thresholds']) && is_array($cfg['thresholds'])) {
             $thr = $cfg['thresholds'];

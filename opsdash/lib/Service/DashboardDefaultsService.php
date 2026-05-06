@@ -290,13 +290,22 @@ final class DashboardDefaultsService {
         $widgets = [];
         $i = 0;
         $widgets[] = $this->buildWidget('targets_v2', [
-            'showForecast' => true,
-            'showHeader' => false,
             'showLegend' => true,
             'showDelta' => true,
+            'showForecast' => true,
             'showPace' => true,
+            'neverFinishedMode' => false,
             'showToday' => true,
-            'scale' => 'lg',
+            'showTotalDelta' => true,
+            'showNeedPerDay' => true,
+            'showCategoryBlocks' => true,
+            'badges' => true,
+            'includeWeekendToggle' => true,
+            'includeZeroDaysInStats' => false,
+            'useLocalConfig' => false,
+            'localConfig' => null,
+            'showHeader' => false,
+            'scale' => 'lg'
         ], ['width' => 'half', 'height' => 'l', 'order' => 10], ++$i);
         $widgets[] = $this->buildWidget('time_summary_overview', [
             'showTotal' => true,
@@ -310,7 +319,14 @@ final class DashboardDefaultsService {
             'showTopCategory' => true,
             'showBalance' => true,
             'mode' => 'active',
+            'showToday' => true,
+            'showActivity' => true,
+            'showHistoryCoreMetrics' => true,
+            'historyView' => 'accordion',
+            'showActivityDetails' => true,
+            'showDelta' => true,
             'scale' => 'md',
+            'heightMode' => 'auto'
         ], ['width' => 'half', 'height' => 'l', 'order' => 20], ++$i);
         $widgets[] = $this->buildWidget('time_summary_lookback', [
             'showTotal' => true,
@@ -324,11 +340,13 @@ final class DashboardDefaultsService {
             'showTopCategory' => true,
             'showBalance' => true,
             'mode' => 'active',
-            'historyView' => 'list',
+            'showToday' => true,
+            'showActivity' => true,
             'showHistoryCoreMetrics' => true,
+            'historyView' => 'list',
             'showActivityDetails' => true,
             'showDelta' => true,
-            'scale' => 'md',
+            'scale' => 'md'
         ], ['width' => 'half', 'height' => 'l', 'order' => 25], ++$i);
         $widgets[] = $this->buildWidget('balance_index', [
             'showTrend' => true,
@@ -340,19 +358,26 @@ final class DashboardDefaultsService {
             'warnAbove' => 0.3,
             'warnBelow' => 0.3,
             'warnIndex' => 0.6,
-            'lookbackWeeks' => 3,
             'messageDensity' => 'normal',
             'trendColor' => '#2563EB',
             'showCurrent' => true,
             'labelMode' => 'period',
-            'reverseTrend' => false,
+            'reverseOrder' => false,
+            'lookbackWeeks' => 3,
+            'reverseTrend' => false
         ], ['width' => 'half', 'height' => 'm', 'order' => 30], ++$i);
-        $widgets[] = $this->buildWidget('dayoff_trend', [], ['width' => 'half', 'height' => 's', 'order' => 40], ++$i);
+        $widgets[] = $this->buildWidget('dayoff_trend', [
+            'reverseOrder' => false,
+            'labelMode' => 'period',
+            'interpretation' => 'more_off_positive',
+            'toneLowColor' => '#dc2626',
+            'toneHighColor' => '#16a34a',
+        ], ['width' => 'half', 'height' => 's', 'order' => 40], ++$i);
         $widgets[] = $this->buildWidget('deck_stats', [
-            'includeArchived' => true,
-            'includeCompleted' => true,
             'scope' => 'all',
             'mineMode' => 'assignee',
+            'includeArchived' => true,
+            'includeCompleted' => true,
             'metrics' => [
                 'open_now',
                 'overdue_now',
@@ -360,38 +385,83 @@ final class DashboardDefaultsService {
                 'completed_in_range',
                 'due_in_range',
             ],
-        ], ['width' => 'half', 'height' => 'm', 'order' => 45], ++$i);
-        $widgets[] = $this->buildWidget('category_mix_trend', [
-            'lookbackWeeks' => 3,
-            'density' => 'normal',
-            'labelMode' => 'period',
-            'colorMode' => 'hybrid',
-            'squareCells' => false,
-            'showHeader' => true,
-            'showBadge' => true,
-        ], ['width' => 'full', 'height' => 'l', 'order' => 50], ++$i);
-        $widgets[] = $this->buildWidget('calendar_table', [], ['width' => 'full', 'height' => 'l', 'order' => 55], ++$i);
+            'heightMode' => 'auto',
+        ], ['width' => 'half', 'height' => 'm', 'order' => 55], ++$i);
         $widgets[] = $this->buildWidget('chart_pie', [
-            'scope' => 'calendar',
             'showLegend' => true,
             'showLabels' => true,
-        ], ['width' => 'half', 'height' => 'm', 'order' => 56], ++$i);
+            'compact' => false,
+            'filterMode' => 'calendar',
+            'filterIds' => [],
+            'heightMode' => 'auto',
+        ], ['width' => 'half', 'height' => 'm', 'order' => 45], ++$i);
+        $widgets[] = $this->buildWidget('calendar_table', [
+            'calendarFilter' => [],
+            'compact' => false,
+        ], ['width' => 'full', 'height' => 'l', 'order' => 56], ++$i);
         $widgets[] = $this->buildWidget('chart_stacked', [
-            'scope' => 'calendar',
             'showLegend' => true,
             'showLabels' => false,
+            'compact' => false,
+            'forecastMode' => 'total',
+            'filterMode' => 'calendar',
+            'filterIds' => [],
+            'heightMode' => 'auto',
         ], ['width' => 'full', 'height' => 'l', 'order' => 57], ++$i);
         $widgets[] = $this->buildWidget('chart_per_day', [
-            'scope' => 'calendar',
             'showLabels' => false,
-        ], ['width' => 'half', 'height' => 'm', 'order' => 58], ++$i);
+            'compact' => false,
+            'reverseOrder' => false,
+            'forecastMode' => 'total',
+            'filterMode' => 'calendar',
+            'filterIds' => [],
+            'heightMode' => 'auto',
+        ], ['width' => 'half', 'height' => 'xl', 'order' => 58], ++$i);
         $widgets[] = $this->buildWidget('chart_dow', [
-            'scope' => 'calendar',
             'showLabels' => true,
+            'compact' => false,
+            'reverseOrder' => false,
+            'forecastMode' => 'total',
+            'filterMode' => 'calendar',
+            'filterIds' => [],
+            'heightMode' => 'auto',
         ], ['width' => 'half', 'height' => 'm', 'order' => 58.5], ++$i);
         $widgets[] = $this->buildWidget('chart_hod', [
             'showHint' => false,
+            'showLegend' => true,
+            'lookbackMode' => 'overlay',
+            'compact' => false,
+            'reverseOrder' => false,
+            'heightMode' => 'auto',
         ], ['width' => 'full', 'height' => 'l', 'order' => 59], ++$i);
+        $widgets[] = $this->buildWidget('deck_cards', [
+            'allowMine' => true,
+            'includeArchived' => true,
+            'includeCompleted' => true,
+            'autoScroll' => true,
+            'intervalSeconds' => 5,
+            'showCount' => true,
+            'minFilterCount' => 0,
+            'autoTagsEnabled' => true,
+            'compactList' => true,
+            'customFilters' => [],
+            'filters' => [
+                'open_all',
+                'open_mine',
+                'done_all',
+                'done_mine',
+                'archived_all',
+                'archived_mine',
+                'due_all',
+                'due_mine',
+                'due_today_all',
+                'due_today_mine',
+                'created_today_all',
+                'created_today_mine',
+            ],
+            'defaultFilter' => 'open_all',
+            'mineMode' => 'assignee',
+        ], ['width' => 'full', 'height' => 'm', 'order' => 69], ++$i);
         return $widgets;
     }
 

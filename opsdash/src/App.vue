@@ -223,43 +223,92 @@
 
                     <div class="vsep" />
 
-                    <!-- Width controls -->
-                    <button class="ic" type="button" :class="{ on: selectedWidth === 'half' }" :disabled="!inlineSelectedItem" title="Half width" @click="setInlineWidth('half')">
-                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="5" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">½</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: selectedWidth === 'full' }" :disabled="!inlineSelectedItem" title="Full width" @click="setInlineWidth('full')">
-                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">Full</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: selectedWidth === 'quarter' }" :disabled="!inlineSelectedItem" title="Quarter width" @click="setInlineWidth('quarter')">
-                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="3" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">¼</span>
-                    </button>
+                    <!-- Width group -->
+                    <div class="ic-group" :class="{ open: inlineGroupOpen === 'width' }">
+                      <button class="ic ic-group__trigger" type="button" :class="{ on: inlineGroupOpen === 'width' }" :disabled="!inlineSelectedItem" title="Width options" @click="toggleInlineGroup('width')">
+                        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+                          <rect x="1" y="2" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                          <path d="M5 1v10M11 1v10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".55"/>
+                        </svg>
+                        <span class="ic-lbl">Width</span>
+                      </button>
+                      <div v-if="inlineGroupOpen === 'width'" class="ic-group__rail">
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedWidth === 'quarter' }" :disabled="!inlineSelectedItem" title="Quarter width" @click="setInlineWidth('quarter')">
+                          <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="3" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">¼</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedWidth === 'half' }" :disabled="!inlineSelectedItem" title="Half width" @click="setInlineWidth('half')">
+                          <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="5" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">½</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedWidth === 'full' }" :disabled="!inlineSelectedItem" title="Full width" @click="setInlineWidth('full')">
+                          <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">Full</span>
+                        </button>
+                      </div>
+                    </div>
 
                     <div class="vsep" />
 
-                    <!-- Height controls -->
-                    <button class="ic" type="button" :class="{ on: selectedHeight === 's' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Small height" @click="setInlineHeight('s')">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="4" width="10" height="4" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">S</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: selectedHeight === 'm' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Medium height" @click="setInlineHeight('m')">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">M</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: selectedHeight === 'l' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Large height" @click="setInlineHeight('l')">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
-                      <span class="ic-lbl">L</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: selectedHeight === 'xl' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Extra large height" @click="setInlineHeight('xl')">
-                      <svg width="12" height="13" viewBox="0 0 12 13" fill="none"><rect x="1" y="1" width="10" height="11" rx="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                      <span class="ic-lbl">XL</span>
-                    </button>
-                    <button class="ic" type="button" :class="{ on: isAutoHeight }" :disabled="!inlineSelectedItem" title="Auto height" @click="toggleAutoHeight">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M3.5 3.5L6 1l2.5 2.5M3.5 8.5L6 11l2.5-2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      <span class="ic-lbl">Auto</span>
-                    </button>
+                    <!-- Height group -->
+                    <div class="ic-group" :class="{ open: inlineGroupOpen === 'height' }">
+                      <button class="ic ic-group__trigger" type="button" :class="{ on: inlineGroupOpen === 'height' }" :disabled="!inlineSelectedItem" title="Height options" @click="toggleInlineGroup('height')">
+                        <svg width="12" height="16" viewBox="0 0 12 16" fill="none">
+                          <rect x="2" y="1" width="8" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                          <path d="M1 5h10M1 11h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".55"/>
+                        </svg>
+                        <span class="ic-lbl">Height</span>
+                      </button>
+                      <div v-if="inlineGroupOpen === 'height'" class="ic-group__rail">
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedHeight === 's' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Small height" @click="setInlineHeight('s')">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="4" width="10" height="4" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">S</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedHeight === 'm' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Medium height" @click="setInlineHeight('m')">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">M</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedHeight === 'l' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Large height" @click="setInlineHeight('l')">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                          <span class="ic-lbl">L</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedHeight === 'xl' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Extra large height" @click="setInlineHeight('xl')">
+                          <svg width="12" height="13" viewBox="0 0 12 13" fill="none"><rect x="1" y="1" width="10" height="11" rx="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                          <span class="ic-lbl">XL</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: isAutoHeight }" :disabled="!inlineSelectedItem" title="Auto height" @click="toggleAutoHeight">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M3.5 3.5L6 1l2.5 2.5M3.5 8.5L6 11l2.5-2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          <span class="ic-lbl">Auto</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="vsep" />
+
+                    <!-- Scale group -->
+                    <div class="ic-group" :class="{ open: inlineGroupOpen === 'scale' }">
+                      <button class="ic ic-group__trigger" type="button" :class="{ on: inlineGroupOpen === 'scale' }" :disabled="!inlineSelectedItem" title="Scale options" @click="toggleInlineGroup('scale')">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 11L11 3M6 3h5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M10 13H3V6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                        </svg>
+                        <span class="ic-lbl">Scale</span>
+                      </button>
+                      <div v-if="inlineGroupOpen === 'scale'" class="ic-group__rail">
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedScale === 'sm' }" :disabled="!inlineSelectedItem" title="Small scale" @click="setInlineScale('sm')">
+                          <span class="ic-lbl">S-</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedScale === 'md' }" :disabled="!inlineSelectedItem" title="Normal scale" @click="setInlineScale('md')">
+                          <span class="ic-lbl">M</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedScale === 'lg' }" :disabled="!inlineSelectedItem" title="Large scale" @click="setInlineScale('lg')">
+                          <span class="ic-lbl">L+</span>
+                        </button>
+                        <button class="ic ic-sub" type="button" :class="{ on: selectedScale === 'xl' }" :disabled="!inlineSelectedItem" title="Extra large scale" @click="setInlineScale('xl')">
+                          <span class="ic-lbl">XL</span>
+                        </button>
+                      </div>
+                    </div>
 
                     <div class="vsep" />
 
@@ -683,6 +732,7 @@ function toggleLayoutEditing() {
   if (!isLayoutEditing.value) {
     resetTabEditContext()
     inlineOptionsOpen.value = false
+    inlineGroupOpen.value = null
   }
 }
 
@@ -1660,6 +1710,8 @@ const selectedHeight = computed(() => inlineSelectedItem.value?.layout?.height ?
 const isAutoHeight = computed(() => inlineSelectedItem.value?.options?.heightMode === 'auto')
 const selectedCardBg = computed(() => inlineSelectedItem.value?.options?.cardBg ?? '#ffffff')
 const selectedTitlePrefix = computed(() => inlineSelectedItem.value?.options?.titlePrefix ?? '')
+const selectedScale = computed(() => inlineSelectedItem.value?.options?.scale ?? inlineSelectedItem.value?.options?.textSize ?? 'md')
+const inlineGroupOpen = ref<null | 'width' | 'height' | 'scale'>(null)
 
 function setSelectedOption(key: string, value: any) {
   if (!inlineSelectedItem.value) return
@@ -1679,6 +1731,16 @@ function removeSelectedWidget() {
 function toggleAutoHeight() {
   if (!inlineSelectedItem.value) return
   setSelectedOption('heightMode', isAutoHeight.value ? 'fixed' : 'auto')
+}
+
+function setInlineScale(target: 'sm' | 'md' | 'lg' | 'xl') {
+  if (!inlineSelectedItem.value) return
+  setSelectedOption('scale', target)
+}
+
+function toggleInlineGroup(group: 'width' | 'height' | 'scale') {
+  if (!inlineSelectedItem.value) return
+  inlineGroupOpen.value = inlineGroupOpen.value === group ? null : group
 }
 
 function setInlineWidth(target: 'quarter' | 'half' | 'full') {

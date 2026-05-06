@@ -23,6 +23,10 @@ final class OverviewStatsHistoryService {
      *   userTz: \DateTimeZone,
      *   allDayHours: float,
      *   categoryMeta: array<string, array{id: string, label: string}>,
+     *   targetsConfig: array<string, mixed>,
+     *   targetsWeek: array<string, mixed>,
+     *   targetsMonth: array<string, mixed>,
+     *   idToName: array<string, string>,
      *   maxPerCal: int,
      *   maxTotal: int,
      *   colorsById: array<string, string>,
@@ -85,6 +89,10 @@ final class OverviewStatsHistoryService {
             'mapCalToCategory' => $context['mapCalToCategory'],
             'allDayHours' => $context['allDayHours'],
             'categoryMeta' => $context['categoryMeta'],
+            'targetsConfig' => $context['targetsConfig'],
+            'targetsWeek' => $context['targetsWeek'],
+            'targetsMonth' => $context['targetsMonth'],
+            'idToName' => $context['idToName'],
             'analysisTo' => $context['analysisTo'],
         ]);
 
