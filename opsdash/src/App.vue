@@ -1747,7 +1747,7 @@ const inlineSelectedItemType = computed(() => {
 
 const selectedWidth = computed(() => inlineSelectedItem.value?.layout?.width ?? null)
 const selectedHeight = computed(() => inlineSelectedItem.value?.layout?.height ?? null)
-const isAutoHeight = computed(() => inlineSelectedItem.value?.options?.heightMode === 'auto')
+const isAutoHeight = computed(() => inlineSelectedItem.value?.heightMode === 'auto')
 const selectedCardBg = computed(() => inlineSelectedItem.value?.options?.cardBg ?? null)
 const selectedTitlePrefix = computed(() => inlineSelectedItem.value?.options?.titlePrefix ?? '')
 const selectedScale = computed(() => inlineSelectedItem.value?.options?.scale ?? inlineSelectedItem.value?.options?.textSize ?? 'md')
