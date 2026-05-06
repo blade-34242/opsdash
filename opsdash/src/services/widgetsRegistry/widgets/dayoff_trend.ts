@@ -14,6 +14,7 @@ export const dayOffTrendEntry: RegistryEntry = {
   defaultLayout: { width: 'quarter', height: 's', order: 45 },
   heightMode: 'auto',
   label: 'Time Off Trend',
+  category: 'Time' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

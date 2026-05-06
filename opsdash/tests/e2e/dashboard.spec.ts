@@ -72,7 +72,7 @@ async function markOnboardingComplete(page: Page) {
           strategy: 'total_only',
           completed_at: new Date().toISOString(),
           dashboardMode: 'standard',
-          releaseNotesSeenVersion: '0.7.6',
+          releaseNotesSeenVersion: '0.8.0',
         },
       }),
     })
@@ -81,7 +81,7 @@ async function markOnboardingComplete(page: Page) {
 
 async function dismissReleaseNotesIfVisible(page: Page) {
   const dialog = page.getByRole('dialog')
-  const releaseHeading = page.getByRole('heading', { name: /^Opsdash 0\.7\./ })
+  const releaseHeading = page.getByRole('heading', { name: /^Opsdash 0\./ })
   if (!(await releaseHeading.isVisible({ timeout: 1000 }).catch(() => false))) {
     return
   }
@@ -103,20 +103,8 @@ async function openOnboardingWizardFromSidebar(page: Page) {
     return
   }
 
-  const trigger = page.locator('.rerun-btn').first()
-  if (await trigger.count()) {
-    await trigger.click({ force: true }).catch(async () => {
-      await page.evaluate(() => {
-        const button = document.querySelector('.rerun-btn') as HTMLElement | null
-        button?.click()
-      })
-    })
-  } else {
-    await page.evaluate(() => {
-      const button = document.querySelector('.rerun-btn') as HTMLElement | null
-      button?.click()
-    })
-  }
+  const trigger = page.getByRole('button', { name: 'Open setup wizard' })
+  await trigger.click()
 
   await expect(heading).toBeVisible({ timeout: 15000 })
 }
@@ -127,22 +115,27 @@ async function openProfilesOverlay(page: Page) {
     return
   }
 
-  const trigger = page.locator('.sidebar-icon-btn--profile').first()
-  if (await trigger.count()) {
-    await trigger.click({ force: true }).catch(async () => {
-      await page.evaluate(() => {
-        const button = document.querySelector('.sidebar-icon-btn--profile') as HTMLElement | null
-        button?.click()
-      })
-    })
-  } else {
-    await page.evaluate(() => {
-      const button = document.querySelector('.sidebar-icon-btn--profile') as HTMLElement | null
-      button?.click()
-    })
-  }
+  const trigger = page.getByRole('button', { name: 'Profiles and backups' })
+  await trigger.click()
 
   await expect(dialog).toBeVisible({ timeout: 10000 })
+}
+
+async function ensureFreshOpsdashCss(page: Page) {
+  await page.evaluate(async () => {
+    const existing = [...document.querySelectorAll('link[rel="stylesheet"]')]
+      .find((link) => link.getAttribute('href')?.includes('/apps-extra/opsdash/css/style.css'))
+    if (!existing) return
+    const href = `${existing.getAttribute('href')?.split('?')[0]}?fresh=${Date.now()}`
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = href
+    await new Promise<void>((resolve, reject) => {
+      link.onload = () => resolve()
+      link.onerror = () => reject(new Error('failed to load fresh stylesheet'))
+      document.head.appendChild(link)
+    })
+  })
 }
 
 async function resolveNcRoute(page: Page, route: string): Promise<string> {
@@ -301,6 +294,52 @@ test('Onboarding wizard can be re-run from sidebar', async ({ page, baseURL }) =
   await expect(dialog).toBeHidden()
 })
 
+test('Only the widget configuration row floats below the Nextcloud header in edit mode', async ({ page, baseURL }) => {
+  if (!baseURL) {
+    test.skip()
+    return
+  }
+
+  await page.goto(baseURL + '/index.php/apps/opsdash/overview')
+  await dismissOnboardingIfVisible(page)
+  await ensureFreshOpsdashCss(page)
+
+  await page.getByRole('button', { name: 'Edit layout' }).click()
+
+  const appMain = page.locator('.app-main')
+  const floatingRow = page.locator('.itb-row')
+  const topBar = page.locator('.app-bar')
+
+  await expect(floatingRow).not.toHaveClass(/itb-row--floating/)
+
+  await appMain.evaluate((el) => {
+    ;(el as HTMLElement).scrollTop = 500
+    el.dispatchEvent(new Event('scroll'))
+  })
+
+  await expect(floatingRow).toHaveClass(/itb-row--floating/)
+  await expect(topBar).not.toHaveClass(/app-bar--floating/)
+
+  const metrics = await page.evaluate(() => {
+    const row = document.querySelector('.itb-row') as HTMLElement | null
+    const header = (document.querySelector('#header') || document.querySelector('header')) as HTMLElement | null
+    const appBar = document.querySelector('.app-bar') as HTMLElement | null
+    if (!row || !header || !appBar) return null
+    const rowStyle = getComputedStyle(row)
+    return {
+      rowTop: row.getBoundingClientRect().top,
+      headerBottom: header.getBoundingClientRect().bottom,
+      rowPosition: rowStyle.position,
+      appBarPosition: getComputedStyle(appBar).position,
+    }
+  })
+
+  expect(metrics).not.toBeNull()
+  expect(metrics?.rowPosition).toBe('fixed')
+  expect(metrics?.appBarPosition).not.toBe('fixed')
+  expect(metrics!.rowTop).toBeGreaterThanOrEqual(metrics!.headerBottom + 8)
+})
+
 test('Config preset can be saved via UI', async ({ page, baseURL }) => {
   if (!baseURL) {
     test.skip()
@@ -312,32 +351,18 @@ test('Config preset can be saved via UI', async ({ page, baseURL }) => {
   await page.goto(baseURL + '/index.php/apps/opsdash/overview')
   await dismissOnboardingIfVisible(page)
   await openProfilesOverlay(page)
-  const presetsUrl = await resolveNcRoute(page, '/apps/opsdash/overview/presets')
 
   await page.getByLabel('Profile name').fill(presetName)
+  const saveButton = page.getByRole('button', { name: 'Save current configuration' })
+  await expect(saveButton).toBeEnabled()
   await page.getByRole('button', { name: 'Save current configuration' }).click()
-  await expect.poll(async () => {
-    const response = await page.request.get(presetsUrl)
-    if (!response.ok()) {
-      return false
-    }
-    const payload = await response.json().catch(() => ({}))
-    const list = Array.isArray((payload as any)?.presets)
-      ? (payload as any).presets
-      : Array.isArray(payload)
-        ? payload
-        : []
-    return list.some((entry: any) => String(entry?.name ?? '').trim() === presetName)
-  }, { timeout: 30000 }).toBe(true)
+  await expect(page.getByText(`Profile "${presetName}" saved`)).toBeVisible({ timeout: 15000 })
+  const presetRow = page.locator('.preset-item').filter({ hasText: presetName })
+  await expect(presetRow).toBeVisible({ timeout: 15000 })
 
-  await page.evaluate(async (name) => {
-    const token = (window as any).OC?.requestToken || (window as any).oc_requesttoken || ''
-    await fetch(`/index.php/apps/opsdash/overview/presets/${encodeURIComponent(name)}`, {
-      method: 'DELETE',
-      credentials: 'same-origin',
-      headers: token ? { requesttoken: token } : {},
-    })
-  }, presetName)
+  page.once('dialog', (dialog) => dialog.accept())
+  await presetRow.getByRole('button', { name: 'Delete' }).click()
+  await expect(presetRow).toBeHidden({ timeout: 15000 })
 })
 
 test('Config import applies theme preference', async ({ page, baseURL }) => {

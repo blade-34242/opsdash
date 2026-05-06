@@ -14,6 +14,7 @@ export const noteSnippetEntry: RegistryEntry = {
   defaultLayout: { width: 'quarter', height: 's', order: 68 },
   heightMode: 'auto',
   label: 'Notes snippet',
+  category: 'Notes' as const,
   baseTitle,
   configurable: true,
   controls: [],

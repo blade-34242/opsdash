@@ -56,4 +56,5 @@ final class ViteAssetsService {
             'styles' => $styles,
         ];
     }
+
 }

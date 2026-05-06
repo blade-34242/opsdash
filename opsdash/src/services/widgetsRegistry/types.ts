@@ -112,6 +112,7 @@ export interface RegistryEntry {
    */
   heightMode?: WidgetHeightMode
   label?: string
+  category?: 'Time' | 'Charts' | 'Tasks' | 'Notes'
   baseTitle?: string
   supportsColors?: boolean
   defaultOptions?: Record<string, any>

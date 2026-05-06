@@ -13,6 +13,7 @@ export const chartHodEntry: RegistryEntry = {
   component: ChartHodWidget,
   defaultLayout: { width: 'full', height: 'l', order: 86 },
   label: 'Time-of-Day Chart',
+  category: 'Charts' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

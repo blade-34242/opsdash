@@ -24,6 +24,7 @@ export const chartDowEntry: RegistryEntry = {
   component: ChartDowWidget,
   defaultLayout: { width: 'half', height: 'm', order: 84 },
   label: 'Day-of-Week Chart',
+  category: 'Charts' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

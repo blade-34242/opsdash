@@ -1,131 +1,143 @@
 <template>
   <NcAppNavigation>
     <slot name="actions" />
-    <div class="rangebar" title="Time range">
-      <button
-        class="sidebar-toggle-btn sidebar-toggle-btn--corner"
-        type="button"
-        @click="$emit('toggle-nav')"
-        :aria-label="navToggleLabel"
-        :title="navToggleLabel"
-      >
-        {{ navToggleIcon }}
-      </button>
-      <div class="range-toggle">
-        <NcCheckboxRadioSwitch type="radio" name="range-week" :checked="range==='week'" @update:checked="val => { if (val) $emit('update:range','week') }">Week</NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch type="radio" name="range-month" :checked="range==='month'" @update:checked="val => { if (val) $emit('update:range','month') }">Month</NcCheckboxRadioSwitch>
+
+    <div class="sb-inner">
+      <!-- ── Range hero card ── -->
+      <div class="rc hero">
+        <div class="hero-topbar">
+          <button
+            class="hide-btn"
+            type="button"
+            @click="$emit('toggle-nav')"
+            :aria-label="navToggleLabel"
+            :title="navToggleLabel"
+          >
+            <svg viewBox="0 0 11 12" width="11" height="12" fill="none">
+              <path d="M7 1 2 6l5 5M11 1 6 6l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- Week / Month segmented pill -->
+          <div class="seg w2 hero-seg">
+            <button type="button" :class="{ on: range === 'week' }" @click="$emit('update:range', 'week')">Week</button>
+            <button type="button" :class="{ on: range === 'month' }" @click="$emit('update:range', 'month')">Month</button>
+          </div>
+        </div>
+
+        <div class="ew">{{ rangeEyebrow }}</div>
+        <div class="rc-big">{{ rangeHeadline }}</div>
+
+        <!-- Prev / date pill / Next -->
+        <div class="navrow arw-layout">
+          <button
+            class="arw"
+            type="button"
+            :disabled="isLoading"
+            :aria-label="'Previous ' + (range === 'month' ? 'month' : 'week')"
+            @click="$emit('update:offset', offset - 1)"
+          >
+            <svg viewBox="0 0 7 12" width="7" height="12" fill="none">
+              <path d="M6 1 1 6l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="date-pill">{{ from }} – {{ to }}</div>
+          <button
+            class="arw"
+            type="button"
+            :disabled="isLoading"
+            :aria-label="'Next ' + (range === 'month' ? 'month' : 'week')"
+            @click="$emit('update:offset', offset + 1)"
+          >
+            <svg viewBox="0 0 7 12" width="7" height="12" fill="none">
+              <path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sync row -->
+        <div class="sync-row">
+          <div class="sync-left">
+            <div class="sync-dot" :class="{ syncing: isLoading }" />
+            <span class="sync-txt">{{ syncLabel }}</span>
+          </div>
+          <button
+            class="btn-ref"
+            type="button"
+            :disabled="isLoading"
+            @click="$emit('load')"
+          >Refresh</button>
+        </div>
       </div>
-      <div class="range-nav">
-        <NcButton class="nav-btn" type="tertiary" :disabled="isLoading" @click="$emit('update:offset', offset-1)" title="Previous">◀</NcButton>
-        <span class="range-dates">{{ from }} – {{ to }}</span>
-        <NcButton class="nav-btn" type="tertiary" :disabled="isLoading" @click="$emit('update:offset', offset+1)" title="Next">▶</NcButton>
-      </div>
-      <div class="range-refresh">
-        <button
-          class="sidebar-action-btn"
-          type="button"
-          :disabled="isLoading"
-          @click="$emit('load')"
-        >
-          Refresh
+
+      <!-- ── Setup card ── -->
+      <div class="sc">
+        <div class="sc-hd">
+          <div>
+            <div class="ew">Guided setup</div>
+            <div class="sc-title">Dashboard profile</div>
+          </div>
+          <span v-if="dashboardMode === 'pro'" class="badge">Pro</span>
+          <span v-else-if="dashboardMode === 'standard'" class="badge badge--std">Std</span>
+        </div>
+
+        <button class="wiz" type="button" @click="$emit('rerun-onboarding')">
+          Open setup wizard
         </button>
-      </div>
-    </div>
 
-    <div class="sidebar-block sidebar-block--framed">
-      <div class="sb-title">Guided Setup</div>
-      <div class="sb-actions sb-actions--secondary">
-        <NcButton
-          type="primary"
-          size="small"
-          class="rerun-btn"
-          title="Open the setup wizard again"
-          @click="$emit('rerun-onboarding')"
-        >
-          <span class="rerun-btn__icon" aria-hidden="true">⚙</span>
-          Setup wizard
-        </NcButton>
+        <ol class="steps">
+          <li
+            v-for="step in STEPS"
+            :key="step.id"
+            class="step"
+            :class="guidedHintStatuses?.[step.id] ?? 'dim'"
+            @click="$emit('rerun-onboarding', step.id)"
+            role="button"
+            :title="'Go to ' + step.label"
+          >
+            <span class="sn">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path :d="step.icon" />
+              </svg>
+            </span>
+            <div class="sb-txt">
+              <strong>{{ step.label }}</strong>
+              <small>{{ guidedHints?.[step.id] || step.placeholder }}</small>
+            </div>
+          </li>
+        </ol>
       </div>
-      <div class="onboarding-help">
-        Revisit the setup wizard to adjust your dashboard step by step.
-      </div>
-      <ol class="onboarding-jumps">
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'strategy')">Strategy</button>
-          <div v-if="guidedHints?.strategy" class="onboarding-hint">{{ guidedHints.strategy }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'calendars')">Calendars</button>
-          <div v-if="guidedHints?.calendars" class="onboarding-hint">{{ guidedHints.calendars }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'deck')">Deck</button>
-          <div v-if="guidedHints?.deck" class="onboarding-hint">{{ guidedHints.deck }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'goals')">Goals</button>
-          <div v-if="guidedHints?.goals" class="onboarding-hint">{{ guidedHints.goals }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'preferences')">Preferences</button>
-          <div v-if="guidedHints?.preferences" class="onboarding-hint">{{ guidedHints.preferences }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'dashboard')">Dashboard</button>
-          <div v-if="guidedHints?.dashboard" class="onboarding-hint">{{ guidedHints.dashboard }}</div>
-        </li>
-        <li>
-          <button type="button" class="link" @click="$emit('rerun-onboarding', 'review')">Review</button>
-          <div v-if="guidedHints?.review" class="onboarding-hint">{{ guidedHints.review }}</div>
-        </li>
-      </ol>
-    </div>
 
-    <div class="sidebar-shortcuts sidebar-shortcuts--bottom">
-      <div class="sidebar-icon-row">
+      <!-- ── Bottom dock ── -->
+      <div class="dock">
         <button
+          class="dk-btn"
           type="button"
-          class="sidebar-icon-btn"
           title="Keyboard shortcuts"
           aria-label="Keyboard shortcuts"
-          @click="emit('open-shortcuts', $event.currentTarget as HTMLElement)"
+          @click="$emit('open-shortcuts', $event.currentTarget)"
         >
-          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M4.25 6.5A2.75 2.75 0 0 1 7 3.75h10a2.75 2.75 0 0 1 2.75 2.75v10.5A2.75 2.75 0 0 1 17 19.75H7A2.75 2.75 0 0 1 4.25 17V6.5zm2.75-.75a.75.75 0 0 0-.75.75V17c0 .41.34.75.75.75h10a.75.75 0 0 0 .75-.75V6.5a.75.75 0 0 0-.75-.75H7zm1.5 2.25h2v2h-2v-2zm3 0h2v2h-2v-2zm3 0h2v2h-2v-2zm-6 3h7v2h-7v-2z"
-            />
-          </svg>
+          <b>⌘</b><span>Keys</span>
         </button>
         <button
+          class="dk-btn"
           type="button"
-          class="sidebar-icon-btn sidebar-icon-btn--releases"
-          :class="{ active: releaseNotesOpen }"
+          :class="{ on: releaseNotesAvailable }"
+          :disabled="!releaseNotesAvailable"
           title="What's new"
           aria-label="What's new"
-          :disabled="!releaseNotesAvailable"
-          @click="emit('open-release-notes')"
+          @click="$emit('open-release-notes')"
         >
-          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M12 3.25a.75.75 0 0 1 .69.46l1.61 3.85 4.15.35a.75.75 0 0 1 .43 1.31l-3.16 2.73.95 4.06a.75.75 0 0 1-1.12.8L12 14.67l-3.55 2.14a.75.75 0 0 1-1.12-.8l.95-4.06-3.16-2.73a.75.75 0 0 1 .43-1.31l4.15-.35 1.61-3.85a.75.75 0 0 1 .69-.46zm0 2.66-1.15 2.74a.75.75 0 0 1-.62.46l-2.96.25 2.25 1.95c.22.19.31.48.24.76l-.68 2.89 2.53-1.52a.75.75 0 0 1 .77 0l2.53 1.52-.68-2.89a.75.75 0 0 1 .24-.76l2.25-1.95-2.96-.25a.75.75 0 0 1-.62-.46L12 5.91z"
-            />
-          </svg>
+          <b>✦</b><span>New</span>
         </button>
         <button
+          class="dk-btn"
           type="button"
-          class="sidebar-icon-btn sidebar-icon-btn--profile"
           title="Profiles and backups"
           aria-label="Profiles and backups"
-          @click="emit('open-profiles')"
+          @click="$emit('open-profiles')"
         >
-          <svg class="sidebar-icon sidebar-icon--profile" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M12 4.25a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 7.5c3.18 0 5.75 1.57 5.75 3.5v1.5c0 .41-.34.75-.75.75H7a.75.75 0 0 1-.75-.75v-1.5c0-1.93 2.57-3.5 5.75-3.5zm0 1.5c-2.44 0-4.25 1.05-4.25 2v.75h8.5V16.75c0-.95-1.81-2-4.25-2z"
-            />
-          </svg>
+          <b>◎</b><span>Profiles</span>
         </button>
       </div>
     </div>
@@ -133,11 +145,31 @@
 </template>
 
 <script setup lang="ts">
-import { NcAppNavigation, NcButton, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { computed } from 'vue'
+import { NcAppNavigation } from '@nextcloud/vue'
+import { getWeekNumber, parseDateKey } from '../../services/dateTime'
+
+const MDI_LAYERS = "M12,16L19.36,10.27L21,9L12,2L3,9L4.63,10.27M12,18.54L4.62,12.81L3,14.07L12,21.07L21,14.07L19.37,12.8L12,18.54Z"
+const MDI_CALENDAR_MULTIPLE = "M21,17V8H7V17H21M21,3A2,2 0 0,1 23,5V17A2,2 0 0,1 21,19H7C5.89,19 5,18.1 5,17V5A2,2 0 0,1 7,3H8V1H10V3H18V1H20V3H21M3,21H17V23H3C1.89,23 1,22.1 1,21V9H3V21M19,15H15V11H19V15Z"
+const MDI_VIEW_COLUMN = "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z"
+const MDI_TARGET = "M11,2V4.07C7.38,4.53 4.53,7.38 4.07,11H2V13H4.07C4.53,16.62 7.38,19.47 11,19.93V22H13V19.93C16.62,19.47 19.47,16.62 19.93,13H22V11H19.93C19.47,7.38 16.62,4.53 13,4.07V2M11,6.08V8H13V6.09C15.5,6.5 17.5,8.5 17.92,11H16V13H17.91C17.5,15.5 15.5,17.5 13,17.92V16H11V17.91C8.5,17.5 6.5,15.5 6.08,13H8V11H6.09C6.5,8.5 8.5,6.5 11,6.08M12,11A1,1 0 0,0 11,12A1,1 0 0,0 12,13A1,1 0 0,0 13,12A1,1 0 0,0 12,11Z"
+const MDI_TUNE = "M3,17V19H9V17H3M3,5V7H13V5H3M13,21V19H21V17H13V15H11V21H13M7,9V11H3V13H7V15H9V9H7M21,13V11H11V13H21M15,9H17V7H21V5H17V3H15V9Z"
+const MDI_VIEW_GRID_OUTLINE = "M3 11H11V3H3M5 5H9V9H5M13 21H21V13H13M15 15H19V19H15M3 21H11V13H3M5 15H9V19H5M13 3V11H21V3M19 9H15V5H19Z"
+const MDI_CHECK_DECAGRAM = "M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.78L23,12M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z"
+
+const STEPS = [
+  { id: 'strategy',    label: 'Strategy',    icon: MDI_LAYERS,            placeholder: 'Choose a planning model' },
+  { id: 'calendars',   label: 'Calendars',   icon: MDI_CALENDAR_MULTIPLE, placeholder: 'No calendars selected' },
+  { id: 'deck',        label: 'Deck',        icon: MDI_VIEW_COLUMN,       placeholder: 'Deck integration' },
+  { id: 'goals',       label: 'Goals',       icon: MDI_TARGET,            placeholder: 'Set weekly targets' },
+  { id: 'preferences', label: 'Preferences', icon: MDI_TUNE,              placeholder: 'Theme and hours' },
+  { id: 'dashboard',   label: 'Dashboard',   icon: MDI_VIEW_GRID_OUTLINE, placeholder: 'Layout preset' },
+  { id: 'review',      label: 'Review',      icon: MDI_CHECK_DECAGRAM,    placeholder: 'Confirm and save' },
+] as const
 
 const props = defineProps<{
   isLoading: boolean
-  range: 'week'|'month'
+  range: 'week' | 'month'
   offset: number
   from: string
   to: string
@@ -147,6 +179,8 @@ const props = defineProps<{
   guidedHints?: Partial<Record<'strategy' | 'calendars' | 'deck' | 'goals' | 'preferences' | 'dashboard' | 'review', string>>
   releaseNotesAvailable?: boolean
   releaseNotesOpen?: boolean
+  lastSync?: string | null
+  guidedHintStatuses?: Partial<Record<'strategy' | 'calendars' | 'deck' | 'goals' | 'preferences' | 'dashboard' | 'review', 'done' | 'warn' | 'dim' | 'skip'>>
 }>()
 
 const emit = defineEmits([
@@ -159,233 +193,426 @@ const emit = defineEmits([
   'open-shortcuts',
   'rerun-onboarding',
 ])
+
+const rangeEyebrow = computed(() => props.range === 'month' ? 'This month' : 'This week')
+
+const rangeHeadline = computed(() => {
+  const date = parseDateKey(props.from)
+  if (!date) return props.range === 'month' ? 'Month' : 'Week'
+  if (props.range === 'month') {
+    const monthNum = date.getUTCMonth() + 1
+    return `Month ${monthNum}`
+  }
+  return `Week ${getWeekNumber(date)}`
+})
+
+const syncLabel = computed(() => {
+  if (props.isLoading) return 'Syncing…'
+  return props.lastSync ?? 'Ready'
+})
 </script>
 
 <style scoped>
-.sidebar-toggle-btn{
-  appearance:none;
-  border-radius:14px;
-  border:1px solid color-mix(in oklab, var(--brand), transparent 55%);
-  background:color-mix(in oklab, var(--brand), transparent 86%);
-  color:var(--brand);
-  width:26px;
-  height:26px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 6px 14px rgba(15,23,42,0.12);
-  cursor:pointer;
-  font-size:11px;
-}
-
-.sidebar-toggle-btn:hover{
-  background:color-mix(in oklab, var(--brand), transparent 76%);
-  border-color:color-mix(in oklab, var(--brand), transparent 40%);
-}
-
-.sidebar-toggle-btn:focus-visible{
-  outline:2px solid color-mix(in oklab, var(--brand), transparent 40%);
-  outline-offset:2px;
-}
-
 :global(.app-opsdash #app-navigation),
-:global(.app-opsdash .app-navigation){
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  height:100%;
-  overflow:visible !important;
+:global(.app-opsdash .app-navigation) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: visible !important;
+}
+:global(.app-opsdash .app-content__navigation) {
+  overflow: visible !important;
+}
+:global(.app-opsdash .app-navigation__content) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 100% !important;
 }
 
-:global(.app-opsdash .app-content__navigation){
-  overflow:visible !important;
+.sb-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px 4px;
+  min-height: 100%;
 }
 
-:global(.app-opsdash .app-navigation__content){
-  display:flex;
-  flex-direction:column;
-  flex:1;
-  min-height:100%;
-  overflow:visible !important;
-  max-height:none !important;
+.hero-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.sidebar-toggle-btn--corner{
-  position:absolute;
-  top:-10px;
-  right:-10px;
-  border-color:color-mix(in oklab, var(--brand), var(--line) 70%);
-  background:color-mix(in oklab, var(--card), transparent 10%);
-  box-shadow:0 6px 16px rgba(15,23,42,0.12), inset 0 0 0 1px color-mix(in oklab, var(--brand), transparent 82%);
+.hero-seg {
+  flex: 1;
 }
 
-.sidebar-shortcuts{
-  margin:8px 0 4px;
+/* ── Hide button ── */
+.hide-btn {
+  position: static;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in oklab, var(--brand), transparent 82%);
+  color: var(--brand);
+  background: color-mix(in oklab, var(--brand), transparent 86%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  appearance: none;
+}
+.hide-btn:hover {
+  background: color-mix(in oklab, var(--brand), transparent 76%);
 }
 
-.sidebar-shortcuts--bottom{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  margin-top:auto;
-  padding-bottom:10px;
-  gap:8px;
+/* ── Range hero card ── */
+.rc {
+  border: 1px solid color-mix(in oklab, var(--brand), transparent 82%);
+  border-radius: 22px;
+  padding: 17px 16px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, .08),
+    inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+.hero {
+  background:
+    radial-gradient(circle at 112% -8%, color-mix(in oklab, var(--brand), transparent 82%), transparent 54%),
+    linear-gradient(180deg, color-mix(in oklab, var(--card, #fff), var(--brand) 3%), var(--card, #fff)),
+    var(--card, #fff);
 }
 
-.onboarding-hint{
-  margin:0;
-  font-size:12px;
-  line-height:1.3;
-  color:color-mix(in oklab, var(--text), transparent 40%);
-  white-space:normal;
-  overflow:hidden;
-  max-width:100%;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-  line-clamp:2;
-  text-overflow:ellipsis;
+.ew {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted, #64748b);
+  margin-bottom: 3px;
 }
 
-.sidebar-icon-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:center;
+.rc-big {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.06em;
+  line-height: 1;
+  color: var(--fg, #0f172a);
 }
 
-.sidebar-icon-btn{
-  appearance:none;
-  border-radius:999px;
-  border:1px solid color-mix(in oklab, var(--brand), var(--line) 70%);
-  background:color-mix(in oklab, var(--brand), var(--card) 90%);
-  color:var(--brand);
-  width:40px;
-  height:40px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 6px 14px rgba(15,23,42,0.12);
-  cursor:pointer;
+.rc-sub {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+  margin-top: -5px;
 }
 
-.sidebar-icon-btn:hover{
-  background:color-mix(in oklab, var(--brand), var(--card) 80%);
-  border-color:color-mix(in oklab, var(--brand), var(--line) 50%);
+/* Segmented pill */
+.seg {
+  display: grid;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .06);
 }
+.seg.w2 { grid-template-columns: 1fr 1fr; }
 
-.sidebar-icon-btn.active{
-  background:color-mix(in oklab, var(--brand), var(--card) 70%);
-  border-color:color-mix(in oklab, var(--brand), var(--line) 40%);
-  box-shadow:0 8px 16px rgba(15,23,42,0.16);
-}
-
-.sidebar-icon-btn:disabled{
-  opacity:0.45;
-  cursor:default;
-  box-shadow:none;
-}
-
-.sidebar-icon-btn:focus-visible{
-  outline:2px solid color-mix(in oklab, var(--brand), transparent 40%);
-  outline-offset:2px;
-}
-
-.sidebar-icon{
-  width:20px;
-  height:20px;
-}
-
-.sidebar-icon-btn--profile{
-  width:46px;
-  height:46px;
-}
-
-.sidebar-icon--profile{
-  width:24px;
-  height:24px;
-}
-
-.sidebar-block{
-  margin:8px 0 12px;
-}
-
-.sidebar-block--framed{
-  border:1px solid color-mix(in oklab, var(--brand), var(--line) 70%);
-  border-radius:14px;
-  background:color-mix(in oklab, var(--card), transparent 10%);
-  padding:12px 14px;
-  box-shadow:0 6px 16px rgba(15, 23, 42, 0.12), inset 0 0 0 1px color-mix(in oklab, var(--brand), transparent 82%);
-}
-
-.rerun-btn__icon{
-  display:inline-flex;
-  margin-right:6px;
-  font-size:12px;
-  line-height:1;
-}
-
-.onboarding-jumps{
-  display:grid;
-  gap:10px;
-  margin:8px 0 4px;
-  padding-left:0;
-  min-width:0;
-  font-size:12px;
-  color: var(--muted, #6b7280);
-  list-style: none;
-  counter-reset: guided-step;
-}
-
-.onboarding-jumps li{
-  counter-increment: guided-step;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:4px;
-  min-width:0;
-}
-
-.onboarding-jumps .link{
-  appearance:none;
-  display:inline-block;
-  width:100%;
-  min-width:0;
-  margin:0;
-  min-height:0;
-  background: transparent;
+.seg button {
+  appearance: none;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted, #64748b);
   border: 0;
-  padding: 0;
-  font-size:12px;
-  line-height:1.2;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  color: inherit;
-  text-align: left;
-  text-decoration: none;
+  background: none;
   cursor: pointer;
 }
-
-.onboarding-jumps .link::before{
-  content: counter(guided-step) '. ';
-  font-variant-numeric: tabular-nums;
-  font-weight:600;
-  color:color-mix(in oklab, var(--text), transparent 20%);
+.seg button.on {
+  color: #fff;
+  background: var(--brand, #2563eb);
+  box-shadow: 0 4px 10px color-mix(in oklab, var(--brand), transparent 72%);
 }
 
-.onboarding-jumps .link:hover{
-  color: var(--color-primary-text);
-  text-decoration: underline;
+/* Nav row */
+.navrow {
+  display: grid;
+  gap: 6px;
+  align-items: center;
+}
+.navrow.arw-layout { grid-template-columns: 34px 1fr 34px; }
+
+.arw {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  border: 1px solid var(--line, #e2e8f0);
+  background: var(--card, #fff);
+  color: var(--fg, #0f172a);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, .08);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  appearance: none;
+}
+.arw:disabled { opacity: .45; cursor: default; }
+.arw:hover:not(:disabled) { background: color-mix(in oklab, var(--card), var(--brand) 5%); }
+
+.date-pill {
+  height: 34px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in oklab, var(--brand), transparent 82%);
+  background: color-mix(in oklab, var(--brand), transparent 93%);
+  color: var(--brand, #2563eb);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 6px;
 }
 
-.onboarding-help{
-  font-size:12px;
-  color: var(--muted, #6b7280);
-  margin-top:2px;
-  margin-bottom:4px;
+/* Sync row */
+.sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sync-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green, #16a34a);
+  flex-shrink: 0;
+}
+.sync-dot.syncing {
+  background: var(--amber, #d97706);
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+.sync-txt {
+  font-size: 11px;
+  color: var(--muted, #64748b);
 }
 
+.btn-ref {
+  height: 30px;
+  border-radius: 999px;
+  padding: 0 13px;
+  background: var(--brand, #2563eb);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px color-mix(in oklab, var(--brand), transparent 74%);
+  appearance: none;
+}
+.btn-ref:disabled { opacity: .5; cursor: default; }
+
+/* ── Setup card ── */
+.sc {
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 22px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: var(--card, #fff);
+  box-shadow:
+    0 10px 22px rgba(15, 23, 42, .06),
+    inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+
+.sc-hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sc-title {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  line-height: 1.1;
+  margin-top: 3px;
+  color: var(--fg, #0f172a);
+}
+
+.badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--brand, #2563eb);
+  background: color-mix(in oklab, var(--brand), transparent 93%);
+  border: 1px solid color-mix(in oklab, var(--brand), transparent 82%);
+  flex-shrink: 0;
+}
+.badge--std {
+  color: var(--muted, #64748b);
+  background: transparent;
+  border-color: var(--line, #e2e8f0);
+}
+
+.wiz {
+  width: 100%;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand, #2563eb), color-mix(in oklab, var(--brand, #2563eb), #1d4ed8 40%));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 5px 14px color-mix(in oklab, var(--brand), transparent 74%);
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wiz:hover { filter: brightness(1.08); }
+
+/* ── Steps ── */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 9px;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, .02);
+  border: 1px solid transparent;
+  min-width: 0;
+  cursor: pointer;
+}
+.step:hover { background: rgba(0, 0, 0, .04); }
+
+.step.done {
+  background: rgba(22, 163, 74, .05);
+  border-color: rgba(22, 163, 74, .13);
+}
+.step.warn {
+  background: rgba(217, 119, 6, .06);
+  border-color: rgba(217, 119, 6, .17);
+}
+.step.skip {
+  background: transparent;
+  border-color: rgba(100, 116, 139, .14);
+}
+.step.dim {
+  background: transparent;
+}
+
+/* Step icon badge */
+.sn {
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  background: var(--brand, #2563eb);
+  color: #fff;
+  flex-shrink: 0;
+}
+.step.done .sn { background: var(--green, #16a34a); }
+.step.warn .sn { background: var(--amber, #d97706); }
+.step.dim  .sn { background: rgba(0, 0, 0, .08); color: var(--muted, #64748b); }
+.step.skip .sn { background: rgba(100, 116, 139, .18); color: var(--muted, #64748b); }
+
+/* Step text */
+.sb-txt { min-width: 0; overflow: hidden; }
+.sb-txt strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--fg, #0f172a);
+}
+.sb-txt small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted, #64748b);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Dock ── */
+.dock {
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 20px;
+  padding: 7px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--card, #fff), var(--brand) 2%), rgba(0, 0, 0, .015));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: auto;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, .05),
+    inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+.dk-btn {
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted, #64748b);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  appearance: none;
+}
+.dk-btn b { font-size: 17px; line-height: 1; }
+.dk-btn.on { color: var(--brand, #2563eb); background: color-mix(in oklab, var(--brand), transparent 93%); }
+.dk-btn:disabled { opacity: .4; cursor: default; }
+.dk-btn:hover:not(:disabled) { background: rgba(0, 0, 0, .04); }
 </style>

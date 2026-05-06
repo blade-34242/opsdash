@@ -66,9 +66,10 @@ function mountSidebar() {
 }
 
 describe('Sidebar layout', () => {
-  it('renders the range bar and profiles trigger without legacy controls', () => {
+  it('renders the range hero and profiles trigger without legacy controls', () => {
     const wrapper = mountSidebar()
-    expect(wrapper.find('.rangebar').exists()).toBe(true)
+    expect(wrapper.find('.rc.hero').exists()).toBe(true)
+    expect(wrapper.text()).toContain('This week')
     expect(wrapper.find('button[aria-label="Profiles and backups"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Projection mode')
     expect(wrapper.text()).not.toContain('Trend lookback')

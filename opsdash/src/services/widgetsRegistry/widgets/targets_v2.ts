@@ -17,6 +17,7 @@ export const targetsV2Entry: RegistryEntry = {
   defaultLayout: { width: 'half', height: 'm', order: 18 },
   heightMode: 'auto',
   label: 'Targets',
+  category: 'Time' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

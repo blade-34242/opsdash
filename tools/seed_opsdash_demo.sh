@@ -23,6 +23,15 @@ declare -A CALENDARS=(
   ["opsdash-learning"]="Opsdash · Learning"
 )
 
+declare -A CALENDAR_COLORS=(
+  ["opsdash-work"]="#2563EB"
+  ["opsdash-meetings"]="#7C3AED"
+  ["opsdash-personal"]="#F97316"
+  ["opsdash-recovery"]="#0EA5E9"
+  ["opsdash-sport"]="#10B981"
+  ["opsdash-learning"]="#D97706"
+)
+
 EVENT_DATA=$(cat <<'EOF'
 opsdash-work|Mon|09:00|150|API implementation block
 opsdash-work|Mon|14:00|120|Release hardening sprint
@@ -63,6 +72,41 @@ EOF
 
 log(){ printf '[seed_opsdash_demo] %s\n' "$*"; }
 
+print_story_map(){
+  cat <<EOF
+
+[seed_opsdash_demo] Screenshot/onboarding story map
+[seed_opsdash_demo]   Work:
+[seed_opsdash_demo]     - Opsdash · Deep Work
+[seed_opsdash_demo]     - Opsdash · Meetings
+[seed_opsdash_demo]   Hobby / Personal:
+[seed_opsdash_demo]     - Opsdash · Personal
+[seed_opsdash_demo]     - Opsdash · Learning
+[seed_opsdash_demo]   Sport / Recovery:
+[seed_opsdash_demo]     - Opsdash · Sport
+[seed_opsdash_demo]     - Opsdash · Recovery
+[seed_opsdash_demo]
+[seed_opsdash_demo] Calendar contents
+[seed_opsdash_demo]   Opsdash · Deep Work  -> long focus blocks, implementation, polish work
+[seed_opsdash_demo]   Opsdash · Meetings   -> standups, syncs, retros, customer calls
+[seed_opsdash_demo]   Opsdash · Personal   -> dinners, weekend planning, family time
+[seed_opsdash_demo]   Opsdash · Learning   -> courses, writing, meetups
+[seed_opsdash_demo]   Opsdash · Sport      -> strength, swim, trail run
+[seed_opsdash_demo]   Opsdash · Recovery   -> reset walks, mobility, quiet evening recovery
+[seed_opsdash_demo]
+[seed_opsdash_demo] Recommended onboarding mapping
+[seed_opsdash_demo]   Work  -> Deep Work + Meetings
+[seed_opsdash_demo]   Hobby -> Personal + Learning
+[seed_opsdash_demo]   Sport -> Sport + Recovery
+[seed_opsdash_demo]
+[seed_opsdash_demo] Recommended screenshot presets
+[seed_opsdash_demo]   Single-goal light     -> Work only
+[seed_opsdash_demo]   Calendar goals dark   -> Work + Hobby + Sport
+[seed_opsdash_demo]   Category goals light  -> Work + Hobby + Sport with the mapping above
+[seed_opsdash_demo]   Onboarding dark       -> same seeded set, before completing setup
+EOF
+}
+
 utc_ts(){
   local s="$1"
   if [[ "$s" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})[[:space:]]+(.*)$ ]]; then
@@ -74,6 +118,7 @@ utc_ts(){
 ensure_calendar(){
   local slug="$1"
   local name="$2"
+  local color="$3"
   local url="$DAV_BASE/$slug/"
   local body='<?xml version="1.0" encoding="utf-8"?>
   <c:mkcalendar xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -87,6 +132,21 @@ ensure_calendar(){
   curl -fsS -u "$USER:$PASS" -X MKCALENDAR \
     -H 'Content-Type: application/xml; charset=utf-8' \
     --data-binary "$body" \
+    "$url" >/dev/null || true
+
+  local patch='<?xml version="1.0" encoding="utf-8"?>
+  <d:propertyupdate xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">
+    <d:set>
+      <d:prop>
+        <d:displayname>'"$name"'</d:displayname>
+        <c:calendar-description>Seeded by seed_opsdash_demo.sh</c:calendar-description>
+        <a:calendar-color>'"$color"'</a:calendar-color>
+      </d:prop>
+    </d:set>
+  </d:propertyupdate>'
+  curl -fsS -u "$USER:$PASS" -X PROPPATCH \
+    -H 'Content-Type: application/xml; charset=utf-8' \
+    --data-binary "$patch" \
     "$url" >/dev/null || true
 }
 
@@ -136,7 +196,7 @@ dow_offset(){
 }
 
 for slug in "${!CALENDARS[@]}"; do
-  ensure_calendar "$slug" "${CALENDARS[$slug]}"
+  ensure_calendar "$slug" "${CALENDARS[$slug]}" "${CALENDAR_COLORS[$slug]}"
 done
 
 readarray -t EVENTS <<<"$EVENT_DATA"
@@ -161,6 +221,7 @@ for week in $(seq 0 $((WEEKS-1))); do
 done
 
 log "Done."
+print_story_map
 log "Calendar UI: $BASE_URL/index.php/apps/calendar/"
 log "Dashboard API week: $BASE_URL/index.php/apps/opsdash/config_dashboard/load?range=week&offset=0"
 log "Dashboard API month: $BASE_URL/index.php/apps/opsdash/config_dashboard/load?range=month&offset=0"

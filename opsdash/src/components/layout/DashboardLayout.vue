@@ -1,25 +1,5 @@
 <template>
   <div class="layout-wrapper" :class="{ 'editable-mode': editable }" @click.self="clearSelection">
-    <DashboardToolbar
-      :editable="editable && !advancedTargetsId"
-      :selected-item="selectedItem"
-      :open-options-id="openOptionsId"
-      :preset-label="presetLabel"
-      :context="context"
-      :tabs="tabs"
-      :current-tab-id="currentTabId"
-      @select-first="selectFirst"
-      @move="moveSelected"
-      @cycle-width="cycleSelectedWidth"
-      @cycle-height="cycleSelectedHeight"
-      @remove="removeSelected"
-      @reset-preset="emit('reset:preset')"
-      @toggle-options="toggleOptions"
-      @open-advanced="openAdvancedTargets"
-      @edit-options="(id, key, value) => emit('edit:options', id, key, value)"
-      @move-to-tab="(id, tabId) => emit('edit:move-tab', id, tabId)"
-      @duplicate-to-tab="(id, tabId) => emit('edit:duplicate-tab', id, tabId)"
-    />
 
     <DashboardGrid
       :ordered="ordered"
@@ -54,7 +34,6 @@ import { computed, ref, watch } from 'vue'
 import type { WidgetDefinition, WidgetRenderContext } from '../../services/widgetsRegistry'
 import { mapWidgetToComponent } from '../../services/widgetsRegistry'
 import DashboardGrid from './DashboardGrid.vue'
-import DashboardToolbar from './DashboardToolbar.vue'
 import DashboardAdvancedTargetsOverlay from './DashboardAdvancedTargetsOverlay.vue'
 
 type AdvancedTargetsPayload = {
@@ -216,7 +195,10 @@ function selectCell(orderHint?: number) {
 }
 
 defineExpose({
+  selectedItem,
   openOptionsForSelected,
+  openAdvancedTargets,
+  selectFirst,
 })
 </script>
 

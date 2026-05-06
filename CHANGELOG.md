@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 - None yet.
 
 
+## 0.8.0 - 2026-05-05
+### Added
+- **Edit toolbar redesign (V3)**: sidebar-aware combined bar — single row when sidebar open, two-row bar when collapsed. Floating edit bar sticks below the Nextcloud header on scroll via `--header-height`.
+- **Height L and XL** buttons added to the inline widget toolbar.
+- **Widget configuration popover**: `WidgetOptionsMenu` now uses `position:fixed` with JS-calculated coordinates to escape Nextcloud's `overflow:hidden` containers. Config button is always visible (disabled when nothing configurable is selected).
+- **Sliders config icon**: replaces old Unicode ⚙ — consistent in toolbar and popover trigger.
+- **Toolbar layout**: selected-widget chip far left, "Add widget" far right, mode hint inline next to tab strip (mode-band row removed).
+- **Add Widget Modal**: "Add without closing" action, `↵`/`Esc` keyboard shortcuts, per-widget CSS preview thumbnails (9 distinct variants).
+- **Widget categories**: all 16 widget types declare `category` (`Time` / `Charts` / `Tasks` / `Notes`). Modal filters by category tab.
+- **`WidgetPreview.vue`**: new component for distinct widget previews in the Add Widget grid.
+
+
+## 0.7.7 - 2026-05-01
+### Changed
+- Release preparation for 0.7.7.
+
 
 ## 0.7.6 - 2026-04-27
 ### Changed

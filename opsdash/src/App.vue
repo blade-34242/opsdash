@@ -71,6 +71,8 @@
           :nav-toggle-icon="navToggleIcon"
           :dashboard-mode="dashboardMode"
           :guided-hints="guidedHints"
+          :guided-hint-statuses="guidedStepStatuses"
+          :last-sync="lastSyncLabel"
           :release-notes-available="releaseNotesAvailable"
           :release-notes-open="releaseNotesOverlayOpen"
           @load="performLoad"
@@ -91,62 +93,6 @@
       <div class="app-shell">
         <div class="app-main">
           <div class="app-container">
-            <div
-              v-if="showCollapsedRangeControls"
-              class="range-toolbar"
-              role="toolbar"
-              aria-label="Collapsed range controls"
-            >
-              <button
-                class="range-toolbar__btn range-toolbar__btn--icon sidebar-action-btn--icon"
-                type="button"
-                @click="toggleNav"
-                :aria-expanded="navOpen"
-                aria-controls="opsdash-sidebar"
-                :aria-label="navToggleLabel"
-              >
-                {{ navToggleIcon }}
-              </button>
-              <button
-                class="range-toolbar__btn range-toolbar__btn--pill"
-                type="button"
-                :disabled="isInitialLoading"
-                @click="toggleRangeCollapsed"
-                :aria-pressed="range === 'month'"
-              >
-                {{ rangeToggleLabel }}
-              </button>
-              <div class="range-toolbar__group" role="group" aria-label="Navigate periods">
-                <button
-                  class="range-toolbar__btn sidebar-action-btn--icon"
-                  type="button"
-                  :disabled="isInitialLoading"
-                  @click="goPrevious"
-                >
-                  ◀
-                </button>
-                <span class="range-toolbar__label range-toolbar__label--pill" :title="rangeDateLabel">
-                  {{ rangeDateLabel }}
-                </span>
-                <button
-                  class="range-toolbar__btn sidebar-action-btn--icon"
-                  type="button"
-                  :disabled="isInitialLoading"
-                  @click="goNext"
-                >
-                  ▶
-                </button>
-              </div>
-              <button
-                class="range-toolbar__btn range-toolbar__btn--refresh sidebar-action-btn"
-                type="button"
-                :disabled="isInitialLoading"
-                @click="loadCurrent"
-              >
-                Refresh
-              </button>
-            </div>
-
             <div class="banner warn" v-if="isTruncated" :title="truncTooltip">
               Showing partial data to keep things fast.
               <template v-if="truncLimits && truncLimits.totalProcessed != null">
@@ -154,94 +100,241 @@
               </template>
             </div>
 
-            <div class="cards-toolbar" :class="{ 'cards-toolbar--editing': isLayoutEditing }">
-              <div class="cards-toolbar__tabs" role="tablist" aria-label="Dashboard tabs">
-                <div
-                  v-for="tab in layoutTabs"
-                  :key="tab.id"
-                  class="tab-item"
-                  :class="{ active: tab.id === activeTabId }"
-                >
-                  <button
-                    type="button"
-                    class="tab-btn"
-                    :class="{
-                      active: tab.id === activeTabId,
-                      default: tab.id === defaultTabId,
-                      'tab-btn--with-menu': isLayoutEditing,
-                    }"
-                    role="tab"
-                    :aria-selected="tab.id === activeTabId"
-                    @click="handleTabClick(tab.id)"
-                    @contextmenu.prevent="openTabContextMenu($event, tab.id)"
-                  >
-                    <template v-if="isLayoutEditing && tabEditingId === tab.id">
-                      <input
-                        class="tab-input"
-                        v-model="tabLabelDraft"
-                        @blur="commitTabLabel"
-                        @keydown.enter.prevent="commitTabLabel"
-                        @keydown.esc.prevent="cancelTabLabel"
-                        @click.stop
-                      />
-                    </template>
-                    <template v-else>
-                      <span class="tab-label">{{ tab.label }}</span>
-                      <span v-if="tab.id === defaultTabId" class="tab-default">Default</span>
-                    </template>
+            <!-- ── App bar: unified browse + edit surface ── -->
+            <div ref="appBarRef" class="app-bar" :class="{ 'app-bar--editing': isLayoutEditing }">
+
+              <!-- ══ BROWSE MODE ══ -->
+              <template v-if="!isLayoutEditing">
+                <!-- Row 1: range nav (sidebar closed only) -->
+                <div v-if="!navOpen" class="bar-row">
+                  <button class="show-btn" type="button" @click="toggleNav" :aria-label="navToggleLabel">
+                    <svg width="10" height="11" viewBox="0 0 10 11" fill="none">
+                      <path d="M1 1l4 4.5L1 10M5 1l4 4.5L5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                   </button>
-                  <button
-                    v-if="isLayoutEditing"
-                    type="button"
-                    class="tab-menu-btn"
-                    :class="{ active: tab.id === activeTabId }"
-                    :aria-label="`Tab actions for ${tab.label}`"
-                    @click.stop="openTabContextMenuFromButton($event, tab.id)"
-                  >
-                    ⋯
-                  </button>
-                </div>
-                <button
-                  v-if="isLayoutEditing"
-                  type="button"
-                  class="tab-btn tab-btn--add"
-                  @click="addTab()"
-                >
-                  + Tab
-                </button>
-              </div>
-              <div class="cards-toolbar__center" :class="{ 'cards-toolbar__center--editing': isLayoutEditing }">
-                <div class="cards-toolbar__mode">
-                  <button
-                    type="button"
-                    class="ghost-btn ghost-btn--edit"
-                    @click="toggleLayoutEditing"
-                  >
-                    <span class="ghost-btn__icon" aria-hidden="true">✎</span>
-                    {{ isLayoutEditing ? 'Done editing' : 'Edit layout' }}
-                  </button>
-                </div>
-                <div class="cards-toolbar__tools">
-                  <span class="range-badge" aria-label="Active range">
-                    <span class="range-badge__mode" v-text="rangeBadgePrimary" />
-                    <span class="range-badge__span" v-text="rangeBadgeSecondary" />
-                  </span>
-                  <span v-if="isRefreshing" class="refresh-indicator" role="status" aria-live="polite">
-                    Updating...
-                  </span>
-                  <div v-if="isLayoutEditing" class="cards-toolbar__actions">
-                    <select v-model="newWidgetType" @change="handleAddWidget">
-                      <option value="" disabled>Add widget…</option>
-                      <option v-for="entry in availableWidgetTypesForStrategy" :key="entry.type" :value="entry.type">
-                        {{ entry.label }}
-                      </option>
-                    </select>
-                    <button type="button" class="ghost-btn ghost-btn--tight" @click="resetWidgets">
-                      Reset preset
+                  <div class="app-seg w2">
+                    <button type="button" :class="{ on: range === 'week' }" :disabled="isInitialLoading" @click="setRange('week')">Week</button>
+                    <button type="button" :class="{ on: range === 'month' }" :disabled="isInitialLoading" @click="setRange('month')">Month</button>
+                  </div>
+                  <div class="app-navc">
+                    <button class="navc-btn" type="button" :disabled="isInitialLoading" @click="goPrevious">
+                      <svg width="6" height="11" viewBox="0 0 6 11" fill="none">
+                        <path d="M5 1L1 5.5l4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div class="navc-date">
+                      <span class="navc-sub">
+                        <span class="navc-date-start">{{ from }}</span>
+                        <span class="navc-title">{{ rangeHeadline }}</span>
+                        <span class="navc-date-end">{{ to }}</span>
+                      </span>
+                    </div>
+                    <button class="navc-btn" type="button" :disabled="isInitialLoading" @click="goNext">
+                      <svg width="6" height="11" viewBox="0 0 6 11" fill="none">
+                        <path d="M1 1l4 4.5L1 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
                     </button>
                   </div>
+                  <button class="bar-btn-ref" type="button" :disabled="isInitialLoading" @click="loadCurrent">Refresh</button>
                 </div>
-              </div>
+
+                <!-- Tab strip + Edit layout button -->
+                <div class="bar-row" :class="{ sep: !navOpen }">
+                  <div class="tab-strip" role="tablist" aria-label="Dashboard tabs">
+                    <div v-for="tab in layoutTabs" :key="tab.id" class="tab-item">
+                      <button
+                        type="button"
+                        class="tab"
+                        :class="{ on: tab.id === activeTabId }"
+                        role="tab"
+                        :aria-selected="tab.id === activeTabId"
+                        @click="handleTabClick(tab.id)"
+                        @contextmenu.prevent="openTabContextMenu($event, tab.id)"
+                      >
+                        <span class="tab-label">{{ tab.label }}</span>
+                        <span v-if="tab.id === defaultTabId" class="tab-default-badge">Default</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="bar-flex1" />
+                  <span v-if="isRefreshing" class="refresh-badge" role="status" aria-live="polite">Updating…</span>
+                  <button class="btn-ghost" type="button" @click="toggleLayoutEditing">Edit layout</button>
+                </div>
+              </template>
+
+              <!-- ══ EDIT MODE (hard split) ══ -->
+              <template v-else>
+                <!-- Row 1: tabs + mode pill + Done -->
+                <div class="bar-row">
+                  <div class="tab-strip" role="tablist" aria-label="Dashboard tabs">
+                    <div v-for="tab in layoutTabs" :key="tab.id" class="tab-item">
+                      <button
+                        type="button"
+                        class="tab"
+                        :class="{ on: tab.id === activeTabId }"
+                        role="tab"
+                        :aria-selected="tab.id === activeTabId"
+                        @click="handleTabClick(tab.id)"
+                        @contextmenu.prevent="openTabContextMenu($event, tab.id)"
+                      >
+                        <template v-if="tabEditingId === tab.id">
+                          <input
+                            class="tab-input"
+                            v-model="tabLabelDraft"
+                            @blur="commitTabLabel"
+                            @keydown.enter.prevent="commitTabLabel"
+                            @keydown.esc.prevent="cancelTabLabel"
+                            @click.stop
+                          />
+                        </template>
+                        <template v-else>
+                          <span class="tab-label">{{ tab.label }}</span>
+                        </template>
+                      </button>
+                      <button
+                        type="button"
+                        class="tab-menu-btn"
+                        :aria-label="`Tab actions for ${tab.label}`"
+                        @click.stop="openTabContextMenuFromButton($event, tab.id)"
+                      >⋯</button>
+                    </div>
+                    <button type="button" class="tab tab--add" @click="addTab()">+ Tab</button>
+                  </div>
+                  <span class="mode-hint">Editing layout · no date navigation</span>
+                  <div class="bar-flex1" />
+                  <span class="editing-pill">Layout mode</span>
+                  <button class="btn-done" type="button" @click="toggleLayoutEditing">Done editing</button>
+                </div>
+
+                <!-- Row 2: inline widget controls -->
+                <div class="itb-row-slot" :style="itbFloating && itbRowHeight ? { minHeight: `${itbRowHeight}px` } : undefined">
+                  <div ref="itbRowRef" class="bar-row sep itb-row" :class="{ 'itb-row--floating': itbFloating }">
+                    <div class="itb">
+
+                    <!-- Selected widget chip (far left) -->
+                    <div v-if="inlineSelectedItem" class="sel-chip">
+                      <div class="sel-dot" />
+                      {{ inlineSelectedItemTitle }}
+                    </div>
+                    <div v-else class="sel-chip sel-chip--empty">
+                      <div class="sel-dot sel-dot--empty" />
+                      No selection
+                    </div>
+
+                    <div class="vsep" />
+
+                    <!-- Width controls -->
+                    <button class="ic" type="button" :class="{ on: selectedWidth === 'half' }" :disabled="!inlineSelectedItem" title="Half width" @click="setInlineWidth('half')">
+                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="5" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">½</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: selectedWidth === 'full' }" :disabled="!inlineSelectedItem" title="Full width" @click="setInlineWidth('full')">
+                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">Full</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: selectedWidth === 'quarter' }" :disabled="!inlineSelectedItem" title="Quarter width" @click="setInlineWidth('quarter')">
+                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none"><rect x="1" y="1" width="3" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">¼</span>
+                    </button>
+
+                    <div class="vsep" />
+
+                    <!-- Height controls -->
+                    <button class="ic" type="button" :class="{ on: selectedHeight === 's' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Small height" @click="setInlineHeight('s')">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="4" width="10" height="4" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">S</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: selectedHeight === 'm' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Medium height" @click="setInlineHeight('m')">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">M</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: selectedHeight === 'l' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Large height" @click="setInlineHeight('l')">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>
+                      <span class="ic-lbl">L</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: selectedHeight === 'xl' && !isAutoHeight }" :disabled="!inlineSelectedItem" title="Extra large height" @click="setInlineHeight('xl')">
+                      <svg width="12" height="13" viewBox="0 0 12 13" fill="none"><rect x="1" y="1" width="10" height="11" rx="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M4 5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                      <span class="ic-lbl">XL</span>
+                    </button>
+                    <button class="ic" type="button" :class="{ on: isAutoHeight }" :disabled="!inlineSelectedItem" title="Auto height" @click="toggleAutoHeight">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M3.5 3.5L6 1l2.5 2.5M3.5 8.5L6 11l2.5-2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span class="ic-lbl">Auto</span>
+                    </button>
+
+                    <div class="vsep" />
+
+                    <!-- Color swatch -->
+                    <label class="ic color-btn" title="Card background color">
+                      <div class="color-swatch" :style="{ background: selectedCardBg }" />
+                      <input type="color" class="color-input-hidden" :value="selectedCardBg" :disabled="!inlineSelectedItem" @input="setSelectedOption('cardBg', ($event.target as HTMLInputElement).value)" />
+                      <span class="ic-lbl">Color</span>
+                    </label>
+
+                    <!-- Title prefix input -->
+                    <div class="name-input">
+                      <input type="text" class="name-input__field" :value="selectedTitlePrefix" :disabled="!inlineSelectedItem" placeholder="Name…" @input="setSelectedOption('titlePrefix', ($event.target as HTMLInputElement).value)" />
+                    </div>
+
+                    <!-- Widget config (WidgetOptionsMenu) -->
+                    <div class="ic-config-wrap">
+                      <WidgetOptionsMenu
+                        v-if="inlineSelectedItem && widgetsRegistry[inlineSelectedItem.type]?.configurable"
+                        :entry="widgetsRegistry[inlineSelectedItem.type]"
+                        :options="inlineSelectedItem.options"
+                        :open="inlineOptionsOpen"
+                        :show-advanced="inlineSelectedItem.type === 'targets_v2'"
+                        :context="widgetContext"
+                        :tabs="layoutTabs.map(t => ({ id: t.id, label: t.label }))"
+                        :current-tab-id="activeTabId"
+                        @toggle="(nextOpen) => { inlineOptionsOpen = nextOpen }"
+                        @open-advanced="handleOpenAdvancedFromInline"
+                        @change="(key, val) => setSelectedOption(key, val)"
+                        @move-to-tab="handleMoveWidgetToTab"
+                        @duplicate-to-tab="handleDuplicateWidgetToTab"
+                      />
+                      <button v-else class="ic" type="button" disabled title="Widget configuration">
+                        <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+                          <path d="M1 3h12M1 6h12M1 9h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                          <circle cx="4" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                          <circle cx="10" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                          <circle cx="6" cy="9" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                        </svg>
+                        <span class="ic-lbl">Config</span>
+                      </button>
+                    </div>
+
+                    <!-- Move up / down -->
+                    <button class="ic" type="button" :disabled="!inlineSelectedItem" title="Move earlier" @click="moveSelectedWidget('up')">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9V3M3 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span class="ic-lbl">Up</span>
+                    </button>
+                    <button class="ic" type="button" :disabled="!inlineSelectedItem" title="Move later" @click="moveSelectedWidget('down')">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 3v6M3 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span class="ic-lbl">Down</span>
+                    </button>
+
+                    <!-- Remove -->
+                    <button class="ic ic-danger" type="button" :disabled="!inlineSelectedItem" title="Remove widget" @click="removeSelectedWidget">
+                      <svg width="11" height="12" viewBox="0 0 11 12" fill="none"><path d="M1 3h9M3.5 3V2a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M4.5 5.5v3.5M6.5 5.5v3.5M2 3l.6 7a.5.5 0 00.5.5h4.8a.5.5 0 00.5-.5L9 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span class="ic-lbl">Remove</span>
+                    </button>
+
+                    <div class="bar-flex1" />
+
+                    <!-- Add widget (far right) -->
+                    <div class="vsep" />
+                    <button class="ic-add" type="button" @click="showAddWidgetModal = true">
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                      </svg>
+                      Add widget
+                    </button>
+
+                    </div>
+                  </div>
+                </div>
+              </template>
+
             </div>
             <div
               v-if="tabContext.open"
@@ -260,6 +353,13 @@
                 Remove
               </button>
             </div>
+
+            <AddWidgetModal
+              :open="showAddWidgetModal"
+              :widget-type-list="availableWidgetTypesForStrategy"
+              @close="showAddWidgetModal = false"
+              @select="handleAddWidgetFromModal"
+            />
 
             <div class="cards">
               <DashboardLayout
@@ -314,6 +414,8 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard.vue'
 import ProfilesOverlay from './components/overlays/ProfilesOverlay.vue'
 import KeyboardShortcutsModal from './components/modals/KeyboardShortcutsModal.vue'
 import DashboardLayout from './components/layout/DashboardLayout.vue'
+import AddWidgetModal from './components/layout/AddWidgetModal.vue'
+import WidgetOptionsMenu from './components/layout/WidgetOptionsMenu.vue'
 import { buildTargetsSummary, normalizeTargetsConfig, createEmptyTargetsSummary, createDefaultActivityCardConfig, createDefaultBalanceConfig, cloneTargetsConfig, convertWeekToMonth, type ActivityCardConfig, type BalanceConfig, type TargetsConfig } from './services/targets'
 import { normalizeReportingConfig, normalizeDeckSettings, type DeckFilterMode } from './services/reporting'
 import { ONBOARDING_VERSION, getStrategyDefinitions } from './services/onboarding'
@@ -580,7 +682,94 @@ function toggleLayoutEditing() {
   isLayoutEditing.value = !isLayoutEditing.value
   if (!isLayoutEditing.value) {
     resetTabEditContext()
+    inlineOptionsOpen.value = false
   }
+}
+
+// ── New bar helpers ────────────────────────────────────────
+const showAddWidgetModal = ref(false)
+const inlineOptionsOpen = ref(false)
+const lastLoadedAt = ref<Date | null>(null)
+const itbFloating = ref(false)
+const appBarRef = ref<HTMLElement | null>(null)
+const itbRowRef = ref<HTMLElement | null>(null)
+let teardownItbScroll: null | (() => void) = null
+
+function setupItbScroll() {
+  teardownItbScroll?.()
+  const container = document.querySelector('.app-main') as HTMLElement | null
+  if (!container) return
+  const update = () => {
+    measureItbRow(container)
+    check()
+  }
+  const check = () => {
+    const row = itbRowRef.value
+    if (!row || !isLayoutEditing.value) {
+      itbFloating.value = false
+      return
+    }
+    itbFloating.value = container.scrollTop > itbFloatThreshold
+  }
+  container.addEventListener('scroll', check, { passive: true })
+  window.addEventListener('resize', update, { passive: true })
+  teardownItbScroll = () => {
+    container.removeEventListener('scroll', check)
+    window.removeEventListener('resize', update)
+  }
+  update()
+}
+
+import { nextTick, onMounted, watch } from 'vue'
+const itbRowHeight = ref(0)
+let itbFloatThreshold = 0
+
+function measureItbRow(container: HTMLElement) {
+  const row = itbRowRef.value
+  if (!row) {
+    itbRowHeight.value = 0
+    itbFloatThreshold = 0
+    return
+  }
+  const floatTopOffset = getItbFloatTopOffset()
+  const rowRect = row.getBoundingClientRect()
+  const containerRect = container.getBoundingClientRect()
+  itbRowHeight.value = Math.ceil(rowRect.height)
+  itbFloatThreshold = Math.max(0, rowRect.top - containerRect.top + container.scrollTop - floatTopOffset)
+}
+
+function getItbFloatTopOffset() {
+  if (typeof window === 'undefined') return 62
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--header-height').trim()
+  const headerHeight = Number.parseFloat(raw || '50')
+  return (Number.isFinite(headerHeight) ? headerHeight : 50) + 12
+}
+
+onMounted(() => { setupItbScroll() })
+watch(isLayoutEditing, async (editing) => {
+  if (!editing) {
+    itbFloating.value = false
+    itbRowHeight.value = 0
+    return
+  }
+  await nextTick()
+  requestAnimationFrame(() => {
+    setupItbScroll()
+  })
+})
+onBeforeUnmount(() => { teardownItbScroll?.() })
+
+function setRange(v: 'week' | 'month') {
+  range.value = v
+  offset.value = 0
+  performLoad()
+}
+
+function handleAddWidgetFromModal(type: string) {
+  showAddWidgetModal.value = false
+  const hint = Number.isFinite(addOrderHint.value ?? NaN) ? addOrderHint.value ?? undefined : undefined
+  addWidgetAt(type, hint)
+  addOrderHint.value = null
 }
 
 const {
@@ -921,6 +1110,7 @@ const handleWizardSaveStep = async (payload: WizardStepSavePayload) => {
 
 async function performLoad() {
   await load()
+  lastLoadedAt.value = new Date()
   if (!hasInitialLoad.value) {
     hasInitialLoad.value = true
   }
@@ -1001,6 +1191,15 @@ const releaseNotesAvailable = computed(() => Boolean(currentReleaseNotesEntry.va
 
 const activeDayMode = ref<'active'|'all'>('active')
 const rangeLabel = computed(()=> range.value === 'month' ? 'Month' : 'Week')
+const rangeEyebrow = computed(() => range.value === 'month' ? 'This month' : 'This week')
+const rangeHeadline = computed(() => {
+  const date = parseDateKey(from.value)
+  if (!date) return range.value === 'month' ? 'Month' : 'Week'
+  if (range.value === 'month') {
+    return `Month ${date.getUTCMonth() + 1}`
+  }
+  return `Week ${getWeekNumber(date)}`
+})
 const layoutRef = ref<InstanceType<typeof DashboardLayout> | null>(null)
 
 const rangeBadgePrimary = computed(() => {
@@ -1429,6 +1628,86 @@ const guidedHints = computed(() => ({
   preferences: preferencesHint.value,
   review: reviewHint.value,
 }))
+
+const guidedStepStatuses = computed(() => ({
+  strategy: onboardingState.value?.strategy ? 'done' : 'dim',
+  calendars: (selected.value?.length ?? 0) > 0 ? 'done' : 'dim',
+  deck: deckSettings.value?.enabled ? 'done' : 'skip',
+  goals: (targetsConfig.value?.categories?.length ?? 0) > 0 ? 'done' : 'warn',
+  preferences: 'done',
+  dashboard: (widgets.value?.length ?? 0) > 0 ? 'done' : 'dim',
+  review: hasExistingConfig.value ? 'done' : 'dim',
+} as const))
+
+const lastSyncLabel = computed<string | null>(() => {
+  if (isRefreshing.value) return 'Syncing…'
+  if (!lastLoadedAt.value) return null
+  const mins = Math.floor((Date.now() - lastLoadedAt.value.getTime()) / 60000)
+  return mins < 1 ? 'Just now' : `${mins}m ago`
+})
+
+// ── Inline widget controls ──────────────────────────────────
+const inlineSelectedItem = computed(() => layoutRef.value?.selectedItem ?? null)
+
+const inlineSelectedItemTitle = computed(() => {
+  if (!inlineSelectedItem.value) return ''
+  const entry = availableWidgetTypesForStrategy.value.find((e: any) => e.type === inlineSelectedItem.value!.type)
+  return inlineSelectedItem.value.options?.titlePrefix || entry?.label || inlineSelectedItem.value.type
+})
+
+const selectedWidth = computed(() => inlineSelectedItem.value?.layout?.width ?? null)
+const selectedHeight = computed(() => inlineSelectedItem.value?.layout?.height ?? null)
+const isAutoHeight = computed(() => inlineSelectedItem.value?.options?.heightMode === 'auto')
+const selectedCardBg = computed(() => inlineSelectedItem.value?.options?.cardBg ?? '#ffffff')
+const selectedTitlePrefix = computed(() => inlineSelectedItem.value?.options?.titlePrefix ?? '')
+
+function setSelectedOption(key: string, value: any) {
+  if (!inlineSelectedItem.value) return
+  updateWidgetOptions(inlineSelectedItem.value.id, key, value)
+}
+
+function moveSelectedWidget(dir: 'up' | 'down') {
+  if (!inlineSelectedItem.value) return
+  moveWidget(inlineSelectedItem.value.id, dir)
+}
+
+function removeSelectedWidget() {
+  if (!inlineSelectedItem.value) return
+  removeWidget(inlineSelectedItem.value.id)
+}
+
+function toggleAutoHeight() {
+  if (!inlineSelectedItem.value) return
+  setSelectedOption('heightMode', isAutoHeight.value ? 'fixed' : 'auto')
+}
+
+function setInlineWidth(target: 'quarter' | 'half' | 'full') {
+  if (!inlineSelectedItem.value) return
+  const order = ['quarter', 'half', 'full'] as const
+  const cur = order.indexOf(inlineSelectedItem.value.layout.width as any)
+  const tgt = order.indexOf(target)
+  if (cur === -1 || tgt === -1 || cur === tgt) return
+  const id = inlineSelectedItem.value.id
+  const times = (tgt - cur + 3) % 3
+  for (let i = 0; i < times; i++) cycleWidth(id)
+}
+
+function setInlineHeight(target: 's' | 'm' | 'l' | 'xl') {
+  if (!inlineSelectedItem.value) return
+  const order = ['s', 'm', 'l', 'xl'] as const
+  const cur = order.indexOf(inlineSelectedItem.value.layout.height as any)
+  const tgt = order.indexOf(target)
+  if (cur === -1 || tgt === -1 || cur === tgt) return
+  const id = inlineSelectedItem.value.id
+  const times = (tgt - cur + 4) % 4
+  for (let i = 0; i < times; i++) cycleHeight(id)
+}
+
+function handleOpenAdvancedFromInline() {
+  if (!inlineSelectedItem.value) return
+  inlineOptionsOpen.value = false
+  layoutRef.value?.openAdvancedTargets(inlineSelectedItem.value.id)
+}
 
 useDashboardBoot({
   performLoad,

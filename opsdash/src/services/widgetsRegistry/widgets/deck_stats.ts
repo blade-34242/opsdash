@@ -24,6 +24,7 @@ export const deckStatsEntry: RegistryEntry = {
   component: DeckStatsWidget,
   defaultLayout: { width: 'half', height: 'm', order: 53 },
   label: 'Deck stats',
+  category: 'Tasks' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

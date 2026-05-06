@@ -13,6 +13,7 @@ export const chartPieEntry: RegistryEntry = {
   component: ChartPieWidget,
   defaultLayout: { width: 'half', height: 'm', order: 75 },
   label: 'Pie Chart',
+  category: 'Charts' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

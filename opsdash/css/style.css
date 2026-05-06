@@ -110,16 +110,15 @@
   width:var(--opsdash-sidebar-width);
   max-width:var(--opsdash-sidebar-width);
   height:100%;
-  background:var(--opsdash-surface, var(--card));
-  border-width:1px;
-  border-style:solid;
-  border-color:var(--opsdash-border, var(--line));
+  background:transparent;
+  border:none;
   border-radius:calc(var(--opsdash-radius) - 2px);
   padding:0 !important;
   overflow-x:hidden !important;
   overflow-y:auto !important;
   scrollbar-gutter:stable;
   direction:rtl;
+  box-shadow:none;
   transition:width .25s ease, max-width .25s ease, padding .25s ease, border .25s ease, box-shadow .25s ease, opacity .2s ease;
 }
 #opsdash .app-content__navigation[aria-hidden="true"]{
@@ -2100,4 +2099,386 @@
   overflow-x:visible;
   padding:14px;
   direction:ltr;
+}
+
+/* ══════════════════════════════════════════════════════════
+   App bar — unified browse + edit surface (V3 hard split)
+   ══════════════════════════════════════════════════════════ */
+
+#opsdash .app-bar{
+  background:var(--card);
+  border:1px solid color-mix(in oklab, var(--brand), var(--line) 70%);
+  border-radius:16px;
+  box-shadow:0 4px 16px rgba(15,23,42,.10), 0 1px 3px rgba(15,23,42,.07);
+  overflow:visible;
+  position:relative;
+}
+#opsdash .app-bar--editing{
+  background:linear-gradient(180deg, color-mix(in oklab, var(--brand), transparent 96%), var(--card));
+  border-color:color-mix(in oklab, var(--brand), var(--line) 48%);
+}
+
+/* Floating widget config row only */
+/* ── Bar rows ── */
+#opsdash .bar-row{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center;
+  gap:8px;
+  padding:9px 14px;
+}
+#opsdash .bar-row.sep{
+  border-top:1px solid var(--line);
+  background:color-mix(in oklab, var(--brand), transparent 97%);
+}
+#opsdash .itb-row{
+  padding:8px 14px;
+  overflow:visible;
+  position:relative;
+  background:color-mix(in oklab, var(--card), transparent 2%);
+}
+#opsdash .itb-row.itb-row--floating{
+  position:fixed;
+  top:calc(var(--header-height, 50px) + 12px);
+  left:calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap));
+  right:16px;
+  z-index:120;
+  background:linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%);
+  border:1px solid color-mix(in oklab,var(--brand),var(--line) 50%);
+  border-radius:14px;
+  box-shadow:0 12px 34px rgba(15,23,42,.18), 0 3px 10px rgba(15,23,42,.10);
+  backdrop-filter:blur(14px);
+  padding:8px 16px;
+}
+#opsdash.opsdash-theme-dark .itb-row.itb-row--floating{
+  background:linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(2,6,23,0.98) 100%);
+  border-color:color-mix(in oklab, var(--brand), transparent 30%);
+  box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
+}
+#opsdash .itb-row.itb-row--floating .bar-flex1{ display:none; }
+#opsdash .itb-row.itb-row--floating .vsep{ height:22px; }
+#opsdash .bar-flex1{ flex:1 !important; min-width:0; }
+
+@media (max-width: 1100px){
+  #opsdash .itb-row.itb-row--floating{
+    top:calc(var(--header-height, 50px) + 10px);
+    left:12px;
+    right:12px;
+  }
+}
+
+/* ── Show / hide sidebar buttons ── */
+#opsdash .show-btn{
+  width:34px;height:34px;border-radius:10px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 80%);
+  background:color-mix(in oklab,var(--brand),transparent 93%);
+  color:var(--brand);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;appearance:none;flex-shrink:0;
+}
+#opsdash .show-btn:hover{ background:color-mix(in oklab,var(--brand),transparent 85%); }
+
+/* ── Segmented pill toggle ── */
+#opsdash .app-seg{
+  display:grid;gap:3px;padding:3px;
+  border-radius:999px;
+  background:rgba(0,0,0,.07);
+  flex-shrink:0;
+}
+#opsdash .app-seg.w2{ grid-template-columns:1fr 1fr; }
+#opsdash .app-seg button{
+  appearance:none;height:29px;padding:0 13px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:999px;border:0;
+  font-size:12px;font-weight:800;color:var(--muted);
+  background:none;cursor:pointer;white-space:nowrap;
+}
+#opsdash .app-seg button.on{
+  color:#fff;background:var(--brand);
+  box-shadow:0 3px 8px color-mix(in oklab,var(--brand),transparent 70%);
+}
+#opsdash .app-seg button:disabled{ opacity:.45;cursor:default; }
+
+/* ── Date nav container ── */
+#opsdash .app-navc{
+  display:flex;align-items:center;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--card);
+  overflow:hidden;flex:1;min-width:0;
+  box-shadow:0 1px 3px rgba(15,23,42,.07);
+}
+#opsdash .navc-btn{
+  width:36px;height:34px;color:var(--muted);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;appearance:none;
+}
+#opsdash .navc-btn:disabled{ opacity:.4;cursor:default; }
+#opsdash .navc-btn:hover:not(:disabled){ background:rgba(0,0,0,.04); }
+#opsdash .navc-date{
+  flex:1;height:34px;display:flex;align-items:center;justify-content:center;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+  padding:0 18px;overflow:hidden;text-overflow:ellipsis;
+}
+#opsdash .navc-title{
+  font-size:13px;font-weight:900;letter-spacing:-.03em;color:var(--brand);
+  line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-align:center;
+}
+#opsdash .navc-sub{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  gap:18px;
+  line-height:1;
+  min-width:0;
+}
+#opsdash .navc-date-start,
+#opsdash .navc-date-end{
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  color:color-mix(in oklab, var(--fg), var(--muted) 18%);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#opsdash .navc-date-start{
+  text-align:left;
+}
+#opsdash .navc-date-end{
+  text-align:right;
+}
+
+/* ── Refresh button (in combined browse row) ── */
+#opsdash .bar-btn-ref{
+  height:34px;border-radius:999px;padding:0 16px;
+  background:var(--brand);color:#fff;
+  font-size:12px;font-weight:800;border:0;cursor:pointer;
+  box-shadow:0 4px 12px color-mix(in oklab,var(--brand),transparent 74%);
+  flex-shrink:0;appearance:none;
+}
+#opsdash .bar-btn-ref:disabled{ opacity:.5;cursor:default; }
+
+/* ── Tab strip (new) ── */
+#opsdash .tab-strip{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:stretch;gap:3px;
+  flex:0 0 auto;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+#opsdash .tab-strip::-webkit-scrollbar{ display:none; }
+#opsdash .tab-item{ display:inline-flex !important;align-items:stretch;flex:0 0 auto; }
+
+#opsdash .tab{
+  height:30px;padding:0 12px;
+  border-radius:8px 8px 0 0;
+  border:1px solid var(--line);border-bottom:0;
+  font-size:12px;font-weight:800;color:var(--muted);
+  background:rgba(0,0,0,.02);
+  white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
+  flex-shrink:0;cursor:pointer;appearance:none;
+}
+#opsdash .tab.on{
+  color:var(--fg);background:var(--card);
+  border-color:color-mix(in oklab,var(--brand),transparent 78%);
+  box-shadow:inset 0 -2px 0 var(--brand);
+}
+#opsdash .tab--add{
+  border-radius:7px;border-bottom:1px solid var(--line);
+  padding:0 9px;font-size:16px;font-weight:400;
+  color:var(--brand);background:color-mix(in oklab,var(--brand),transparent 93%);
+  border-color:color-mix(in oklab,var(--brand),transparent 78%);line-height:1;
+}
+#opsdash .tab-default-badge{
+  opacity:.45;font-size:10px;font-weight:600;
+}
+#opsdash .tab-input{
+  border:0;background:none;font:inherit;color:inherit;
+  outline:none;width:80px;
+}
+#opsdash .tab-menu-btn{
+  appearance:none;border:0;background:none;font:inherit;
+  color:var(--muted);cursor:pointer;
+  padding:0 5px;display:inline-flex;align-items:center;font-size:14px;
+}
+
+/* ── Refresh badge ── */
+#opsdash .refresh-badge{
+  font-size:11px;color:var(--muted);flex-shrink:0;
+}
+
+/* ── Ghost (Edit layout) button ── */
+#opsdash .btn-ghost{
+  height:28px;border-radius:7px;padding:0 11px;
+  border:1px solid var(--line);color:var(--muted);
+  font-size:11px;font-weight:800;background:rgba(0,0,0,.02);
+  flex-shrink:0;cursor:pointer;appearance:none;
+  display:inline-flex;align-items:center;
+}
+#opsdash .btn-ghost:hover{ background:rgba(0,0,0,.05); }
+
+/* ── Done editing button ── */
+#opsdash .btn-done{
+  height:28px;border-radius:7px;padding:0 14px;
+  background:var(--brand);color:#fff;
+  font-size:12px;font-weight:900;flex-shrink:0;
+  border:0;cursor:pointer;appearance:none;
+  box-shadow:0 3px 10px color-mix(in oklab,var(--brand),transparent 72%);
+  display:inline-flex;align-items:center;
+}
+#opsdash .btn-done:hover{ filter:brightness(1.08); }
+
+/* ── Editing mode pill ── */
+#opsdash .editing-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  height:28px;border-radius:999px;padding:0 12px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 78%);
+  color:var(--brand);
+  background:color-mix(in oklab,var(--brand),transparent 93%);
+  font-size:11px;font-weight:900;flex-shrink:0;
+}
+#opsdash .editing-pill::before{
+  content:"";width:7px;height:7px;border-radius:50%;
+  background:var(--brand);
+  box-shadow:0 0 0 3px color-mix(in oklab,var(--brand),transparent 82%);
+  flex-shrink:0;
+}
+
+/* ── Mode band ── */
+#opsdash .mode-hint{
+  font-size:11px;color:var(--brand);font-weight:600;
+  opacity:.7;white-space:nowrap;align-self:center;padding-left:10px;
+}
+
+/* ── Inline toolbar ── */
+#opsdash .itb{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center;
+  gap:2px;
+  flex-wrap:nowrap !important;
+  flex:1;min-width:0;
+  overflow-x:auto !important;
+  overflow-y:visible;
+  scrollbar-width:none;
+}
+#opsdash .itb::-webkit-scrollbar{ display:none; }
+#opsdash .vsep{
+  width:1px;height:24px;background:var(--line);flex-shrink:0;margin:0 6px;
+}
+
+/* Icon buttons — larger, more breathing room */
+#opsdash .ic{
+  width:46px;height:46px;border-radius:10px;
+  background:transparent;color:var(--muted);
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:9px;font-weight:900;flex-shrink:0;
+  border:0;cursor:pointer;appearance:none;
+}
+#opsdash .ic svg{ width:20px;height:20px; }
+#opsdash .ic:hover:not(:disabled){ background:rgba(0,0,0,.06); }
+#opsdash .ic.on{
+  background:color-mix(in oklab,var(--brand),transparent 90%);
+  color:var(--brand);
+}
+#opsdash .ic:disabled{ opacity:.28;cursor:default; }
+#opsdash .ic-danger:hover:not(:disabled){
+  background:rgba(220,38,38,.10);color:#dc2626;
+}
+#opsdash .ic-lbl{
+  font-size:9px;font-weight:900;letter-spacing:.02em;line-height:1;
+}
+
+/* Add widget button */
+#opsdash .ic-add{
+  padding:0 14px;width:auto;height:46px;gap:6px;
+  border-radius:10px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 78%);
+  background:color-mix(in oklab,var(--brand),transparent 91%);
+  color:var(--brand);font-size:12px;font-weight:900;flex-shrink:0;
+  display:inline-flex;align-items:center;cursor:pointer;appearance:none;
+}
+#opsdash .ic-add svg{ width:13px;height:13px; }
+#opsdash .ic-add:hover{ background:color-mix(in oklab,var(--brand),transparent 84%); }
+
+/* Color swatch */
+#opsdash .color-btn{
+  position:relative;flex-direction:column;
+}
+#opsdash .color-swatch{
+  width:16px;height:16px;border-radius:4px;flex-shrink:0;
+  border:1px solid rgba(0,0,0,.12);
+}
+#opsdash .color-input-hidden{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;
+}
+
+/* Name input */
+#opsdash .name-input{
+  height:36px;border-radius:9px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 78%);
+  background:color-mix(in oklab,var(--brand),transparent 95%);
+  color:var(--brand);padding:0 10px;width:108px;flex-shrink:0;
+  display:flex;align-items:center;
+}
+#opsdash .name-input__field{
+  border:0;background:none;font:inherit;color:inherit;
+  font-size:11px;font-weight:800;width:100%;outline:none;
+}
+#opsdash .name-input__field::placeholder{
+  color:color-mix(in oklab,var(--brand),transparent 60%);font-style:italic;
+}
+#opsdash .name-input__field:disabled{ cursor:not-allowed;opacity:.6; }
+
+/* Selected widget chip */
+#opsdash .sel-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  height:28px;border-radius:7px;padding:0 10px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 78%);
+  background:color-mix(in oklab,var(--brand),transparent 93%);
+  color:var(--brand);font-size:11px;font-weight:900;
+  flex-shrink:0;
+}
+#opsdash .sel-chip--empty{
+  opacity:.4;
+  border-style:dashed;
+  background:transparent;
+}
+#opsdash .sel-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--brand);opacity:.75;flex-shrink:0;
+}
+#opsdash .sel-dot--empty{
+  background:var(--muted);opacity:.5;
+}
+
+/* WidgetOptionsMenu in inline toolbar — style the wrapper's ⚙ button */
+#opsdash .ic-config-wrap .options-pop{
+  z-index:8000;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Sidebar — Mission Control style (SIDEBAR_FINAL)
+   ══════════════════════════════════════════════════════════ */
+
+#opsdash .app-content .app-content__navigation #opsdash-sidebar .sb-inner{
+  padding:0 4px 4px;
+  display:flex;flex-direction:column;gap:8px;min-height:100%;
+  position:relative;
+}
+
+/* Ensure sidebar scrolls properly */
+#opsdash .app-content .app-content__navigation #opsdash-sidebar{
+  display:flex;flex-direction:column;height:100%;
+}
+
+#opsdash .app-content .app-content__navigation #opsdash-sidebar.app-navigation,
+#opsdash .app-content .app-content__navigation #opsdash-sidebar{
+  padding:0 4px 4px !important;
+  border-radius:24px;
+  border:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
 }

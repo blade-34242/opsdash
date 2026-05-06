@@ -21,6 +21,7 @@ export const deckCardsEntry: RegistryEntry = {
   defaultLayout: { width: 'half', height: 'm', order: 52 },
   heightMode: 'auto',
   label: 'Deck cards',
+  category: 'Tasks' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

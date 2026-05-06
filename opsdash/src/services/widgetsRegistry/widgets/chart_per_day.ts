@@ -23,6 +23,7 @@ export const chartPerDayEntry: RegistryEntry = {
   component: ChartPerDayWidget,
   defaultLayout: { width: 'half', height: 'm', order: 82 },
   label: 'Daily Chart',
+  category: 'Charts' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

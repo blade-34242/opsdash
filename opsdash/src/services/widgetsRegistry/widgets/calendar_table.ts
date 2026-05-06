@@ -26,6 +26,7 @@ export const calendarTableEntry: RegistryEntry = {
   defaultLayout: { width: 'full', height: 'l', order: 70 },
   heightMode: 'auto',
   label: 'Calendar Table',
+  category: 'Time' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {

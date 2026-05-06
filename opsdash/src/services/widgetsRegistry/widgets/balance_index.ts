@@ -14,6 +14,7 @@ export const balanceIndexEntry: RegistryEntry = {
   component: BalanceIndexCard,
   defaultLayout: { width: 'half', height: 's', order: 32 },
   label: 'Balance Index',
+  category: 'Time' as const,
   baseTitle,
   configurable: true,
   supportsColors: true,

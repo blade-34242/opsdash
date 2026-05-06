@@ -1,7 +1,15 @@
 <template>
   <div class="options-wrapper" @keydown.stop>
-    <button type="button" class="ghost" title="Configure widget" @click.stop="open = !open">⚙</button>
-    <div v-if="open" class="options-pop">
+    <button ref="triggerRef" type="button" class="ic" title="Configure widget" @click.stop="togglePop">
+      <svg width="14" height="12" viewBox="0 0 14 12" fill="none" aria-hidden="true">
+        <path d="M1 3h12M1 6h12M1 9h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="4" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <circle cx="10" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <circle cx="6" cy="9" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      <span class="ic-lbl">Config</span>
+    </button>
+    <div v-if="open" class="options-pop" :style="popStyle">
       <div class="opt-section">
         <div class="opt-section__title">Layout & title</div>
         <div v-for="control in coreControls" :key="control.key" class="opt-row">
@@ -240,7 +248,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
+
+const triggerRef = ref<HTMLElement | null>(null)
+const popStyle = ref<Record<string, string>>({})
+
+function togglePop() {
+  open.value = !open.value
+  if (open.value) {
+    nextTick(() => {
+      const btn = triggerRef.value
+      if (!btn) return
+      const r = btn.getBoundingClientRect()
+      const popW = Math.min(440, window.innerWidth - 24)
+      let left = r.right - popW
+      if (left < 12) left = 12
+      popStyle.value = {
+        position: 'fixed',
+        top: `${r.bottom + 8}px`,
+        left: `${left}px`,
+        width: `${popW}px`,
+      }
+    })
+  }
+}
 
 const props = defineProps<{
   entry: any
@@ -504,10 +535,7 @@ function splitFilterValue(value: string) {
   --opt-input-border: color-mix(in oklab, #94a3b8, transparent 34%);
   --opt-input-text: #0f172a;
   --opt-code-bg: color-mix(in oklab, #e2e8f0, #f8fafc 62%);
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  bottom: auto;
+  position: fixed;
   background: var(--opt-pop-bg);
   color: var(--opt-pop-text);
   border: 1px solid var(--opt-pop-border);

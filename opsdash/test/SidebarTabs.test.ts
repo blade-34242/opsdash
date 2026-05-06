@@ -4,14 +4,6 @@ import { h } from 'vue'
 import Sidebar from '../src/components/sidebar/Sidebar.vue'
 
 vi.mock('@nextcloud/vue', () => {
-  const buttonStub = {
-    name: 'NcButton',
-    inheritAttrs: false,
-    setup(_props: unknown, { slots, attrs }) {
-      return () => h('button', { type: 'button', ...attrs }, slots.default ? slots.default() : [])
-    },
-  }
-
   const navigationStub = {
     name: 'NcAppNavigation',
     setup(_props: unknown, { slots }) {
@@ -19,39 +11,12 @@ vi.mock('@nextcloud/vue', () => {
     },
   }
 
-  const checkboxStub = {
-    name: 'NcCheckboxRadioSwitch',
-    props: {
-      checked: { type: Boolean, default: false },
-    },
-    emits: ['update:checked'],
-    setup(props, { slots, emit, attrs }) {
-      const toggle = () => {
-        emit('update:checked', !props.checked)
-      }
-      return () =>
-        h(
-          'label',
-          {
-            ...attrs,
-            onClick: (event: MouseEvent) => {
-              event.preventDefault()
-              toggle()
-            },
-          },
-          slots.default ? slots.default() : [],
-        )
-    },
-  }
-
   return {
     NcAppNavigation: navigationStub,
-    NcButton: buttonStub,
-    NcCheckboxRadioSwitch: checkboxStub,
   }
 })
 
-function mountSidebar() {
+function mountSidebar(props: Record<string, unknown> = {}) {
   return mount(Sidebar, {
     props: {
       isLoading: false,
@@ -61,27 +26,42 @@ function mountSidebar() {
       to: '2025-03-09',
       navToggleLabel: 'Toggle sidebar',
       navToggleIcon: '⟨',
-      presets: [],
-      presetsLoading: false,
-      presetSaving: false,
-      presetApplying: false,
-      presetWarnings: [],
+      ...props,
     },
   })
 }
 
-describe('Sidebar onboarding links', () => {
+describe('Sidebar guided setup', () => {
   it('emits rerun onboarding when clicking the main button', async () => {
     const wrapper = mountSidebar()
-    await wrapper.get('button.rerun-btn').trigger('click')
+    await wrapper.get('button.wiz').trigger('click')
     expect(wrapper.emitted('rerun-onboarding')).toEqual([[]])
   })
 
-  it('emits rerun onboarding with a step', async () => {
+  it('emits rerun onboarding with a step when clicking a guided step', async () => {
     const wrapper = mountSidebar()
-    const calendars = wrapper.findAll('button.link').find((btn) => btn.text() === 'Calendars')
-    expect(calendars).toBeTruthy()
-    await calendars!.trigger('click')
-    expect(wrapper.emitted('rerun-onboarding')).toEqual([[ 'calendars' ]])
+    const calendarsStep = wrapper.findAll('.step').find((item) => item.text().includes('Calendars'))
+    expect(calendarsStep).toBeTruthy()
+    await calendarsStep!.trigger('click')
+    expect(wrapper.emitted('rerun-onboarding')).toEqual([['calendars']])
+  })
+
+  it('renders guided hint text and status classes from props', () => {
+    const wrapper = mountSidebar({
+      guidedHints: {
+        calendars: '2 calendars linked',
+      },
+      guidedHintStatuses: {
+        calendars: 'done',
+        review: 'warn',
+      },
+    })
+
+    const calendarsStep = wrapper.findAll('.step').find((item) => item.text().includes('Calendars'))
+    const reviewStep = wrapper.findAll('.step').find((item) => item.text().includes('Review'))
+
+    expect(calendarsStep?.classes()).toContain('done')
+    expect(calendarsStep?.text()).toContain('2 calendars linked')
+    expect(reviewStep?.classes()).toContain('warn')
   })
 })

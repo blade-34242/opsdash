@@ -14,6 +14,7 @@ export const categoryMixTrendEntry: RegistryEntry = {
   defaultLayout: { width: 'half', height: 'm', order: 47 },
   heightMode: 'auto',
   label: 'Category Mix Trend',
+  category: 'Charts' as const,
   baseTitle,
   defaultOptions: {
     density: 'normal',

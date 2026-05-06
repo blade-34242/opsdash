@@ -91,6 +91,7 @@ export function useWidgetLayoutManager(options: {
     Object.keys(widgetsRegistry).map((type) => ({
       type,
       label: widgetsRegistry[type]?.label || type,
+      category: widgetsRegistry[type]?.category,
     })),
   )
 

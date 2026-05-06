@@ -14,6 +14,7 @@ export const noteEditorEntry: RegistryEntry = {
   defaultLayout: { width: 'half', height: 'm', order: 69 },
   heightMode: 'auto',
   label: 'Notes editor',
+  category: 'Notes' as const,
   baseTitle,
   configurable: true,
   controls: [

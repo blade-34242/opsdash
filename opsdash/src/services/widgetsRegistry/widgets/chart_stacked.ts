@@ -19,6 +19,7 @@ export const chartStackedEntry: RegistryEntry = {
   component: ChartStackedWidget,
   defaultLayout: { width: 'full', height: 'l', order: 80 },
   label: 'Stacked Chart',
+  category: 'Charts' as const,
   baseTitle,
   configurable: true,
   defaultOptions: {
