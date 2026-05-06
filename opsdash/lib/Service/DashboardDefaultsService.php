@@ -411,6 +411,7 @@ final class DashboardDefaultsService {
                 'id' => 'widget-chart_stacked-9',
                 'type' => 'chart_stacked',
                 'options' => [
+                    'heightMode' => 'auto',
                     'showLegend' => true,
                     'showLabels' => false,
                     'compact' => false,
