@@ -19,6 +19,7 @@ use OCA\Opsdash\Service\OverviewLoadService;
 use OCA\Opsdash\Service\OverviewIncludeResolver;
 use OCA\Opsdash\Service\ViteAssetsService;
 use OCA\Opsdash\Service\DashboardDefaultsService;
+use OCA\Opsdash\Service\LoadRateLimiter;
 
 final class OverviewController extends Controller {
     use CsrfEnforcerTrait;
@@ -42,6 +43,7 @@ final class OverviewController extends Controller {
         private OverviewLoadService $loadService,
         private OverviewIncludeResolver $includeResolver,
         private DashboardDefaultsService $dashboardDefaultsService,
+        private LoadRateLimiter $rateLimiter,
     ) {
         parent::__construct($appName, $request);
     }
@@ -152,6 +154,9 @@ final class OverviewController extends Controller {
         $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($method !== 'POST') {
             return new DataResponse(['message' => 'method not allowed'], Http::STATUS_METHOD_NOT_ALLOWED);
+        }
+        if (!$this->rateLimiter->allow($uid)) {
+            return new DataResponse(['message' => 'too many requests'], Http::STATUS_TOO_MANY_REQUESTS);
         }
         $data = $this->readJsonBodyDefault();
         if ($data instanceof DataResponse) {

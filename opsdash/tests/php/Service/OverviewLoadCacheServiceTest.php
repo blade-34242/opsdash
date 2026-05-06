@@ -179,11 +179,18 @@ final class FakeCache implements ICache {
 final class FakeCacheFactory implements ICacheFactory {
   public function __construct(private ICache $cache) {}
 
-  public function createLocal(string $prefix): ICache {
+  public function isAvailable(): bool { return true; }
+  public function isLocalCacheAvailable(): bool { return true; }
+
+  public function createLocal(string $prefix = ''): ICache {
     return $this->cache;
   }
 
-  public function createDistributed(string $prefix): ICache {
+  public function createDistributed(string $prefix = ''): ICache {
+    return $this->cache;
+  }
+
+  public function createInMemory(int $capacity = 512): ICache {
     return $this->cache;
   }
 }

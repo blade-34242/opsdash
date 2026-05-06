@@ -26,6 +26,7 @@ use OCA\Opsdash\Service\OverviewStatsKpiService;
 use OCA\Opsdash\Service\OverviewStatsHistoryService;
 use OCA\Opsdash\Service\OverviewStatsService;
 use OCA\Opsdash\Service\OverviewStatsTrendService;
+use OCA\Opsdash\Service\LoadRateLimiter;
 use OCA\Opsdash\Service\PersistSanitizer;
 use OCA\Opsdash\Service\UserConfigService;
 use OCA\Opsdash\Service\ViteAssetsService;
@@ -121,6 +122,7 @@ class OverviewControllerTest extends TestCase {
     );
 
     $dashboardDefaultsService = new DashboardDefaultsService();
+    $rateLimiter = new LoadRateLimiter($cacheFactory);
     $this->controller = new OverviewController(
       'opsdash',
       $request,
@@ -132,6 +134,7 @@ class OverviewControllerTest extends TestCase {
       $this->loadService,
       $includeResolver,
       $dashboardDefaultsService,
+      $rateLimiter,
     );
   }
 
