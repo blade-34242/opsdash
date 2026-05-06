@@ -38,6 +38,9 @@ final class ViteAssetsService {
         if ($scriptPath === '' || $scriptPath === $scriptFile) {
             throw new \RuntimeException('Unexpected script filename in manifest: ' . $scriptFile);
         }
+        if (!preg_match('/^assets\/[a-zA-Z0-9._-]+$/', $scriptPath)) {
+            throw new \RuntimeException('Unsafe script path in manifest: ' . $scriptPath);
+        }
         $styles = [];
         if (isset($entry['css']) && is_array($entry['css'])) {
             foreach ($entry['css'] as $cssPath) {
@@ -45,7 +48,7 @@ final class ViteAssetsService {
                     continue;
                 }
                 $css = preg_replace('/\.css$/', '', $cssPath);
-                if ($css !== '' && $css !== $cssPath) {
+                if ($css !== '' && $css !== $cssPath && preg_match('/^assets\/[a-zA-Z0-9._-]+$/', $css)) {
                     $styles[] = $css;
                 }
             }
