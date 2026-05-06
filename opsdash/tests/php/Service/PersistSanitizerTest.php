@@ -285,6 +285,12 @@ class PersistSanitizerTest extends TestCase {
         'type' => 'targets_v2',
         'id' => 'w1',
         'options' => [
+          'heightMode' => 'fixed',
+          'titlePrefix' => 'Focus',
+          'showHeader' => 0,
+          'cardBg' => '#123abc',
+          'scale' => 'lg',
+          'dense' => 1,
           'showLegend' => 1,
           'showDelta' => 0,
           'localConfig' => [
@@ -324,6 +330,12 @@ class PersistSanitizerTest extends TestCase {
     $this->assertCount(2, $result);
 
     $targetsOptions = $result[0]['options'];
+    $this->assertSame('fixed', $targetsOptions['heightMode']);
+    $this->assertSame('Focus', $targetsOptions['titlePrefix']);
+    $this->assertFalse($targetsOptions['showHeader']);
+    $this->assertSame('#123ABC', $targetsOptions['cardBg']);
+    $this->assertSame('lg', $targetsOptions['scale']);
+    $this->assertTrue($targetsOptions['dense']);
     $this->assertTrue($targetsOptions['showLegend']);
     $this->assertFalse($targetsOptions['showDelta']);
     $this->assertArrayNotHasKey('extraKey', $targetsOptions);
@@ -339,6 +351,23 @@ class PersistSanitizerTest extends TestCase {
     $this->assertSame('#AABBCC', $trendOptions['shareLowColor']);
     $this->assertArrayNotHasKey('shareHighColor', $trendOptions);
     $this->assertArrayNotHasKey('unexpected', $trendOptions);
+  }
+
+  public function testSanitizeWidgetsMigratesLegacyRootHeightMode(): void {
+    $result = $this->sanitizer->sanitizeWidgets([
+      [
+        'type' => 'targets_v2',
+        'id' => 'w1',
+        'heightMode' => 'fixed',
+        'options' => [
+          'showLegend' => true,
+        ],
+      ],
+    ]);
+
+    $this->assertCount(1, $result);
+    $this->assertSame('fixed', $result[0]['options']['heightMode']);
+    $this->assertTrue($result[0]['options']['showLegend']);
   }
 
   public function testCleanOnboardingState(): void {

@@ -37,6 +37,8 @@ final class PersistWidgetsSanitizer {
     private const FILTER_MODES = ['category', 'calendar'];
     private const LABEL_MODES = ['date', 'period', 'compact', 'offset'];
     private const HISTORY_VIEWS = ['timeline', 'accordion'];
+    private const HEIGHT_MODES = ['auto', 'fixed'];
+    private const SCALE_MODES = ['sm', 'md', 'lg', 'xl'];
 
     private ?PersistSanitizer $persistSanitizer = null;
 
@@ -55,9 +57,10 @@ final class PersistWidgetsSanitizer {
         $COLOR = ['t' => 'color'];
         $ID_LIST = ['t' => 'id_list'];
         $TEXT = ['t' => 'text'];
+        $CORE = self::coreOptionSchema();
 
         return [
-            'balance_index' => [
+            'balance_index' => $CORE + [
                 'showConfig'     => $BOOL,
                 'showTrend'      => $BOOL,
                 'showMessages'   => $BOOL,
@@ -73,11 +76,11 @@ final class PersistWidgetsSanitizer {
                 'warnIndex'      => ['t' => 'number', 'min' => 0.0, 'max' => 1.0],
                 'trendColor'     => $COLOR,
             ],
-            'calendar_table' => [
+            'calendar_table' => $CORE + [
                 'calendarFilter' => $ID_LIST,
                 'compact'        => $BOOL,
             ],
-            'category_mix_trend' => [
+            'category_mix_trend' => $CORE + [
                 'density'          => ['t' => 'select', 'v' => ['normal', 'dense']],
                 'squareCells'      => $BOOL,
                 'reverseOrder'     => $BOOL,
@@ -92,7 +95,7 @@ final class PersistWidgetsSanitizer {
                 'filterMode'       => $FILTER_MODE,
                 'filterIds'        => $ID_LIST,
             ],
-            'chart_dow' => [
+            'chart_dow' => $CORE + [
                 'showLabels'   => $BOOL,
                 'compact'      => $BOOL,
                 'reverseOrder' => $BOOL,
@@ -100,7 +103,7 @@ final class PersistWidgetsSanitizer {
                 'filterMode'   => $FILTER_MODE,
                 'filterIds'    => $ID_LIST,
             ],
-            'chart_hod' => [
+            'chart_hod' => $CORE + [
                 'showLegend'   => $BOOL,
                 'showHint'     => $BOOL,
                 'compact'      => $BOOL,
@@ -109,7 +112,7 @@ final class PersistWidgetsSanitizer {
                 'filterMode'   => $FILTER_MODE,
                 'filterIds'    => $ID_LIST,
             ],
-            'chart_per_day' => [
+            'chart_per_day' => $CORE + [
                 'showLabels'   => $BOOL,
                 'compact'      => $BOOL,
                 'reverseOrder' => $BOOL,
@@ -117,14 +120,14 @@ final class PersistWidgetsSanitizer {
                 'filterMode'   => $FILTER_MODE,
                 'filterIds'    => $ID_LIST,
             ],
-            'chart_pie' => [
+            'chart_pie' => $CORE + [
                 'showLegend' => $BOOL,
                 'showLabels' => $BOOL,
                 'compact'    => $BOOL,
                 'filterMode' => $FILTER_MODE,
                 'filterIds'  => $ID_LIST,
             ],
-            'chart_stacked' => [
+            'chart_stacked' => $CORE + [
                 'showLegend'   => $BOOL,
                 'showLabels'   => $BOOL,
                 'compact'      => $BOOL,
@@ -132,14 +135,14 @@ final class PersistWidgetsSanitizer {
                 'filterMode'   => $FILTER_MODE,
                 'filterIds'    => $ID_LIST,
             ],
-            'dayoff_trend' => [
+            'dayoff_trend' => $CORE + [
                 'reverseOrder'    => $BOOL,
                 'labelMode'       => $LABEL_MODE,
                 'interpretation'  => ['t' => 'select', 'v' => ['more_off_positive', 'more_off_warning']],
                 'toneLowColor'    => $COLOR,
                 'toneHighColor'   => $COLOR,
             ],
-            'deck_cards' => [
+            'deck_cards' => $CORE + [
                 'allowMine'       => $BOOL,
                 'includeArchived' => $BOOL,
                 'includeCompleted'=> $BOOL,
@@ -153,7 +156,7 @@ final class PersistWidgetsSanitizer {
                 'minFilterCount'  => ['t' => 'number', 'min' => 0.0, 'max' => 999.0],
                 'defaultFilter'   => $TEXT,
             ],
-            'deck_stats' => [
+            'deck_stats' => $CORE + [
                 'includeArchived' => $BOOL,
                 'includeCompleted'=> $BOOL,
                 'boardIds'        => $ID_LIST,
@@ -162,12 +165,12 @@ final class PersistWidgetsSanitizer {
                 'scope'           => ['t' => 'select', 'v' => ['all', 'mine', 'unassigned']],
                 'mineMode'        => ['t' => 'select', 'v' => ['assignee', 'creator', 'both']],
             ],
-            'note_editor' => [
+            'note_editor' => $CORE + [
                 'prevLabel' => $TEXT,
                 'currLabel' => $TEXT,
             ],
-            'note_snippet' => [],
-            'targets_v2' => [
+            'note_snippet' => $CORE,
+            'targets_v2' => $CORE + [
                 'showLegend'             => $BOOL,
                 'showDelta'              => $BOOL,
                 'showForecast'           => $BOOL,
@@ -186,10 +189,10 @@ final class PersistWidgetsSanitizer {
                 'localTargetsWeek'       => ['t' => 'targets_map'],
                 'localTargetsMonth'      => ['t' => 'targets_map'],
             ],
-            'text_block' => [
+            'text_block' => $CORE + [
                 'content' => ['t' => 'text', 'maxlen' => 4096],
             ],
-            'time_summary_lookback' => [
+            'time_summary_lookback' => $CORE + [
                 'showTotal'              => $BOOL,
                 'showAverage'            => $BOOL,
                 'showMedian'             => $BOOL,
@@ -207,7 +210,7 @@ final class PersistWidgetsSanitizer {
                 'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
                 'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
             ],
-            'time_summary_overview' => [
+            'time_summary_overview' => $CORE + [
                 'showTotal'              => $BOOL,
                 'showAverage'            => $BOOL,
                 'showMedian'             => $BOOL,
@@ -225,7 +228,7 @@ final class PersistWidgetsSanitizer {
                 'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
                 'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
             ],
-            'time_summary_v2' => [
+            'time_summary_v2' => $CORE + [
                 'showTotal'              => $BOOL,
                 'showAverage'            => $BOOL,
                 'showMedian'             => $BOOL,
@@ -243,7 +246,25 @@ final class PersistWidgetsSanitizer {
                 'historyView'            => ['t' => 'select', 'v' => self::HISTORY_VIEWS],
                 'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
             ],
-            'activity_schedule' => [],
+            'activity_schedule' => $CORE,
+        ];
+    }
+
+    /**
+     * Global widget UI options supported across widget types.
+     *
+     * @return array<string,array<string,mixed>>
+     */
+    private static function coreOptionSchema(): array {
+        return [
+            'heightMode'  => ['t' => 'select', 'v' => self::HEIGHT_MODES],
+            'titlePrefix' => ['t' => 'text', 'maxlen' => 128],
+            'showHeader'  => ['t' => 'bool'],
+            'cardBg'      => ['t' => 'color'],
+            'scale'       => ['t' => 'select', 'v' => self::SCALE_MODES],
+            // Legacy alias still accepted from old imports; frontend normalizes to `scale`.
+            'textSize'    => ['t' => 'select', 'v' => self::SCALE_MODES],
+            'dense'       => ['t' => 'bool'],
         ];
     }
 
@@ -337,6 +358,10 @@ final class PersistWidgetsSanitizer {
             $orderRaw = $layout['order'] ?? 0;
             $order = is_numeric($orderRaw) ? (float)$orderRaw : 0.0;
             $rawOptions = (isset($item['options']) && is_array($item['options'])) ? $item['options'] : [];
+            // Legacy payloads stored heightMode at widget root; migrate into options.
+            if (!array_key_exists('heightMode', $rawOptions) && isset($item['heightMode'])) {
+                $rawOptions['heightMode'] = $item['heightMode'];
+            }
             $options = $this->sanitizeOptions($rawOptions, $schemas[$type] ?? []);
             $cleaned[] = [
                 'id' => $id !== '' ? $id : sprintf('widget-%s-%d', $type, count($cleaned) + 1),

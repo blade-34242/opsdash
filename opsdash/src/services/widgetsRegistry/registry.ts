@@ -101,6 +101,10 @@ export function normalizeWidgetLayout(raw: any, fallback: WidgetDefinition[], al
       ...(source?.options && typeof source.options === 'object' ? source.options : {}),
       ...(optionOverrides && typeof optionOverrides === 'object' ? optionOverrides : {}),
     }
+    // Legacy payloads may still store heightMode at widget root.
+    if (options.heightMode == null && (source?.heightMode === 'auto' || source?.heightMode === 'fixed')) {
+      options.heightMode = source.heightMode
+    }
     if (options.scale == null && options.textSize != null) {
       options.scale = options.textSize
       delete options.textSize
