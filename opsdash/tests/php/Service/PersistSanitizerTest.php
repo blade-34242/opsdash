@@ -193,7 +193,7 @@ class PersistSanitizerTest extends TestCase {
     $this->assertSame('off', $resultOff['index']['basis']);
 
     $resultFallback = $this->sanitizer->cleanBalanceConfig(['index' => ['basis' => 'invalid']], []);
-    $this->assertSame('category', $resultFallback['index']['basis']);
+    $this->assertSame('calendar', $resultFallback['index']['basis']);
   }
 
   public function testBalanceUiDefaultsAndDropsDeprecatedFields(): void {

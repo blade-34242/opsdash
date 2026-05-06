@@ -54,6 +54,30 @@ final class OverviewStatsTrendServiceTest extends TestCase {
       'mapCalToCategory' => fn (string $id): string => 'work',
       'allDayHours' => 8.0,
       'categoryMeta' => ['work' => ['id' => 'work', 'label' => 'Work']],
+      'targetsConfig' => [
+        'categories' => [
+          ['id' => 'work', 'label' => 'Work', 'targetHours' => 0, 'includeWeekend' => false, 'paceMode' => 'days_only', 'groupIds' => []],
+        ],
+        'balance' => [
+          'categories' => ['work'],
+          'useCategoryMapping' => true,
+          'index' => ['method' => 'simple_range', 'basis' => 'category'],
+          'thresholds' => [
+            'noticeAbove' => 0.15,
+            'noticeBelow' => 0.15,
+            'warnAbove' => 0.3,
+            'warnBelow' => 0.3,
+            'warnIndex' => 0.6,
+          ],
+          'relations' => ['displayMode' => 'ratio'],
+          'trend' => ['lookbackWeeks' => 3],
+          'dayparts' => ['enabled' => false],
+          'ui' => ['showNotes' => false],
+        ],
+      ],
+      'targetsWeek' => ['work' => 0.0],
+      'targetsMonth' => ['work' => 0.0],
+      'idToName' => ['cal-1' => 'Calendar 1'],
     ]);
 
     $this->assertCount(3, $result['dayOffTrend']);
