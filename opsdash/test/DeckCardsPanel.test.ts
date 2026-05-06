@@ -189,4 +189,54 @@ describe('DeckCardsPanel', () => {
     expect(emissions.length).toBe(1)
     expect(emissions[0]).toEqual([['done_all', 'archived_all', 'open_all']])
   })
+
+  it('sanitizes unsafe board and label colors, keeps valid hex', () => {
+    const maliciousCards = [
+      {
+        id: 'c3',
+        title: 'Test card',
+        status: 'active',
+        match: 'due' as const,
+        due: null,
+        done: null,
+        boardId: 'b2',
+        boardTitle: 'Board',
+        boardColor: 'red; } body { display:none',
+        stackTitle: 'Stack',
+        labels: [{ id: 'l2', title: 'Bad', color: 'url(https://evil.com)' }],
+        assignees: [],
+      },
+      {
+        id: 'c4',
+        title: 'Safe card',
+        status: 'active',
+        match: 'due' as const,
+        due: null,
+        done: null,
+        boardId: 'b3',
+        boardTitle: 'Board',
+        boardColor: '#2563EB',
+        stackTitle: 'Stack',
+        labels: [{ id: 'l3', title: 'Ok', color: '#F97316' }],
+        assignees: [],
+      },
+    ]
+    const wrapper = mountPanel({ cards: maliciousCards })
+    const boardSpans = wrapper.findAll('.deck-card__board')
+    const labelSpans = wrapper.findAll('.deck-card__label')
+
+    // Unsafe board color falls back to CSS var; the malicious string must not appear.
+    const badBoardStyle = boardSpans[0]?.attributes('style') ?? ''
+    expect(badBoardStyle).not.toContain('display')
+    expect(badBoardStyle).not.toContain('evil.com')
+    expect(badBoardStyle).not.toContain('red; }')
+
+    // Safe hex board color passes through (jsdom renders hex as rgb()).
+    const goodBoardStyle = boardSpans[1]?.attributes('style') ?? ''
+    expect(goodBoardStyle).toContain('37, 99, 235')
+
+    // Safe hex label color passes through (c4's label is labelSpans[1]).
+    const goodLabelStyle = labelSpans[1]?.attributes('style') ?? ''
+    expect(goodLabelStyle).toContain('249, 115, 22')
+  })
 })

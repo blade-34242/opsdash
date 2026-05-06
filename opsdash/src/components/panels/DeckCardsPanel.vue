@@ -101,7 +101,7 @@
               </span>
               <span class="deck-card__title">{{ card.title }}</span>
               <span class="deck-card__meta">
-                <span class="deck-card__board" :style="{ borderColor: card.boardColor || 'var(--brand)' }">
+                <span class="deck-card__board" :style="{ borderColor: safeColor(card.boardColor, 'var(--brand)') }">
                   {{ card.boardTitle }}
                 </span>
                 <span class="deck-card__stack">{{ card.stackTitle }}</span>
@@ -111,7 +111,7 @@
                   v-for="label in card.labels"
                   :key="`deck-label-${card.id}-${label.id ?? label.title}`"
                   class="deck-card__label"
-                  :style="{ background: label.color || 'var(--soft)' }"
+                  :style="{ background: safeColor(label.color, 'var(--soft)') }"
                 >
                   {{ label.title }}
                 </span>
@@ -142,7 +142,7 @@
             </div>
             <div class="deck-card__title">{{ card.title }}</div>
             <div class="deck-card__meta">
-              <span class="deck-card__board" :style="{ borderColor: card.boardColor || 'var(--brand)' }">
+              <span class="deck-card__board" :style="{ borderColor: safeColor(card.boardColor, 'var(--brand)') }">
                 {{ card.boardTitle }}
               </span>
               <span class="deck-card__stack">{{ card.stackTitle }}</span>
@@ -152,7 +152,7 @@
                 v-for="label in card.labels"
                 :key="`deck-label-${card.id}-${label.id ?? label.title}`"
                 class="deck-card__label"
-                :style="{ background: label.color || 'var(--soft)' }"
+                :style="{ background: safeColor(label.color, 'var(--soft)') }"
               >
                 {{ label.title }}
               </span>
@@ -181,6 +181,14 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import type { DeckCardSummary } from '../../services/deck'
 import type { DeckFilterMode } from '../../services/reporting'
 import { formatDateTime, parseDateTime } from '../../services/dateTime'
+
+function safeColor(value: string | null | undefined, fallback: string): string {
+  if (!value) return fallback
+  const v = value.trim()
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v)) return v
+  if (/^[a-zA-Z]+$/.test(v)) return v
+  return fallback
+}
 
 const props = defineProps<{
   cards: DeckCardSummary[]
