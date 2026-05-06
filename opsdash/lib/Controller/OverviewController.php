@@ -156,7 +156,7 @@ final class OverviewController extends Controller {
             return new DataResponse(['message' => 'method not allowed'], Http::STATUS_METHOD_NOT_ALLOWED);
         }
         if (!$this->rateLimiter->allow($uid)) {
-            return new DataResponse(['message' => 'too many requests'], Http::STATUS_TOO_MANY_REQUESTS);
+            return new DataResponse(['message' => 'too many requests'], 429);
         }
         $data = $this->readJsonBodyDefault();
         if ($data instanceof DataResponse) {
