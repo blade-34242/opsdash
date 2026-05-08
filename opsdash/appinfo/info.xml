@@ -31,7 +31,7 @@ Opsdash is built for teams that already plan in calendars and want clear executi
   <documentation>
     <developer>https://alex.gellert-innovation.com/</developer>
   </documentation>
-  <website>https:/gellert-innovation.com</website>
+  <website>https://gellert-innovation.com/</website>
   <discussion>https://github.com/blade-34242/opsdash/issues</discussion>
   <bugs>https://github.com/blade-34242/opsdash/issues</bugs>
   <repository>https://forgejodev.gellert-innovation.com/blade34242/opsdash-app</repository>
@@ -39,11 +39,11 @@ Opsdash is built for teams that already plan in calendars and want clear executi
   <bootstrap>OCA\Opsdash\AppInfo\Application</bootstrap>
   <category>tools</category>
   <category>dashboard</category>
-  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-01-single-goal-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-01-single-goal-light.png</screenshot>
-  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-02-calendar-goals-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-02-calendar-goals-dark.png</screenshot>
-  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-03-category-goals-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-03-category-goals-light.png</screenshot>
-  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-04-onboarding-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-04-onboarding-dark.png</screenshot>
-  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-demo-960w.gif">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-demo-960w.gif</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-01-single-goal-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-01-single-goal-light.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-02-calendar-goals-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-02-calendar-goals-dark.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-03-category-goals-light.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-03-category-goals-light.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-04-onboarding-dark.png">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-04-onboarding-dark.png</screenshot>
+  <screenshot small-thumbnail="https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-demo-960w.gif">https://forgejodev.gellert-innovation.com/blade34242/opsdash-public/raw/branch/master/opsdash-marketplace-v2-demo-960w.gif</screenshot>
   <navigations>
     <navigation>
       <name>Operational Dashboard</name>
