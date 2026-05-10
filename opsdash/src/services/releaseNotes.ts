@@ -26,6 +26,20 @@ export interface ReleaseNotesEntry {
 
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
+    version: '0.8.1',
+    date: '2026-05-10',
+    title: 'Forgejo smoke checks and release prep tightened up',
+    teaser: 'This update focuses on release readiness: Forgejo runs a narrower stable browser smoke path now, and the release docs/versioned references were cleaned up for 0.8.1.',
+    summary: 'Version 0.8.1 is a release-preparation pass that tightens the browser smoke path in Forgejo and keeps the surrounding release/version docs aligned with the current app version.',
+    highlights: [
+      'Forgejo now targets a smaller must-pass browser smoke path instead of leaving browser coverage fully disabled.',
+      'The smoke flow is more deterministic around onboarding and release-note dismissal state.',
+      'Release references and supporting docs were aligned to the 0.8.1 cycle.',
+    ],
+    autoShow: true,
+    showInHistory: true,
+  },
+  {
     version: '0.8.0',
     date: '2026-05-06',
     title: 'Smarter balance tracking, cleaner editing',

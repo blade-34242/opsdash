@@ -58,6 +58,7 @@ async function dismissOnboardingIfVisible(page: Page) {
 async function markOnboardingComplete(page: Page) {
   await page.evaluate(async () => {
     const token = (window as any).OC?.requestToken || (window as any).oc_requesttoken || ''
+    const appVersion = String(document.getElementById('app')?.dataset?.opsdashVersion || '').replace(/^v/i, '')
     await fetch('/index.php/apps/opsdash/overview/persist', {
       method: 'POST',
       credentials: 'same-origin',
@@ -72,7 +73,7 @@ async function markOnboardingComplete(page: Page) {
           strategy: 'total_only',
           completed_at: new Date().toISOString(),
           dashboardMode: 'standard',
-          releaseNotesSeenVersion: '0.8.0',
+          releaseNotesSeenVersion: appVersion,
         },
       }),
     })

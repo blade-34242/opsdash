@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 - None yet.
 
 
+
+## 0.8.1 - 2026-05-10
+### Changed
+- Release preparation for 0.8.1.
+- Added a dedicated Forgejo must-pass Playwright smoke path instead of leaving browser smoke fully disabled in the Forgejo matrix.
+- Hardened E2E onboarding and release-note dismissal helpers so smoke coverage depends less on prior persisted user state.
+- Updated versioned release-note data and current release references to 0.8.1.
+
+
 ## 0.8.0 - 2026-05-06
 ### Added
 - **Edit toolbar redesign (V3)**: sidebar-aware combined bar — single row when sidebar open, two-row bar when collapsed. Floating edit bar sticks below the Nextcloud header on scroll via `--header-height`.
