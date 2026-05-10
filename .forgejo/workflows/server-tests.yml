@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload Playwright results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: playwright-report-${{ matrix.nextcloud_branch }}-php${{ matrix.php_version }}
           path: server/apps/${{ env.APP_NAME }}/playwright-report
