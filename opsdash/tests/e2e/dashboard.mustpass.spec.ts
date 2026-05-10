@@ -1,25 +1,44 @@
 import { expect, test, type Page } from '@playwright/test'
 
+async function dismissReleaseNotesIfVisible(page: Page) {
+  const dialog = page.getByRole('dialog')
+  const releaseHeading = page.getByRole('heading', { name: /^Opsdash 0\./ })
+  if (!(await releaseHeading.isVisible({ timeout: 1000 }).catch(() => false))) {
+    return
+  }
+
+  const closeButton = dialog.getByRole('button', { name: 'Close release notes' })
+  if (await closeButton.isVisible().catch(() => false)) {
+    await closeButton.click()
+    await expect(releaseHeading).toBeHidden({ timeout: 15000 })
+    return
+  }
+
+  await page.locator('.onboarding-backdrop').click({ force: true })
+  await expect(releaseHeading).toBeHidden({ timeout: 15000 })
+}
+
 async function dismissOnboardingIfVisible(page: Page) {
   const dialog = page.getByRole('dialog')
   const onboardingHeading = page.getByRole('heading', { name: 'Welcome to Opsdash' })
-  if (await dialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+  if (await onboardingHeading.isVisible({ timeout: 1000 }).catch(() => false)) {
     const closeButton = dialog.getByRole('button', { name: 'Close onboarding' })
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click()
       await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
-      return
+    } else {
+      await markOnboardingComplete(page)
+      await page.reload({ waitUntil: 'networkidle' })
+      await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
     }
-
-    await markOnboardingComplete(page)
-    await page.reload({ waitUntil: 'networkidle' })
-    await expect(onboardingHeading).toBeHidden({ timeout: 15000 })
   }
+  await dismissReleaseNotesIfVisible(page)
 }
 
 async function markOnboardingComplete(page: Page) {
   await page.evaluate(async () => {
     const token = (window as any).OC?.requestToken || (window as any).oc_requesttoken || ''
+    const appVersion = String(document.getElementById('app')?.dataset?.opsdashVersion || '').replace(/^v/i, '')
     await fetch('/index.php/apps/opsdash/overview/persist', {
       method: 'POST',
       credentials: 'same-origin',
@@ -34,7 +53,7 @@ async function markOnboardingComplete(page: Page) {
           strategy: 'total_only',
           completed_at: new Date().toISOString(),
           dashboardMode: 'standard',
-          releaseNotesSeenVersion: '0.7.6',
+          releaseNotesSeenVersion: appVersion,
         },
       }),
     })

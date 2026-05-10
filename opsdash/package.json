@@ -11,6 +11,7 @@
     "test": "vitest",
     "test:unit": "vitest --run",
     "test:e2e": "playwright test",
+    "test:e2e:mustpass": "playwright test tests/e2e/dashboard.mustpass.spec.ts",
     "i18n:scan": "node ../tools/i18n/scan_strings.mjs",
     "i18n:extract": "../tools/i18n/extract.sh"
   },
