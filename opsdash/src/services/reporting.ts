@@ -1,12 +1,16 @@
-export type ReportingSchedule = 'week' | 'month' | 'both'
-export type ReportingInterim = 'none' | 'midweek' | 'daily'
+export type ReportingMode = 'week' | 'month'
+export type ReportingCadence = 'end' | 'mid' | 'daily'
 export type ReportingReminder = 'none' | '1d' | '2d'
+
+export interface ReportingModeConfig {
+  enabled: boolean
+  cadence: ReportingCadence
+  reminderLead: ReportingReminder
+}
 
 export interface ReportingConfig {
   enabled: boolean
-  schedule: ReportingSchedule
-  interim: ReportingInterim
-  reminderLead: ReportingReminder
+  modes: Record<ReportingMode, ReportingModeConfig>
   alertOnRisk: boolean
   riskThreshold: number // 0-1
   notifyEmail: boolean
@@ -58,9 +62,18 @@ export interface DeckFeatureSettings {
 export function createDefaultReportingConfig(): ReportingConfig {
   return {
     enabled: false,
-    schedule: 'both',
-    interim: 'none',
-    reminderLead: '1d',
+    modes: {
+      week: {
+        enabled: true,
+        cadence: 'end',
+        reminderLead: '1d',
+      },
+      month: {
+        enabled: false,
+        cadence: 'end',
+        reminderLead: '2d',
+      },
+    },
     alertOnRisk: true,
     riskThreshold: 0.85,
     notifyEmail: true,
@@ -68,27 +81,62 @@ export function createDefaultReportingConfig(): ReportingConfig {
   }
 }
 
+function normalizeReportingModeConfig(input: any, fallback: ReportingModeConfig): ReportingModeConfig {
+  if (!input || typeof input !== 'object') {
+    return { ...fallback }
+  }
+  const cadence: ReportingCadence =
+    input.cadence === 'daily' || input.cadence === 'mid' ? input.cadence : 'end'
+  const reminderLead: ReportingReminder =
+    input.reminderLead === '1d' || input.reminderLead === '2d' ? input.reminderLead : 'none'
+  return {
+    enabled: Boolean(input.enabled),
+    cadence,
+    reminderLead,
+  }
+}
+
 export function normalizeReportingConfig(input: any, fallback?: ReportingConfig): ReportingConfig {
   const base = fallback ?? createDefaultReportingConfig()
   if (!input || typeof input !== 'object') {
-    return { ...base }
+    return {
+      ...base,
+      modes: {
+        week: { ...base.modes.week },
+        month: { ...base.modes.month },
+      },
+    }
   }
-  const schedule: ReportingSchedule =
-    input.schedule === 'week' || input.schedule === 'month' ? input.schedule : 'both'
-  const interim: ReportingInterim =
-    input.interim === 'midweek' || input.interim === 'daily' ? input.interim : 'none'
-  const reminder: ReportingReminder =
-    input.reminderLead === '1d' || input.reminderLead === '2d' ? input.reminderLead : 'none'
   const thresholdRaw = Number(input.riskThreshold)
   const riskThreshold =
     Number.isFinite(thresholdRaw) && thresholdRaw >= 0 && thresholdRaw <= 1
       ? thresholdRaw
       : base.riskThreshold
+  const legacyCadence: ReportingCadence =
+    input.interim === 'daily' ? 'daily' : input.interim === 'midweek' ? 'mid' : 'end'
+  const legacyReminder: ReportingReminder =
+    input.reminderLead === '1d' || input.reminderLead === '2d' ? input.reminderLead : 'none'
+  const legacySchedule = input.schedule === 'week' || input.schedule === 'month' ? input.schedule : 'both'
+  const modes = input.modes && typeof input.modes === 'object'
+    ? {
+        week: normalizeReportingModeConfig(input.modes.week, base.modes.week),
+        month: normalizeReportingModeConfig(input.modes.month, base.modes.month),
+      }
+    : {
+        week: {
+          enabled: legacySchedule === 'week' || legacySchedule === 'both',
+          cadence: legacyCadence,
+          reminderLead: legacyReminder,
+        },
+        month: {
+          enabled: legacySchedule === 'month' || legacySchedule === 'both',
+          cadence: legacyCadence,
+          reminderLead: legacyReminder,
+        },
+      }
   return {
     enabled: Boolean(input.enabled),
-    schedule,
-    interim,
-    reminderLead: reminder,
+    modes,
     alertOnRisk: input.alertOnRisk !== false,
     riskThreshold,
     notifyEmail: input.notifyEmail !== false,

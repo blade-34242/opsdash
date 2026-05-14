@@ -8,11 +8,33 @@ All notable changes to this project will be documented in this file.
 
 
 ## 0.8.1 - 2026-05-10
+### Added
+- Real recap mail delivery for Opsdash via the shared reporting pipeline:
+  - `ReportSummaryService`
+  - `ReportRenderService`
+  - `ReportDeliveryService`
+- A UI-triggerable test-send path through `POST /overview/report/test-send`.
+- A dedicated mail test command matrix: `occ opsdash:report:send-matrix --user=<uid>`.
+- Goal-type-aware recap variants that ignore dashboard layout presets and render different mail bodies for:
+  - `Single Goal`
+  - `Calendar Goals`
+  - `Calendar + Category Goals`
+- Separate weekly and monthly reporting mode configuration with independent cadence/reminder settings.
+- Local Nextcloud 33 + Mailpit mail-test stack documentation and workflow.
+
 ### Changed
 - Release preparation for 0.8.1.
 - Added a dedicated Forgejo must-pass Playwright smoke path instead of leaving browser smoke fully disabled in the Forgejo matrix.
 - Hardened E2E onboarding and release-note dismissal helpers so smoke coverage depends less on prior persisted user state.
 - Updated versioned release-note data and current release references to 0.8.1.
+- Report mails now use the native Nextcloud mail shell while rendering the inner recap body in an Opsdash-specific card/block structure instead of a generic list dump.
+- Reporting preferences in onboarding now expose live weekly/monthly recap controls rather than a preview-only placeholder.
+- Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI and CLI using the same internal report core.
+
+### Fixed
+- Fixed recap-reporting onboarding reactivity so enabling reporting in the live wizard actually reveals the weekly/monthly recap controls.
+- Fixed the `opsdash:report` command path so the registered command works again in the NC33 app runtime.
+- Fixed the report payload/renderer split so dashboard layout mode no longer leaks into report selection and old generic report composition no longer appears for `Single Goal`.
 
 
 ## 0.8.0 - 2026-05-06

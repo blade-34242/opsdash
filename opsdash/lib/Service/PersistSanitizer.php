@@ -341,27 +341,43 @@ final class PersistSanitizer {
         if (!is_array($value)) {
             return $defaults;
         }
-        $schedule = $value['schedule'] ?? 'both';
-        if ($schedule !== 'week' && $schedule !== 'month') {
-            $schedule = 'both';
-        }
-        $interim = $value['interim'] ?? 'none';
-        if (!in_array($interim, ['none', 'midweek', 'daily'], true)) {
-            $interim = 'none';
-        }
-        $reminder = $value['reminderLead'] ?? 'none';
-        if (!in_array($reminder, ['none', '1d', '2d'], true)) {
-            $reminder = 'none';
-        }
         $threshold = (float)($value['riskThreshold'] ?? $defaults['riskThreshold']);
         if (!is_finite($threshold) || $threshold < 0 || $threshold > 1) {
             $threshold = $defaults['riskThreshold'];
         }
+        $legacySchedule = $value['schedule'] ?? 'both';
+        if ($legacySchedule !== 'week' && $legacySchedule !== 'month') {
+            $legacySchedule = 'both';
+        }
+        $legacyCadence = $value['interim'] ?? 'none';
+        if (!in_array($legacyCadence, ['none', 'midweek', 'daily'], true)) {
+            $legacyCadence = 'none';
+        }
+        $legacyReminder = $value['reminderLead'] ?? 'none';
+        if (!in_array($legacyReminder, ['none', '1d', '2d'], true)) {
+            $legacyReminder = 'none';
+        }
+        $modes = [
+            'week' => $this->sanitizeReportingModeConfig(
+                is_array($value['modes']['week'] ?? null) ? $value['modes']['week'] : null,
+                [
+                    'enabled' => $legacySchedule === 'week' || $legacySchedule === 'both',
+                    'cadence' => $legacyCadence === 'daily' ? 'daily' : ($legacyCadence === 'midweek' ? 'mid' : 'end'),
+                    'reminderLead' => $legacyReminder,
+                ]
+            ),
+            'month' => $this->sanitizeReportingModeConfig(
+                is_array($value['modes']['month'] ?? null) ? $value['modes']['month'] : null,
+                [
+                    'enabled' => $legacySchedule === 'month' || $legacySchedule === 'both',
+                    'cadence' => $legacyCadence === 'daily' ? 'daily' : ($legacyCadence === 'midweek' ? 'mid' : 'end'),
+                    'reminderLead' => $legacyReminder,
+                ]
+            ),
+        ];
         return [
             'enabled' => !empty($value['enabled']),
-            'schedule' => $schedule,
-            'interim' => $interim,
-            'reminderLead' => $reminder,
+            'modes' => $modes,
             'alertOnRisk' => array_key_exists('alertOnRisk', $value) ? (bool)$value['alertOnRisk'] : true,
             'riskThreshold' => round($threshold, 3),
             'notifyEmail' => array_key_exists('notifyEmail', $value) ? (bool)$value['notifyEmail'] : true,
@@ -467,6 +483,30 @@ final class PersistSanitizer {
     }
 
     /**
+     * @param mixed $value
+     * @param array<string,mixed> $fallback
+     * @return array<string,mixed>
+     */
+    private function sanitizeReportingModeConfig($value, array $fallback): array {
+        if (!is_array($value)) {
+            return $fallback;
+        }
+        $cadence = $value['cadence'] ?? 'end';
+        if (!in_array($cadence, ['end', 'mid', 'daily'], true)) {
+            $cadence = $fallback['cadence'] ?? 'end';
+        }
+        $reminder = $value['reminderLead'] ?? 'none';
+        if (!in_array($reminder, ['none', '1d', '2d'], true)) {
+            $reminder = $fallback['reminderLead'] ?? 'none';
+        }
+        return [
+            'enabled' => array_key_exists('enabled', $value) ? (bool)$value['enabled'] : !empty($fallback['enabled']),
+            'cadence' => $cadence,
+            'reminderLead' => $reminder,
+        ];
+    }
+
+    /**
      * @return array<string,mixed>
      */
     private function defaultActivityCardConfig(): array {
@@ -513,9 +553,18 @@ final class PersistSanitizer {
     private function defaultReportingConfig(): array {
         return [
             'enabled' => false,
-            'schedule' => 'both',
-            'interim' => 'none',
-            'reminderLead' => '1d',
+            'modes' => [
+                'week' => [
+                    'enabled' => true,
+                    'cadence' => 'end',
+                    'reminderLead' => '1d',
+                ],
+                'month' => [
+                    'enabled' => false,
+                    'cadence' => 'end',
+                    'reminderLead' => '2d',
+                ],
+            ],
             'alertOnRisk' => true,
             'riskThreshold' => 0.85,
             'notifyEmail' => true,

@@ -15,7 +15,9 @@ import {
   createDefaultDeckSettings,
   createDefaultReportingConfig,
   type DeckFeatureSettings,
+  type ReportingCadence,
   type ReportingConfig,
+  type ReportingMode,
 } from '../src/services/reporting'
 import { clampTarget, convertWeekToMonth } from '../src/services/targets'
 import { createDefaultWidgetTabs, filterWidgetTabsForStrategy } from '../src/services/widgetsRegistry'
@@ -207,19 +209,21 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
 
   const reportingSummary = computed(() => {
     if (!reportingDraft.value.enabled) return 'Recap disabled'
-    const schedule =
-      reportingDraft.value.schedule === 'both'
-        ? 'Weekly + monthly recap'
-        : reportingDraft.value.schedule === 'week'
-          ? 'Weekly recap'
-          : 'Monthly recap'
-    const interim =
-      reportingDraft.value.interim === 'daily'
-        ? 'Daily reminder'
-        : reportingDraft.value.interim === 'midweek'
-          ? 'Mid-range reminder'
-          : 'No interim reminder'
-    return `${schedule} • ${interim}`
+    const labels: string[] = []
+    ;(['week', 'month'] as ReportingMode[]).forEach((mode) => {
+      const current = reportingDraft.value.modes[mode]
+      if (!current?.enabled) return
+      const title = mode === 'week' ? 'Week' : 'Month'
+      const cadence =
+        current.cadence === 'daily'
+          ? 'daily'
+          : current.cadence === 'mid'
+            ? 'mid-cycle'
+            : 'end only'
+      labels.push(`${title}: ${cadence}`)
+    })
+    if (!labels.length) return 'Recap enabled • no active cadence'
+    return labels.join(' • ')
   })
 
   const openColorId = ref<string | null>(null)
@@ -1025,16 +1029,47 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
     reportingDraft.value = { ...reportingDraft.value, enabled }
   }
 
-  function setReportingSchedule(value: ReportingConfig['schedule']) {
-    reportingDraft.value = { ...reportingDraft.value, schedule: value }
-  }
-
-  function setReportingInterim(value: ReportingConfig['interim']) {
-    reportingDraft.value = { ...reportingDraft.value, interim: value }
+  function setReportingModeEnabled(mode: ReportingMode, enabled: boolean) {
+    reportingDraft.value = {
+      ...reportingDraft.value,
+      modes: {
+        ...reportingDraft.value.modes,
+        [mode]: {
+          ...reportingDraft.value.modes[mode],
+          enabled,
+        },
+      },
+    }
   }
 
   function updateReporting(patch: Partial<ReportingConfig>) {
     reportingDraft.value = { ...reportingDraft.value, ...patch }
+  }
+
+  function setReportingModeCadence(mode: ReportingMode, cadence: ReportingCadence) {
+    reportingDraft.value = {
+      ...reportingDraft.value,
+      modes: {
+        ...reportingDraft.value.modes,
+        [mode]: {
+          ...reportingDraft.value.modes[mode],
+          cadence,
+        },
+      },
+    }
+  }
+
+  function updateReportingMode(mode: ReportingMode, patch: Partial<ReportingConfig['modes'][ReportingMode]>) {
+    reportingDraft.value = {
+      ...reportingDraft.value,
+      modes: {
+        ...reportingDraft.value.modes,
+        [mode]: {
+          ...reportingDraft.value.modes[mode],
+          ...patch,
+        },
+      },
+    }
   }
 
   function createFallbackQuickTargets(selection: string[]) {
@@ -1423,9 +1458,10 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
     applySuggestedCalendarTarget,
     applySuggestedCategoryTarget,
     setReportingEnabled,
-    setReportingSchedule,
-    setReportingInterim,
+    setReportingModeEnabled,
+    setReportingModeCadence,
     updateReporting,
+    updateReportingMode,
     canGoBack,
     canGoNext,
     nextDisabled,

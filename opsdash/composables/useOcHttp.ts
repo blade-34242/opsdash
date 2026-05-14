@@ -11,6 +11,7 @@ interface RouteMap {
   presetsLoad: string
   presetsDelete: string
   ping: string
+  reportTestSend: string
 }
 
 const ROUTES: RouteMap = {
@@ -24,6 +25,7 @@ const ROUTES: RouteMap = {
   presetsLoad: '/apps/opsdash/overview/presets',
   presetsDelete: '/apps/opsdash/overview/presets',
   ping: '/apps/opsdash/overview/ping',
+  reportTestSend: '/apps/opsdash/overview/report/test-send',
 }
 
 function getRoot(): string {

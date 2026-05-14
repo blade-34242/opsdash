@@ -154,9 +154,11 @@
               :on-trend-lookback-change="onTrendLookbackChange"
               :reporting-draft="reportingDraft"
               :set-reporting-enabled="setReportingEnabled"
-              :set-reporting-schedule="setReportingSchedule"
-              :set-reporting-interim="setReportingInterim"
+              :set-reporting-mode-enabled="setReportingModeEnabled"
+              :set-reporting-mode-cadence="setReportingModeCadence"
               :update-reporting="updateReporting"
+              :update-reporting-mode="updateReportingMode"
+              :send-test-report="handleTestReportSend"
             />
           </section>
 
@@ -261,6 +263,12 @@ const props = defineProps<{
     balanceTrendLookback?: number
   } | null
   persistStep?: (payload: WizardStepSavePayload) => Promise<void>
+  sendTestReport?: (payload: {
+    selected: string[]
+    groups: Record<string, number>
+    targetsConfig: TargetsConfig
+    reportingConfig: ReportingConfig
+  }) => Promise<void>
 }>()
 
 const emit = defineEmits<{
@@ -328,9 +336,10 @@ const {
   toggleDeckBoard,
   reportingDraft,
   setReportingEnabled,
-  setReportingSchedule,
-  setReportingInterim,
+  setReportingModeEnabled,
+  setReportingModeCadence,
   updateReporting,
+  updateReportingMode,
   dashboardMode,
   dashboardPresets,
   strategies,
@@ -436,6 +445,22 @@ async function requestClose() {
   const saved = await persistCurrentStep()
   if (!saved) return
   handleClose()
+}
+
+async function handleTestReportSend() {
+  if (!props.sendTestReport) return
+  const targetsPayload = buildStepPayload('review') as {
+    cals?: string[]
+    groups?: Record<string, number>
+    targets_config?: TargetsConfig
+    reporting_config?: ReportingConfig
+  }
+  await props.sendTestReport({
+    selected: [...(targetsPayload.cals ?? [])],
+    groups: { ...(targetsPayload.groups ?? {}) },
+    targetsConfig: targetsPayload.targets_config ?? ({} as TargetsConfig),
+    reportingConfig: targetsPayload.reporting_config ?? { ...reportingDraft.value },
+  })
 }
 
 function isStepDone(step: typeof currentStep.value, index: number) {

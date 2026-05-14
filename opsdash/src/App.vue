@@ -25,6 +25,7 @@
       :snapshot-saving="isWizardSnapshotSaving"
       :snapshot-notice="wizardSnapshotNotice"
       :persist-step="handleWizardSaveStep"
+      :send-test-report="handleWizardTestReport"
       @close="handleWizardClose"
       @skip="handleWizardSkip"
       @complete="handleWizardComplete"
@@ -1204,6 +1205,28 @@ const handleWizardSaveStep = async (payload: WizardStepSavePayload) => {
     applyDashboardPreset(payload.dashboardMode)
   }
   await onboardingActions.saveStep(payload)
+}
+
+const handleWizardTestReport = async (payload: {
+  selected: string[]
+  groups: Record<string, number>
+  targetsConfig: Record<string, unknown>
+  reportingConfig: Record<string, unknown>
+}) => {
+  try {
+    const result = await postJson(route('reportTestSend'), {
+      range: range.value,
+      offset: offset.value,
+      cals: payload.selected,
+      groups: payload.groups,
+      targets_config: payload.targetsConfig,
+      reporting_config: payload.reportingConfig,
+    })
+    notifySuccess(`Test recap sent to ${result.email}`)
+  } catch (error) {
+    console.error(error)
+    notifyError('Failed to send test recap')
+  }
 }
 
 async function performLoad() {

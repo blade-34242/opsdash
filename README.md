@@ -17,7 +17,7 @@ Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintai
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
 - 🔐 **Runs inside Nextcloud** – same session, same permissions, CSRF-protected writes, no external API calls.
 - 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
-- 📨 **Report tab (preview)** – configure weekly/monthly digest preferences and reminder behavior.
+- 📨 **Reporting & recap mail** – configure separate weekly/monthly recap modes, trigger a live test send from the UI, and render goal-type-aware mails inside the native Nextcloud email shell.
 - 📐 **Widget sizing controls** – per-widget width/height plus scale/dense options for layout tuning.
 
 ## Screenshots
@@ -72,6 +72,31 @@ PLAYWRIGHT_BASE_URL=http://localhost:8093 npm run test:e2e
 - `make start31` starts the Nextcloud 31 container on `http://localhost:8088`.
 - The checked-out app is mounted into the dev container from `./opsdash` by default. Override with `APP_SOURCE_DIR=/abs/path/to/opsdash` if you need a different source path.
 - `make status` / `make logs` help confirm the stack is up before testing.
+- The `ghcr.io/juliusknorr/nextcloud-dev-php83:latest` image bootstraps the server on first start. After `docker compose up -d`, Apache may answer on the mapped port before Nextcloud is ready.
+- On a fresh volume, wait until `docker exec <container> bash -lc 'cd /var/www/html && php occ status'` reports `installed: true`. This can take roughly 4 minutes on first bootstrap.
+- Do not run `php occ maintenance:install` against these dev-image containers during normal startup. Use the image's built-in bootstrap flow and only intervene manually when you intentionally reset a dedicated test volume.
+
+### Mail Test Stack
+
+For SMTP testing with a local mail catcher:
+
+```bash
+docker compose -f docker-compose33-mail.yml up -d
+docker exec nc33-mailguard bash -lc 'cd /var/www/html && php occ status'
+```
+
+- `docker-compose33-mail.yml` starts a dedicated Nextcloud 33 test instance on `http://localhost:8094`.
+- It also starts Mailpit with SMTP on `localhost:1026` and the web inbox on `http://localhost:8026`.
+- The same bootstrap rule applies here: wait for `occ status` to show `installed: true` before setting SMTP, users, or app config.
+- Test-send paths:
+  - UI: `POST /overview/report/test-send`
+  - CLI payload: `php occ opsdash:report --user=<uid> --range=week --offset=0 --format=json`
+  - CLI mail matrix: `php occ opsdash:report:send-matrix --user=<uid>`
+- Report mails are goal-type-driven:
+  - `Single Goal`
+  - `Calendar Goals`
+  - `Calendar + Category Goals`
+- Dashboard presets/layout variants stay in the UI, but they do not affect report rendering.
 
 Quick smoke check:
 ```bash

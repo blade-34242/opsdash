@@ -15,5 +15,6 @@ return [
     ['name' => 'presets#presetsDelete',  'url' => '/overview/presets/{name}', 'verb' => 'DELETE'],
     ['name' => 'deck#boards',            'url' => '/overview/deck/boards',    'verb' => 'GET'],
     ['name' => 'deck#cards',             'url' => '/overview/deck/cards',     'verb' => 'GET'],
+    ['name' => 'report#testSend',        'url' => '/overview/report/test-send', 'verb' => 'POST'],
   ],
 ];
