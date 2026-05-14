@@ -140,7 +140,18 @@ class PresetsControllerTest extends TestCase {
       'theme_preference' => 'dark',
       'reporting_config' => [
         'enabled' => true,
-        'schedule' => 'week',
+        'modes' => [
+          'week' => [
+            'enabled' => true,
+            'cadence' => 'mid',
+            'reminderLead' => '1d',
+          ],
+          'month' => [
+            'enabled' => false,
+            'cadence' => 'end',
+            'reminderLead' => '2d',
+          ],
+        ],
       ],
       'deck_settings' => [
         'enabled' => true,
@@ -183,7 +194,9 @@ class PresetsControllerTest extends TestCase {
 
     $this->assertSame([], $result['warnings']);
     $this->assertSame('dark', $result['payload']['theme_preference']);
-    $this->assertSame('week', $result['payload']['reporting_config']['schedule']);
+    $this->assertTrue($result['payload']['reporting_config']['modes']['week']['enabled']);
+    $this->assertSame('mid', $result['payload']['reporting_config']['modes']['week']['cadence']);
+    $this->assertSame('2d', $result['payload']['reporting_config']['modes']['month']['reminderLead']);
     $this->assertSame('mine', $result['payload']['deck_settings']['defaultFilter']);
     $this->assertSame('full_granular', $result['payload']['onboarding']['strategy']);
     $this->assertSame('pro', $result['payload']['onboarding']['dashboardMode']);

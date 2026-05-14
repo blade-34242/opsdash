@@ -92,11 +92,13 @@ docker exec nc33-mailguard bash -lc 'cd /var/www/html && php occ status'
   - UI: `POST /overview/report/test-send`
   - CLI payload: `php occ opsdash:report --user=<uid> --range=week --offset=0 --format=json`
   - CLI mail matrix: `php occ opsdash:report:send-matrix --user=<uid>`
+  - CLI scheduled debug run: `php occ opsdash:report:send-scheduled --user=<uid>`
 - Report mails are goal-type-driven:
   - `Single Goal`
   - `Calendar Goals`
   - `Calendar + Category Goals`
 - Dashboard presets/layout variants stay in the UI, but they do not affect report rendering.
+- Automatic recap delivery is integrated through the Nextcloud background job system, not an app-managed Unix cron path.
 
 Quick smoke check:
 ```bash

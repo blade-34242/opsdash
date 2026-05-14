@@ -164,6 +164,60 @@ class PersistSanitizerTest extends TestCase {
     $this->assertArrayHasKey('autoScroll', $result['ticker']);
   }
 
+  public function testSanitizeReportingConfigMigratesLegacyShape(): void {
+    $result = $this->sanitizer->sanitizeReportingConfig([
+      'enabled' => true,
+      'schedule' => 'week',
+      'interim' => 'midweek',
+      'reminderLead' => '1d',
+      'alertOnRisk' => true,
+      'riskThreshold' => 0.9,
+      'notifyEmail' => false,
+      'notifyNotification' => true,
+    ]);
+
+    $this->assertTrue($result['enabled']);
+    $this->assertTrue($result['modes']['week']['enabled']);
+    $this->assertFalse($result['modes']['month']['enabled']);
+    $this->assertSame('mid', $result['modes']['week']['cadence']);
+    $this->assertSame('1d', $result['modes']['week']['reminderLead']);
+    $this->assertSame('mid', $result['modes']['month']['cadence']);
+    $this->assertSame('1d', $result['modes']['month']['reminderLead']);
+    $this->assertSame(0.9, $result['riskThreshold']);
+    $this->assertFalse($result['notifyEmail']);
+    $this->assertTrue($result['notifyNotification']);
+  }
+
+  public function testSanitizeReportingConfigNormalizesModeValues(): void {
+    $result = $this->sanitizer->sanitizeReportingConfig([
+      'enabled' => 1,
+      'modes' => [
+        'week' => [
+          'enabled' => true,
+          'cadence' => 'broken',
+          'reminderLead' => '5d',
+        ],
+        'month' => [
+          'enabled' => false,
+          'cadence' => 'daily',
+          'reminderLead' => '2d',
+        ],
+      ],
+      'riskThreshold' => 9,
+      'notifyEmail' => 0,
+      'notifyNotification' => 1,
+    ]);
+
+    $this->assertTrue($result['enabled']);
+    $this->assertSame('end', $result['modes']['week']['cadence']);
+    $this->assertSame('none', $result['modes']['week']['reminderLead']);
+    $this->assertSame('daily', $result['modes']['month']['cadence']);
+    $this->assertSame('2d', $result['modes']['month']['reminderLead']);
+    $this->assertSame(0.85, $result['riskThreshold']);
+    $this->assertFalse($result['notifyEmail']);
+    $this->assertTrue($result['notifyNotification']);
+  }
+
   public function testBalanceLookbackClampValid(): void {
     $resultOne = $this->sanitizer->cleanBalanceConfig(['trend' => ['lookbackWeeks' => 1]], []);
     $this->assertSame(1, $resultOne['trend']['lookbackWeeks']);

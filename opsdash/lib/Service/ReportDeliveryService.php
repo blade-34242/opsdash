@@ -6,7 +6,7 @@ namespace OCA\Opsdash\Service;
 use OCP\IUserManager;
 use OCP\Mail\IMailer;
 
-final class ReportDeliveryService {
+class ReportDeliveryService {
     public function __construct(
         private ReportSummaryService $reportSummaryService,
         private ReportRenderService $reportRenderService,

@@ -41,6 +41,15 @@ if (!class_exists(\OCP\Util::class)) {
 if (!class_exists(\Sabre\VObject\Reader::class)) {
 	require __DIR__ . '/stubs/Sabre/VObject/Reader.php';
 }
+if (!class_exists(\Symfony\Component\Console\Command\Command::class)) {
+	require __DIR__ . '/stubs/Symfony/Component/Console/Command/Command.php';
+}
+if (!class_exists(\Symfony\Component\Console\Input\InputOption::class)) {
+	require __DIR__ . '/stubs/Symfony/Component/Console/Input/InputOption.php';
+}
+if (!class_exists(\Symfony\Component\Console\Attribute\AsCommand::class)) {
+	require __DIR__ . '/stubs/Symfony/Component/Console/Attribute/AsCommand.php';
+}
 
 $interfaceStubs = [
 	\OCP\IRequest::class => '/stubs/OCP/IRequest.php',
@@ -49,10 +58,14 @@ $interfaceStubs = [
 	\OCP\IUser::class => '/stubs/OCP/IUser.php',
 	\OCP\IUserManager::class => '/stubs/OCP/IUserManager.php',
 	\OCP\IConfig::class => '/stubs/OCP/IConfig.php',
+	\OCP\IURLGenerator::class => '/stubs/OCP/IURLGenerator.php',
 	\OCP\ICache::class => '/stubs/OCP/ICache.php',
 	\OCP\ICacheFactory::class => '/stubs/OCP/ICacheFactory.php',
 	\OCP\IL10N::class => '/stubs/OCP/IL10N.php',
+	\OCP\Mail\IMailer::class => '/stubs/OCP/Mail/IMailer.php',
 	\OCP\App\IAppManager::class => '/stubs/OCP/App/IAppManager.php',
+	\Symfony\Component\Console\Input\InputInterface::class => '/stubs/Symfony/Component/Console/Input/InputInterface.php',
+	\Symfony\Component\Console\Output\OutputInterface::class => '/stubs/Symfony/Component/Console/Output/OutputInterface.php',
 	\Psr\Log\LoggerInterface::class => '/stubs/Psr/Log/LoggerInterface.php',
 ];
 

@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace OCA\Opsdash\AppInfo;
 
+use OCA\Opsdash\BackgroundJob\ScheduledReportJob;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Bootstrap\IBootContext;
+use OCP\BackgroundJob\IJobList;
 // (metrics/admin settings removed)
 
 class Application extends App implements IBootstrap {
@@ -22,5 +24,18 @@ class Application extends App implements IBootstrap {
 
     public function boot(IBootContext $context): void {
         // Navigation is declared via appinfo/navigation.xml.
+        /** @var IJobList $jobList */
+        $jobList = $context->getServerContainer()->get(IJobList::class);
+        $jobs = [];
+        foreach ($jobList->getJobsIterator(ScheduledReportJob::class, 10, 0) as $job) {
+            $jobs[] = $job;
+        }
+        if ($jobs === []) {
+            $jobList->add(ScheduledReportJob::class);
+            return;
+        }
+        foreach (array_slice($jobs, 1) as $duplicateJob) {
+            $jobList->removeById($duplicateJob->getId());
+        }
     }
 }

@@ -272,6 +272,11 @@ class OverviewControllerTest extends TestCase {
     $fixture = json_decode((string)file_get_contents($fixturePath), true, 512, JSON_THROW_ON_ERROR);
     $this->assertTrue($fixture['ok']);
     $this->assertArrayHasKey('reporting_config_read', $fixture);
+    $this->assertArrayHasKey('modes', $fixture['reporting_config_read']);
+    $this->assertArrayHasKey('week', $fixture['reporting_config_read']['modes']);
+    $this->assertArrayHasKey('month', $fixture['reporting_config_read']['modes']);
+    $this->assertSame('mid', $fixture['reporting_config_read']['modes']['week']['cadence']);
+    $this->assertSame('1d', $fixture['reporting_config_read']['modes']['week']['reminderLead']);
     $this->assertArrayHasKey('deck_settings_read', $fixture);
     $this->assertSame('mine', $fixture['deck_settings_read']['defaultFilter']);
     $this->assertSame([42], $fixture['deck_settings_read']['hiddenBoards']);
