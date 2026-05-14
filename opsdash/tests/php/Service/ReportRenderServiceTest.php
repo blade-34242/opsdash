@@ -89,7 +89,7 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Single Goal model', $result['plain']);
+    $this->assertStringContainsString('Report model: Single Goal', $result['plain']);
     $this->assertStringContainsString('Goal progress', $result['plain']);
     $this->assertStringNotContainsString('Calendar targets', $result['plain']);
     $this->assertStringNotContainsString('Balance index:', $result['plain']);
@@ -101,7 +101,7 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Calendar Goals model', $result['plain']);
+    $this->assertStringContainsString('Report model: Calendar Goals', $result['plain']);
     $this->assertStringContainsString('Calendar targets', $result['plain']);
     $this->assertStringContainsString('Opsdash · Meetings', $result['plain']);
     $this->assertStringNotContainsString('Balance index:', $result['plain']);
@@ -113,7 +113,7 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Calendar + Category Goals model', $result['plain']);
+    $this->assertStringContainsString('Report model: Calendar + Category Goals', $result['plain']);
     $this->assertStringContainsString('Targets & pace', $result['plain']);
     $this->assertStringContainsString('Work: 30.00 h / 24.00 h', $result['plain']);
     $this->assertStringContainsString('Balance index: 0.50', $result['plain']);

@@ -106,12 +106,11 @@
             <div
               ref="appBarSlotRef"
               class="app-bar-slot"
-              :style="itbFloating && appBarHeight ? { minHeight: `${appBarHeight}px` } : undefined"
             >
             <div
               ref="appBarRef"
               class="app-bar"
-              :class="{ 'app-bar--editing': isLayoutEditing, 'app-bar--floating': itbFloating }"
+              :class="{ 'app-bar--editing': isLayoutEditing }"
             >
 
               <!-- ══ BROWSE MODE ══ -->
@@ -221,8 +220,12 @@
                 </div>
 
                 <!-- Row 3: inline widget controls -->
-                <div ref="itbRowSlotRef" class="itb-row-slot">
-                  <div ref="itbRowRef" class="bar-row sep itb-row">
+                <div
+                  ref="itbRowSlotRef"
+                  class="itb-row-slot"
+                  :style="itbFloating && itbRowHeight ? { minHeight: `${itbRowHeight}px` } : undefined"
+                >
+                  <div ref="itbRowRef" class="bar-row sep itb-row" :class="{ 'itb-row--floating': itbFloating }">
                     <div class="itb">
 
                     <!-- Selected widget chip (far left) -->
@@ -812,27 +815,22 @@ function setupItbScroll() {
 
 import { nextTick, onMounted, watch } from 'vue'
 const itbRowHeight = ref(0)
-const appBarHeight = ref(0)
 let itbFloatThreshold = 0
 
 function measureItbRow(container: HTMLElement) {
   const appBar = appBarRef.value
-  const appBarSlot = appBarSlotRef.value
   const row = itbRowRef.value
   const slot = itbRowSlotRef.value
   if (!row || !appBar) {
     itbRowHeight.value = 0
-    appBarHeight.value = 0
     itbFloatThreshold = 0
     return
   }
   const floatTopOffset = getItbFloatTopOffset()
   const rowRect = row.getBoundingClientRect()
-  const appBarRect = appBar.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
-  const thresholdRect = (appBarSlot ?? slot ?? row).getBoundingClientRect()
+  const thresholdRect = (slot ?? row).getBoundingClientRect()
   itbRowHeight.value = Math.ceil(rowRect.height)
-  appBarHeight.value = Math.ceil(appBarRect.height)
   itbFloatThreshold = Math.max(0, thresholdRect.top - containerRect.top + container.scrollTop - floatTopOffset)
 }
 
@@ -848,7 +846,6 @@ watch(isLayoutEditing, async (editing) => {
   if (!editing) {
     itbFloating.value = false
     itbRowHeight.value = 0
-    appBarHeight.value = 0
     return
   }
   await nextTick()

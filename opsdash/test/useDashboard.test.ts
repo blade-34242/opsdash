@@ -107,9 +107,18 @@ describe('useDashboard load', () => {
       charts: { pie: { ids: ['cal-1'], colors: ['#ff0000'] } },
       reportingConfig: {
         enabled: true,
-        schedule: 'week',
-        interim: 'midweek',
-        reminderLead: '1d',
+        modes: {
+          week: {
+            enabled: true,
+            cadence: 'mid',
+            reminderLead: '1d',
+          },
+          month: {
+            enabled: false,
+            cadence: 'end',
+            reminderLead: '2d',
+          },
+        },
         alertOnRisk: true,
         riskThreshold: 0.75,
         notifyEmail: true,
@@ -168,7 +177,16 @@ describe('useDashboard load', () => {
     expect(dashboard.onboarding.value).toEqual(response.onboarding)
 
     expect(dashboard.stats.totalHours).toBe(12)
-    expect(dashboard.reportingConfig.value.schedule).toBe('week')
+    expect(dashboard.reportingConfig.value.modes.week).toEqual({
+      enabled: true,
+      cadence: 'mid',
+      reminderLead: '1d',
+    })
+    expect(dashboard.reportingConfig.value.modes.month).toEqual({
+      enabled: false,
+      cadence: 'end',
+      reminderLead: '2d',
+    })
     expect(dashboard.deckSettings.value.filtersEnabled).toBe(false)
     expect(dashboard.byCal.value).toEqual(response.byCal)
     expect(dashboard.byDay.value).toEqual(response.byDay)

@@ -232,6 +232,7 @@ export function useOnboardingFlow(deps: OnboardingFlowDeps) {
 
   function handleWizardClose() {
     if (autoWizardNeeded.value) return
+    autoWizardNeeded.value = false
     manualWizardOpen.value = false
   }
 

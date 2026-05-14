@@ -338,7 +338,16 @@ describe('useDashboardPersistence', () => {
     queueSave(false)
     await vi.runOnlyPendingTimersAsync()
 
-    expect(reportingConfig.value.schedule).toBe('week')
+    expect(reportingConfig.value.modes.week).toEqual({
+      enabled: true,
+      cadence: 'mid',
+      reminderLead: '1d',
+    })
+    expect(reportingConfig.value.modes.month).toEqual({
+      enabled: false,
+      cadence: 'end',
+      reminderLead: '1d',
+    })
     expect(reportingConfig.value.notifyEmail).toBe(false)
     expect(reportingConfig.value.notifyNotification).toBe(true)
     expect(deckSettings.value.enabled).toBe(false)
