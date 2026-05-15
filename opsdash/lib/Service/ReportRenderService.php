@@ -24,10 +24,7 @@ final class ReportRenderService {
         $reportVariant = $this->resolveReportVariant($summary);
         $reportVariantLabel = $this->reportVariantLabel($reportVariant);
 
-        $subject = sprintf('Opsdash test recap · %s · %s', $rangeLabel, $periodLabel);
-        if ($variantLabel !== '') {
-            $subject .= sprintf(' · %s', $variantLabel);
-        }
+        $subject = sprintf('Opsdash recap · %s · %s', $rangeLabel, $periodLabel);
 
         $selectedLabels = array_values(array_map('strval', $summary['selected_labels'] ?? []));
         $selectedLine = empty($selectedLabels) ? 'None' : implode(', ', $selectedLabels);
@@ -48,8 +45,8 @@ final class ReportRenderService {
         $template->addHeader();
         $template->addHeading('Opsdash recap');
         $template->addBodyText(
-            $this->renderHeroHtml($displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $variantLabel),
-            $this->renderHeroPlain($displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $variantLabel),
+            $this->renderHeroHtml($summary, $reportVariant, $displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel),
+            $this->renderHeroPlain($displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel),
         );
 
         switch ($reportVariant) {
@@ -112,7 +109,7 @@ final class ReportRenderService {
             'Open Opsdash overview',
             $this->urlGenerator->linkToRouteAbsolute('opsdash.overview.index'),
         );
-        $template->addFooter('Opsdash reporting test mail<br>Sent manually from Opsdash or via occ matrix run.');
+        $template->addFooter('You\'re receiving this because you have automatic recaps enabled in Opsdash.');
 
         return [
             'subject' => $template->renderSubject(),
@@ -195,41 +192,88 @@ final class ReportRenderService {
     }
 
     private function renderHeroHtml(
+        array $summary,
+        string $reportVariant,
         string $displayName,
         string $rangeLabel,
         string $periodLabel,
         string $selectedLine,
         string $reportVariantLabel,
-        string $variantLabel,
     ): string {
-        $variant = $variantLabel === '' ? '' : sprintf(
-            '<span style="display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:#eaf4fb;color:#0b5f93;font-size:12px;font-weight:700;letter-spacing:.02em;">Trigger · %s</span>',
-            $this->escape($variantLabel),
-        );
+        // 4 hero stats differ per variant
+        switch ($reportVariant) {
+            case 'calendar_goals':
+                $stats = [
+                    ['Total hours',    $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                              '#22d3ee'],
+                    ['Calendar pace',  $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',      '#c4b5fd'],
+                    ['Active days',    (string)(int)($summary['active_days'] ?? 0),                                              '#ffffff'],
+                    ['Future planned', $this->formatHours((float)($summary['future_hours'] ?? 0.0)),                             '#fcd34d'],
+                ];
+                break;
+            case 'category_and_calendar_goals':
+                $stats = [
+                    ['Total hours',    $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                              '#22d3ee'],
+                    ['Target',         $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',      '#c4b5fd'],
+                    ['Active days',    (string)(int)($summary['active_days'] ?? 0),                                              '#ffffff'],
+                    ['Balance index',  $this->formatIndex((float)($summary['balance']['index'] ?? 0.0)),                         '#fcd34d'],
+                ];
+                break;
+            default: // single_goal
+                $stats = [
+                    ['Total hours', $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                                 '#22d3ee'],
+                    ['Target',      $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',         '#c4b5fd'],
+                    ['Active days', (string)(int)($summary['active_days'] ?? 0),                                                 '#ffffff'],
+                    ['Events',      (string)(int)($summary['events'] ?? 0),                                                      '#fcd34d'],
+                ];
+        }
+
+        $statCells = '';
+        foreach ($stats as $i => [$label, $value, $color]) {
+            $pr = $i < 3 ? 'padding-right:6px;' : '';
+            $statCells .= sprintf(
+                '<td style="width:25%%;vertical-align:top;%s">
+                    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 10px;">
+                        <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;">%s</div>
+                        <div style="font-size:20px;font-weight:800;color:%s;line-height:1;">%s</div>
+                    </div>
+                </td>',
+                $pr,
+                $this->escape($label),
+                $color,
+                $this->escape($value),
+            );
+        }
+
         return sprintf(
-            '<div style="background:linear-gradient(135deg,#0b5f93 0%%,#1d87c5 100%%);border-radius:18px;padding:26px 28px;color:#ffffff;">
-                <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.84;">%s recap</div>
-                <div style="font-size:28px;line-height:1.15;font-weight:800;margin-top:8px;">%s</div>
-                <div style="font-size:15px;line-height:1.55;margin-top:10px;opacity:.95;">Hello %s. This report follows the <strong>%s</strong> model and ignores dashboard layout presets, so the mail stays consistent even when the UI layout changes.</div>
-                <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
-                    <div style="flex:1 1 220px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.12);font-size:14px;line-height:1.55;">
-                        <strong style="display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.82;">Report model</strong>
-                        <span>%s</span>
-                    </div>
-                    <div style="flex:2 1 280px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.12);font-size:14px;line-height:1.55;">
-                        <strong style="display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.82;">Selected calendars</strong>
-                        <span>%s</span>
-                    </div>
-                </div>
-                %s
+            '<div style="background:linear-gradient(145deg,#0f1f35 0%%,#1e3a5f 55%%,#0c4a78 100%%);border-radius:16px;padding:28px 26px 24px;color:#ffffff;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px;">%s recap</div>
+                <div style="font-size:30px;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">%s</div>
+                <div style="font-size:14px;color:rgba(255,255,255,.55);margin-bottom:22px;">Hey %s — here\'s how your %s went.</div>
+                <table role="presentation" style="width:100%%;border-collapse:collapse;"><tr>%s</tr></table>
+                <table role="presentation" style="width:100%%;border-collapse:collapse;margin-top:14px;">
+                    <tr>
+                        <td style="width:60%%;padding-right:6px;vertical-align:top;">
+                            <div style="padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);">
+                                <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;">Calendars</div>
+                                <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.4;">%s</div>
+                            </div>
+                        </td>
+                        <td style="width:40%%;vertical-align:top;">
+                            <div style="padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);">
+                                <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;">Model</div>
+                                <div style="font-size:12px;color:rgba(255,255,255,.8);">%s</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>',
             $this->escape($rangeLabel),
             $this->escape($periodLabel),
             $this->escape($displayName !== '' ? $displayName : 'there'),
-            $this->escape($reportVariantLabel),
-            $this->escape($reportVariantLabel),
+            $this->escape(strtolower($rangeLabel)),
+            $statCells,
             $this->escape($selectedLine),
-            $variant,
+            $this->escape($reportVariantLabel),
         );
     }
 
@@ -239,51 +283,54 @@ final class ReportRenderService {
         string $periodLabel,
         string $selectedLine,
         string $reportVariantLabel,
-        string $variantLabel,
     ): string {
-        $lines = [
-            sprintf('Hello %s,', $displayName !== '' ? $displayName : 'there'),
+        return implode(PHP_EOL, [
+            sprintf('Hey %s,', $displayName !== '' ? $displayName : 'there'),
             '',
-            sprintf('%s recap for %s', $rangeLabel, $periodLabel),
-            sprintf('Report model: %s', $reportVariantLabel),
-            sprintf('Selected calendars: %s', $selectedLine),
-        ];
-        if ($variantLabel !== '') {
-            $lines[] = sprintf('Trigger: %s', $variantLabel);
-        }
-        return implode(PHP_EOL, $lines);
+            sprintf('%s recap · %s', $rangeLabel, $periodLabel),
+            sprintf('Calendars: %s', $selectedLine),
+            sprintf('Model: %s', $reportVariantLabel),
+        ]);
     }
 
     /**
      * @param array<int,array{label:string,value:string,detail:string}> $cards
      */
     private function renderKpiGridHtml(array $cards): string {
-        $htmlCards = array_map(function (array $card): string {
-            return sprintf(
-                '<td style="width:50%%;padding:0 8px 16px 8px;vertical-align:top;">
-                    <div style="border:1px solid #dbe7f0;border-radius:16px;padding:16px 18px;background:#f8fbfd;">
-                        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">%s</div>
-                        <div style="font-size:24px;line-height:1.2;font-weight:800;color:#12344f;margin-top:8px;">%s</div>
-                        <div style="font-size:13px;line-height:1.45;color:#5f7387;margin-top:6px;">%s</div>
-                    </div>
-                </td>',
-                $this->escape($card['label']),
-                $this->escape($card['value']),
-                $this->escape($card['detail']),
-            );
-        }, $cards);
-
         $rows = [];
-        for ($i = 0; $i < count($htmlCards); $i += 2) {
-            $left = $htmlCards[$i];
-            $right = $htmlCards[$i + 1] ?? '<td style="width:50%;padding:0 8px 16px 8px;vertical-align:top;"></td>';
-            $rows[] = '<tr>' . $left . $right . '</tr>';
+        $chunks = array_chunk($cards, 2);
+        foreach ($chunks as $pair) {
+            $cells = '';
+            foreach ($pair as $idx => $card) {
+                $pr = $idx === 0 ? 'padding-right:8px;' : '';
+                $cells .= sprintf(
+                    '<td style="width:50%%;vertical-align:top;%s padding-bottom:8px;">
+                        <div style="border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;background:#f8fafc;">
+                            <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">%s</div>
+                            <div style="font-size:24px;line-height:1;font-weight:800;color:#0f172a;margin-bottom:4px;">%s</div>
+                            <div style="font-size:12px;color:#64748b;">%s</div>
+                        </div>
+                    </td>',
+                    $pr,
+                    $this->escape($card['label']),
+                    $this->escape($card['value']),
+                    $this->escape($card['detail']),
+                );
+            }
+            if (count($pair) === 1) {
+                $cells .= '<td style="width:50%;vertical-align:top;"></td>';
+            }
+            $rows[] = '<tr>' . $cells . '</tr>';
         }
 
-        return '<div style="margin-top:22px;">
-            <div style="font-size:20px;font-weight:800;color:#12344f;margin:0 0 14px 0;">KPI snapshot</div>
-            <table role="presentation" style="width:100%;border-collapse:collapse;border-spacing:0;">' . implode('', $rows) . '</table>
-        </div>';
+        return sprintf(
+            '<div style="margin-top:28px;">
+                %s
+                <table role="presentation" style="width:100%%;border-collapse:collapse;">%s</table>
+            </div>',
+            $this->sectionHeader('📊', 'KPI snapshot', '#e0f9ff'),
+            implode('', $rows),
+        );
     }
 
     /**
@@ -301,20 +348,36 @@ final class ReportRenderService {
      * @param array<string,mixed> $targetTotal
      */
     private function renderProgressHtml(array $targetTotal): string {
+        $pct    = (float)($targetTotal['percent'] ?? 0.0);
+        $status = (string)($targetTotal['status'] ?? 'none');
+        $bar    = min(100, (int)round($pct));
+        [$pillBg, $pillColor, $barColor] = $this->statusStyles($status);
+
         return sprintf(
-            '<div style="margin-top:28px;border:1px solid #dbe7f0;border-radius:18px;padding:20px;background:#ffffff;">
-                <div style="font-size:20px;font-weight:800;color:#12344f;">Goal progress</div>
-                <div style="margin-top:10px;font-size:15px;line-height:1.55;color:#34506a;">A compact total-goal recap without calendar or category drill-down.</div>
-                <div style="margin-top:18px;border-radius:16px;background:#f5f9fc;padding:18px 20px;">
-                    <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">Total target</div>
-                    <div style="margin-top:6px;font-size:28px;font-weight:800;color:#12344f;">%s / %s</div>
-                    <div style="margin-top:8px;font-size:14px;color:#34506a;">%s%% complete · %s · remaining %s</div>
+            '<div style="margin-top:28px;">
+                %s
+                <div style="border:1px solid #e2e8f0;border-radius:16px;padding:20px 22px;background:#f8fafc;">
+                    <div style="font-size:26px;font-weight:800;color:#0f172a;line-height:1;margin-bottom:6px;">%s <span style="font-size:16px;color:#94a3b8;font-weight:500;">/ %s</span></div>
+                    <div style="background:#e9f0f6;border-radius:99px;height:8px;overflow:hidden;margin:14px 0 8px;">
+                        <div style="width:%d%%;height:100%%;background:%s;border-radius:99px;"></div>
+                    </div>
+                    <div style="display:inline-block;">
+                        <span style="font-size:13px;font-weight:700;color:#0f172a;">%s%%</span>
+                        <span style="font-size:13px;color:#64748b;margin:0 8px;">·</span>
+                        <span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:%s;color:%s;">%s</span>
+                        <span style="font-size:13px;color:#64748b;margin-left:8px;">· remaining %s</span>
+                    </div>
                 </div>
             </div>',
+            $this->sectionHeader('🎯', 'Goal progress', '#ede9fe'),
             $this->escape($this->formatHours((float)($targetTotal['actual'] ?? 0.0))),
             $this->escape($this->formatHours((float)($targetTotal['target'] ?? 0.0))),
-            $this->escape($this->formatPercent((float)($targetTotal['percent'] ?? 0.0))),
-            $this->escape($this->statusLabel((string)($targetTotal['status'] ?? 'none'))),
+            $bar,
+            $barColor,
+            $this->escape($this->formatPercent($pct)),
+            $pillBg,
+            $pillColor,
+            $this->escape($this->statusLabel($status)),
             $this->escape($this->formatHours((float)($targetTotal['remaining'] ?? 0.0))),
         );
     }
@@ -341,59 +404,83 @@ final class ReportRenderService {
      * @param array<int,array<string,mixed>> $rows
      */
     private function renderTargetBoardHtml(string $title, string $intro, array $targetTotal, array $rows, string $rowLabel): string {
-        $tableRows = '';
-        foreach (array_slice($this->sortTargets($rows), 0, 5) as $row) {
-            $tableRows .= sprintf(
-                '<tr>
-                    <td style="padding:12px 14px;border-top:1px solid #e7edf3;font-weight:700;color:#12344f;">%s</td>
-                    <td style="padding:12px 14px;border-top:1px solid #e7edf3;color:#34506a;">%s</td>
-                    <td style="padding:12px 14px;border-top:1px solid #e7edf3;color:#34506a;">%s</td>
-                    <td style="padding:12px 14px;border-top:1px solid #e7edf3;color:%s;font-weight:700;">%s</td>
-                </tr>',
+        $rowsHtml = '';
+        foreach (array_slice($rows, 0, 5) as $row) {
+            $pct    = (float)($row['percent'] ?? 0.0);
+            $status = (string)($row['status'] ?? 'none');
+            $bar    = min(100, (int)round($pct));
+            [$pillBg, $pillColor, $barColor] = $this->statusStyles($status);
+            $rowsHtml .= sprintf(
+                '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:8px;background:#ffffff;">
+                    <table role="presentation" style="width:100%%;border-collapse:collapse;">
+                        <tr>
+                            <td style="width:130px;vertical-align:middle;padding-right:12px;">
+                                <div style="font-size:14px;font-weight:700;color:#0f172a;">%s</div>
+                                <div style="font-size:11px;color:#94a3b8;margin-top:2px;font-family:monospace;">%s / %s</div>
+                            </td>
+                            <td style="vertical-align:middle;padding-right:12px;">
+                                <div style="background:#f1f5f9;border-radius:99px;height:7px;overflow:hidden;">
+                                    <div style="width:%d%%;height:100%%;background:%s;border-radius:99px;"></div>
+                                </div>
+                            </td>
+                            <td style="width:50px;vertical-align:middle;text-align:right;padding-right:10px;">
+                                <span style="font-size:13px;font-weight:700;color:#0f172a;font-family:monospace;">%s%%</span>
+                            </td>
+                            <td style="width:64px;vertical-align:middle;text-align:right;">
+                                <span style="display:inline-block;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;background:%s;color:%s;">%s</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>',
                 $this->escape((string)($row['label'] ?? $rowLabel)),
-                $this->escape(sprintf(
-                    '%s / %s',
-                    $this->formatHours((float)($row['actual'] ?? 0.0)),
-                    $this->formatHours((float)($row['target'] ?? 0.0)),
-                )),
-                $this->escape(sprintf('%s%%', $this->formatPercent((float)($row['percent'] ?? 0.0)))),
-                $this->statusColor((string)($row['status'] ?? 'none')),
-                $this->escape($this->statusLabel((string)($row['status'] ?? 'none'))),
+                $this->escape($this->formatHours((float)($row['actual'] ?? 0.0))),
+                $this->escape($this->formatHours((float)($row['target'] ?? 0.0))),
+                $bar,
+                $barColor,
+                $this->escape($this->formatPercent($pct)),
+                $pillBg,
+                $pillColor,
+                $this->escape($this->statusLabel($status)),
             );
         }
-        if ($tableRows === '') {
-            $tableRows = sprintf('<tr><td colspan="4" style="padding:12px 14px;border-top:1px solid #e7edf3;color:#61758a;">No %s targets configured.</td></tr>', strtolower($this->escape($rowLabel)));
+        if ($rowsHtml === '') {
+            $rowsHtml = sprintf(
+                '<div style="padding:14px 16px;border:1px solid #e2e8f0;border-radius:12px;color:#64748b;">No %s targets configured.</div>',
+                strtolower($this->escape($rowLabel)),
+            );
         }
 
+        $totalStatus = (string)($targetTotal['status'] ?? 'none');
+        [$pillBg, $pillColor] = $this->statusStyles($totalStatus);
+
         return sprintf(
-            '<div style="margin-top:28px;border:1px solid #dbe7f0;border-radius:18px;overflow:hidden;">
-                <div style="padding:18px 20px;background:#f5f9fc;">
-                    <div style="font-size:20px;font-weight:800;color:#12344f;">%s</div>
-                    <div style="margin-top:8px;font-size:14px;line-height:1.55;color:#34506a;">%s</div>
-                    <div style="margin-top:12px;font-size:15px;line-height:1.55;color:#34506a;">
-                        <strong style="font-size:22px;color:#12344f;">%s / %s</strong><br>
-                        %s%% complete · %s · remaining %s
-                    </div>
+            '<div style="margin-top:28px;">
+                %s
+                <div style="border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;background:#f8fafc;margin-bottom:12px;">
+                    <div style="font-size:13px;color:#64748b;margin-bottom:8px;">%s</div>
+                    <table role="presentation" style="width:100%%;border-collapse:collapse;"><tr>
+                        <td style="vertical-align:middle;">
+                            <span style="font-size:22px;font-weight:800;color:#0f172a;">%s</span>
+                            <span style="font-size:14px;color:#94a3b8;margin:0 4px;">/</span>
+                            <span style="font-size:14px;color:#64748b;">%s</span>
+                        </td>
+                        <td style="vertical-align:middle;text-align:right;">
+                            <span style="font-size:13px;font-weight:700;color:#0f172a;">%s%%</span>
+                            <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:%s;color:%s;margin-left:8px;">%s</span>
+                        </td>
+                    </tr></table>
                 </div>
-                <table role="presentation" style="width:100%%;border-collapse:collapse;border-spacing:0;background:#ffffff;">
-                    <tr>
-                        <th align="left" style="padding:12px 14px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#61758a;background:#ffffff;">%s</th>
-                        <th align="left" style="padding:12px 14px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#61758a;background:#ffffff;">Actual / target</th>
-                        <th align="left" style="padding:12px 14px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#61758a;background:#ffffff;">Progress</th>
-                        <th align="left" style="padding:12px 14px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#61758a;background:#ffffff;">Status</th>
-                    </tr>
-                    %s
-                </table>
+                %s
             </div>',
-            $title,
+            $this->sectionHeader('🎯', $title, '#ede9fe'),
             $this->escape($intro),
             $this->escape($this->formatHours((float)($targetTotal['actual'] ?? 0.0))),
             $this->escape($this->formatHours((float)($targetTotal['target'] ?? 0.0))),
             $this->escape($this->formatPercent((float)($targetTotal['percent'] ?? 0.0))),
-            $this->escape($this->statusLabel((string)($targetTotal['status'] ?? 'none'))),
-            $this->escape($this->formatHours((float)($targetTotal['remaining'] ?? 0.0))),
-            $this->escape($rowLabel),
-            $tableRows,
+            $pillBg,
+            $pillColor,
+            $this->escape($this->statusLabel($totalStatus)),
+            $rowsHtml,
         );
     }
 
@@ -413,7 +500,7 @@ final class ReportRenderService {
                 $this->formatHours((float)($targetTotal['remaining'] ?? 0.0)),
             ),
         ];
-        foreach (array_slice($this->sortTargets($rows), 0, 5) as $row) {
+        foreach (array_slice($rows, 0, 5) as $row) {
             $lines[] = sprintf(
                 '%s: %s / %s (%s%%) · %s',
                 (string)($row['label'] ?? 'Row'),
@@ -431,34 +518,42 @@ final class ReportRenderService {
      * @param string[] $balanceWarnings
      */
     private function renderBalanceHtml(array $balance, array $balanceWarnings): string {
-        $warningHtml = '';
         if ($balanceWarnings === []) {
-            $warningHtml = '<div style="margin-top:12px;color:#5b8b6d;background:#eff9f1;border:1px solid #d2ebd8;border-radius:12px;padding:12px 14px;">No balance warnings for this period.</div>';
+            $warningsHtml = '<div style="padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-left:3px solid #22c55e;border-radius:8px;font-size:12px;color:#15803d;line-height:1.5;">No balance warnings for this period.</div>';
         } else {
+            $warningsHtml = '';
             foreach ($balanceWarnings as $warning) {
-                $warningHtml .= sprintf(
-                    '<div style="margin-top:10px;color:#7d4f08;background:#fff6df;border:1px solid #f0deaa;border-radius:12px;padding:12px 14px;">%s</div>',
+                $warningsHtml .= sprintf(
+                    '<div style="padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #f59e0b;border-radius:8px;font-size:12px;color:#78350f;line-height:1.5;margin-bottom:6px;">%s</div>',
                     $this->escape($warning),
                 );
             }
         }
 
         return sprintf(
-            '<div style="margin-top:28px;border:1px solid #dbe7f0;border-radius:18px;padding:18px 20px;background:#ffffff;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-                    <div>
-                        <div style="font-size:20px;font-weight:800;color:#12344f;">Balance</div>
-                        <div style="font-size:14px;line-height:1.5;color:#61758a;margin-top:6px;">A quick health check on time mix and drift.</div>
-                    </div>
-                    <div style="min-width:150px;border-radius:14px;background:#f5f9fc;padding:14px 16px;">
-                        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">Balance index</div>
-                        <div style="font-size:28px;font-weight:800;color:#12344f;margin-top:4px;">%s</div>
-                    </div>
-                </div>
+            '<div style="margin-top:28px;">
                 %s
+                <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:16px;padding:18px 20px;">
+                    <table role="presentation" style="width:100%%;border-collapse:collapse;">
+                        <tr>
+                            <td style="width:100px;vertical-align:top;padding-right:16px;">
+                                <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:14px;text-align:center;">
+                                    <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b45309;margin-bottom:6px;">Index</div>
+                                    <div style="font-size:34px;font-weight:800;color:#d97706;line-height:1;">%s</div>
+                                </div>
+                            </td>
+                            <td style="vertical-align:top;">
+                                <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:4px;">Balance health</div>
+                                <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.5;">A quick check on time mix and drift from your goals.</div>
+                                %s
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>',
+            $this->sectionHeader('⚖️', 'Balance', '#fef9c3'),
             $this->escape($this->formatIndex((float)($balance['index'] ?? 0.0))),
-            $warningHtml,
+            $warningsHtml,
         );
     }
 
@@ -501,23 +596,34 @@ final class ReportRenderService {
             ],
         ];
 
-        $html = '<div style="margin-top:28px;"><div style="font-size:20px;font-weight:800;color:#12344f;margin:0 0 14px 0;">Activity</div><table role="presentation" style="width:100%;border-collapse:separate;border-spacing:0 12px;">';
-        foreach ($cards as $card) {
-            $html .= sprintf(
-                '<tr>
-                    <td style="padding:16px 18px;border:1px solid #dbe7f0;border-radius:16px;background:#f8fbfd;">
-                        <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">%s</div>
-                        <div style="font-size:20px;font-weight:800;color:#12344f;margin-top:6px;">%s</div>
-                        <div style="font-size:13px;line-height:1.45;color:#5f7387;margin-top:6px;">%s</div>
-                    </td>
-                </tr>',
+        $cells = '';
+        $icons = ['🌙', '🔥', '⏱'];
+        foreach ($cards as $i => $card) {
+            $pr = $i < 2 ? 'padding-right:8px;' : '';
+            $cells .= sprintf(
+                '<td style="width:33.33%%;vertical-align:top;%s">
+                    <div style="border:1px solid #e2e8f0;border-radius:14px;padding:16px;background:#f8fafc;height:100%%;">
+                        <div style="font-size:16px;margin-bottom:8px;">%s</div>
+                        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">%s</div>
+                        <div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;margin-bottom:4px;">%s</div>
+                        <div style="font-size:11px;color:#64748b;line-height:1.45;">%s</div>
+                    </div>
+                </td>',
+                $pr,
+                $icons[$i] ?? '📌',
                 $this->escape((string)$card[0]),
                 $this->escape((string)$card[1]),
                 $this->escape((string)$card[2]),
             );
         }
-        $html .= '</table></div>';
-        return $html;
+        return sprintf(
+            '<div style="margin-top:28px;">
+                %s
+                <table role="presentation" style="width:100%%;border-collapse:collapse;"><tr>%s</tr></table>
+            </div>',
+            $this->sectionHeader('⚡', 'Activity highlights', '#dcfce7'),
+            $cells,
+        );
     }
 
     /**
@@ -544,27 +650,39 @@ final class ReportRenderService {
      * @param array<string,mixed> $reportingConfig
      */
     private function renderNotesHtml(array $notes, array $reportingConfig): string {
+        $current  = trim((string)($notes['current'] ?? ''));
+        $previous = trim((string)($notes['previous'] ?? ''));
+        if ($current === '' && $previous === '') {
+            return '';
+        }
+
+        $blocks = '';
+        if ($current !== '') {
+            $blocks .= sprintf(
+                '<div style="margin-bottom:14px;">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px;">This period</div>
+                    <div style="font-size:13px;line-height:1.65;color:#34506a;">%s</div>
+                </div>',
+                nl2br($this->escape($current)),
+            );
+        }
+        if ($previous !== '') {
+            $blocks .= sprintf(
+                '<div>
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px;">Previous period</div>
+                    <div style="font-size:13px;line-height:1.65;color:#34506a;">%s</div>
+                </div>',
+                nl2br($this->escape($previous)),
+            );
+        }
+
         return sprintf(
-            '<div style="margin-top:28px;display:flex;gap:16px;flex-wrap:wrap;">
-                <div style="flex:1 1 260px;border:1px solid #dbe7f0;border-radius:18px;padding:18px 20px;background:#ffffff;">
-                    <div style="font-size:20px;font-weight:800;color:#12344f;">Notes</div>
-                    <div style="margin-top:12px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">This period</div>
-                    <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#34506a;">%s</div>
-                    <div style="margin-top:14px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#61758a;">Previous period</div>
-                    <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#34506a;">%s</div>
-                </div>
-                <div style="flex:1 1 220px;border:1px solid #dbe7f0;border-radius:18px;padding:18px 20px;background:#f8fbfd;">
-                    <div style="font-size:20px;font-weight:800;color:#12344f;">Delivery</div>
-                    <div style="margin-top:12px;font-size:13px;line-height:1.6;color:#34506a;"><strong>Modes:</strong><br>%s</div>
-                    <div style="margin-top:12px;font-size:13px;line-height:1.6;color:#34506a;"><strong>Signals:</strong><br>risk-alert=%s, email=%s, in-app=%s</div>
-                </div>
+            '<div style="margin-top:28px;">
+                %s
+                <div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;background:#f8fafc;">%s</div>
             </div>',
-            nl2br($this->escape(trim((string)($notes['current'] ?? '')) ?: '—')),
-            nl2br($this->escape(trim((string)($notes['previous'] ?? '')) ?: '—')),
-            nl2br($this->escape($this->renderModePrefsPlain($reportingConfig))),
-            !empty($reportingConfig['alertOnRisk']) ? 'on' : 'off',
-            !empty($reportingConfig['notifyEmail']) ? 'on' : 'off',
-            !empty($reportingConfig['notifyNotification']) ? 'on' : 'off',
+            $this->sectionHeader('📝', 'Notes', '#f0f9ff'),
+            $blocks,
         );
     }
 
@@ -573,18 +691,19 @@ final class ReportRenderService {
      * @param array<string,mixed> $reportingConfig
      */
     private function renderNotesPlain(array $notes, array $reportingConfig): string {
-        return implode(PHP_EOL, [
-            'Notes',
-            'This period: ' . (trim((string)($notes['current'] ?? '')) ?: '—'),
-            'Previous period: ' . (trim((string)($notes['previous'] ?? '')) ?: '—'),
-            'Reporting prefs: ' . $this->renderModePrefsPlain($reportingConfig),
-            sprintf(
-                'Signals: risk-alert=%s, email=%s, in-app=%s',
-                !empty($reportingConfig['alertOnRisk']) ? 'on' : 'off',
-                !empty($reportingConfig['notifyEmail']) ? 'on' : 'off',
-                !empty($reportingConfig['notifyNotification']) ? 'on' : 'off',
-            ),
-        ]);
+        $current  = trim((string)($notes['current'] ?? ''));
+        $previous = trim((string)($notes['previous'] ?? ''));
+        if ($current === '' && $previous === '') {
+            return '';
+        }
+        $lines = ['Notes'];
+        if ($current !== '') {
+            $lines[] = 'This period: ' . $current;
+        }
+        if ($previous !== '') {
+            $lines[] = 'Previous period: ' . $previous;
+        }
+        return implode(PHP_EOL, $lines);
     }
 
     private function formatHours(float $hours): string {
@@ -597,17 +716,6 @@ final class ReportRenderService {
 
     private function formatIndex(float $index): string {
         return number_format($index, 2, '.', '');
-    }
-
-    /**
-     * @param array<int,array<string,mixed>> $rows
-     * @return array<int,array<string,mixed>>
-     */
-    private function sortTargets(array $rows): array {
-        usort($rows, function (array $a, array $b): int {
-            return ((float)($a['percent'] ?? 0.0) <=> (float)($b['percent'] ?? 0.0));
-        });
-        return $rows;
     }
 
     /**
@@ -647,13 +755,27 @@ final class ReportRenderService {
         };
     }
 
-    private function statusColor(string $status): string {
+    /**
+     * @return array{0:string,1:string,2:string} [pillBg, pillColor, barColor]
+     */
+    private function statusStyles(string $status): array {
         return match ($status) {
-            'on_track', 'done' => '#2f7a49',
-            'at_risk' => '#b4690e',
-            'behind' => '#b42424',
-            default => '#61758a',
+            'done', 'on_track' => ['#dcfce7', '#15803d', 'linear-gradient(90deg,#22c55e,#4ade80)'],
+            'at_risk'          => ['#fef3c7', '#b45309', 'linear-gradient(90deg,#f59e0b,#fbbf24)'],
+            'behind'           => ['#fee2e2', '#dc2626', 'linear-gradient(90deg,#ef4444,#f87171)'],
+            default            => ['#e0f2fe', '#0369a1', 'linear-gradient(90deg,#0ea5e9,#38bdf8)'],
         };
+    }
+
+    private function sectionHeader(string $icon, string $title, string $iconBg): string {
+        return sprintf(
+            '<div style="margin-bottom:12px;">
+                <span style="display:inline-block;vertical-align:middle;width:24px;height:24px;line-height:24px;text-align:center;background:%s;border-radius:7px;font-size:13px;margin-right:8px;">%s</span><span style="font-size:16px;font-weight:800;color:#0f172a;vertical-align:middle;">%s</span>
+            </div>',
+            $iconBg,
+            $icon,
+            $this->escape($title),
+        );
     }
 
     private function escape(string $value): string {
