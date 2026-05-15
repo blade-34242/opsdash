@@ -113,7 +113,6 @@ class ReportScheduleService {
                     targetsConfigOverride: null,
                     reportingConfigOverride: null,
                     reportVariantOverride: null,
-                    variantLabel: '',
                 );
                 $state[$modeKey] = [
                     'lastSentKey' => $dispatch['dispatchKey'],

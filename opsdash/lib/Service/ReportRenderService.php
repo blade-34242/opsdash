@@ -18,20 +18,18 @@ final class ReportRenderService {
      * @param array<string,mixed> $reportingConfig
      * @return array{subject:string,plain:string,html:string}
      */
-    public function render(array $summary, array $reportingConfig, string $displayName, string $variantLabel = ''): array {
+    public function render(array $summary, array $reportingConfig, string $displayName): array {
         $rangeLabel = ($summary['range'] ?? 'week') === 'month' ? 'Monthly' : 'Weekly';
         $periodLabel = sprintf('%s to %s', (string)($summary['from'] ?? ''), (string)($summary['to'] ?? ''));
         $reportVariant = $this->resolveReportVariant($summary);
         $reportVariantLabel = $this->reportVariantLabel($reportVariant);
 
         $subject = sprintf('Opsdash recap · %s · %s', $rangeLabel, $periodLabel);
-        $variantLabel = trim($variantLabel);
-        if ($variantLabel !== '') {
-            $subject .= ' · ' . $variantLabel;
-        }
 
         $selectedLabels = array_values(array_map('strval', $summary['selected_labels'] ?? []));
-        $selectedLine = empty($selectedLabels) ? 'None' : implode(', ', $selectedLabels);
+        $selectedLine = empty($selectedLabels)
+            ? 'None'
+            : implode(', ', array_map([$this, 'escape'], $selectedLabels));
         $topCalendar = is_array($summary['top_calendar'] ?? null) ? $summary['top_calendar'] : null;
         $topCategory = is_array($summary['top_category'] ?? null) ? $summary['top_category'] : null;
         $targets = is_array($summary['targets'] ?? null) ? $summary['targets'] : [];
@@ -276,7 +274,7 @@ final class ReportRenderService {
             $this->escape($displayName !== '' ? $displayName : 'there'),
             $this->escape(strtolower($rangeLabel)),
             $statCells,
-            $this->escape($selectedLine),
+            $selectedLine,
             $this->escape($reportVariantLabel),
         );
     }

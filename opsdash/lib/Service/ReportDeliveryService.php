@@ -34,7 +34,6 @@ class ReportDeliveryService {
         ?array $targetsConfigOverride = null,
         ?array $reportingConfigOverride = null,
         ?string $reportVariantOverride = null,
-        string $variantLabel = '',
     ): array {
         $summary = $this->reportSummaryService->build(
             $appName,
@@ -54,7 +53,6 @@ class ReportDeliveryService {
             $summary,
             $reportingConfigOverride,
             $reportVariantOverride,
-            $variantLabel,
         );
     }
 
@@ -69,7 +67,6 @@ class ReportDeliveryService {
         array $summary,
         ?array $reportingConfigOverride = null,
         ?string $reportVariantOverride = null,
-        string $variantLabel = '',
     ): array {
         $user = $this->userManager->get($uid);
         if ($user === null) {
@@ -93,7 +90,6 @@ class ReportDeliveryService {
             $summary,
             $reportingConfig,
             (string)$user->getDisplayName(),
-            $variantLabel,
         );
 
         $message = $this->mailer->createMessage();

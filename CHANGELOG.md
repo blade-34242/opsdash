@@ -16,9 +16,7 @@ All notable changes to this project will be documented in this file.
 - Nextcloud-integrated scheduled recap delivery:
   - `ReportScheduleService`
   - `ScheduledReportJob`
-  - `occ opsdash:report:send-scheduled --user=<uid>` debug path
 - A UI-triggerable test-send path through `POST /overview/report/test-send`.
-- A dedicated mail test command matrix: `occ opsdash:report:send-matrix --user=<uid>`.
 - Goal-type-aware recap variants that ignore dashboard layout presets and render different mail bodies for:
   - `Single Goal`
   - `Calendar Goals`
@@ -33,8 +31,9 @@ All notable changes to this project will be documented in this file.
 - Updated versioned release-note data and current release references to 0.8.1.
 - Report mails now use the native Nextcloud mail shell while rendering the inner recap body in an Opsdash-specific card/block structure instead of a generic list dump.
 - Reporting preferences in onboarding now expose live weekly/monthly recap controls rather than a preview-only placeholder.
-- Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI and CLI using the same internal report core.
+- Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI, background jobs, and the lightweight `opsdash:report` snapshot command using the same internal report core.
 - Automatic recap sending now runs through the Nextcloud background job system instead of any app-managed Unix cron path, with cadence derived from persisted user reporting preferences.
+- Release command exposure is intentionally minimal: only `occ opsdash:report` is shipped, while QA/seed helpers stay external.
 
 ### Fixed
 - Fixed recap-reporting onboarding reactivity so enabling reporting in the live wizard actually reveals the weekly/monthly recap controls.
