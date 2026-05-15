@@ -104,15 +104,16 @@ class ReportScheduleService {
 
             try {
                 $sendResult = $this->reportDeliveryService->sendTestReport(
-                    $appName,
-                    $uid,
-                    $modeKey,
-                    0,
-                    null,
-                    null,
-                    null,
-                    null,
-                    'scheduled_' . $dispatch['cadenceLabel'],
+                    appName: $appName,
+                    uid: $uid,
+                    range: $modeKey,
+                    offset: 0,
+                    requestedCals: null,
+                    groupsOverride: null,
+                    targetsConfigOverride: null,
+                    reportingConfigOverride: null,
+                    reportVariantOverride: null,
+                    variantLabel: '',
                 );
                 $state[$modeKey] = [
                     'lastSentKey' => $dispatch['dispatchKey'],

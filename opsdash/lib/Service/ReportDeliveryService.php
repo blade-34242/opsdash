@@ -33,6 +33,42 @@ class ReportDeliveryService {
         ?array $groupsOverride = null,
         ?array $targetsConfigOverride = null,
         ?array $reportingConfigOverride = null,
+        ?string $reportVariantOverride = null,
+        string $variantLabel = '',
+    ): array {
+        $summary = $this->reportSummaryService->build(
+            $appName,
+            $uid,
+            $range,
+            $offset,
+            $requestedCals,
+            $groupsOverride,
+            $targetsConfigOverride,
+        );
+        if ($reportVariantOverride !== null && $reportVariantOverride !== '') {
+            $summary['report_variant'] = $reportVariantOverride;
+        }
+        return $this->sendPreparedReport(
+            $appName,
+            $uid,
+            $summary,
+            $reportingConfigOverride,
+            $reportVariantOverride,
+            $variantLabel,
+        );
+    }
+
+    /**
+     * @param array<string,mixed> $summary
+     * @param array<string,mixed>|null $reportingConfigOverride
+     * @return array{email:string,subject:string,summary:array<string,mixed>}
+     */
+    public function sendPreparedReport(
+        string $appName,
+        string $uid,
+        array $summary,
+        ?array $reportingConfigOverride = null,
+        ?string $reportVariantOverride = null,
         string $variantLabel = '',
     ): array {
         $user = $this->userManager->get($uid);
@@ -49,15 +85,10 @@ class ReportDeliveryService {
             ? $this->persistSanitizer->sanitizeReportingConfig($reportingConfigOverride)
             : $this->userConfigService->readReportingConfig($appName, $uid);
 
-        $summary = $this->reportSummaryService->build(
-            $appName,
-            $uid,
-            $range,
-            $offset,
-            $requestedCals,
-            $groupsOverride,
-            $targetsConfigOverride,
-        );
+        if ($reportVariantOverride !== null && $reportVariantOverride !== '') {
+            $summary['report_variant'] = $reportVariantOverride;
+        }
+
         $rendered = $this->reportRenderService->render(
             $summary,
             $reportingConfig,

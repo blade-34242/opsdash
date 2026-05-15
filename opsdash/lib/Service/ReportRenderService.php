@@ -25,6 +25,10 @@ final class ReportRenderService {
         $reportVariantLabel = $this->reportVariantLabel($reportVariant);
 
         $subject = sprintf('Opsdash recap · %s · %s', $rangeLabel, $periodLabel);
+        $variantLabel = trim($variantLabel);
+        if ($variantLabel !== '') {
+            $subject .= ' · ' . $variantLabel;
+        }
 
         $selectedLabels = array_values(array_map('strval', $summary['selected_labels'] ?? []));
         $selectedLine = empty($selectedLabels) ? 'None' : implode(', ', $selectedLabels);

@@ -89,7 +89,7 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Report model: Single Goal', $result['plain']);
+    $this->assertStringContainsString('Model: Single Goal', $result['plain']);
     $this->assertStringContainsString('Goal progress', $result['plain']);
     $this->assertStringNotContainsString('Calendar targets', $result['plain']);
     $this->assertStringNotContainsString('Balance index:', $result['plain']);
@@ -101,7 +101,7 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Report model: Calendar Goals', $result['plain']);
+    $this->assertStringContainsString('Model: Calendar Goals', $result['plain']);
     $this->assertStringContainsString('Calendar targets', $result['plain']);
     $this->assertStringContainsString('Opsdash · Meetings', $result['plain']);
     $this->assertStringNotContainsString('Balance index:', $result['plain']);
@@ -113,10 +113,30 @@ class ReportRenderServiceTest extends TestCase {
 
     $result = $this->render($summary, $this->reportingConfig());
 
-    $this->assertStringContainsString('Report model: Calendar + Category Goals', $result['plain']);
+    $this->assertStringContainsString('Model: Calendar + Category Goals', $result['plain']);
     $this->assertStringContainsString('Targets & pace', $result['plain']);
     $this->assertStringContainsString('Work: 30.00 h / 24.00 h', $result['plain']);
     $this->assertStringContainsString('Balance index: 0.50', $result['plain']);
+  }
+
+  public function testHtmlOutputEscapesUserControlledContent(): void {
+    $summary = $this->baseSummary();
+    $summary['report_variant'] = 'single_goal';
+    $summary['selected_labels'] = ['<img src=x onerror=alert(1)>'];
+    $summary['top_calendar'] = ['label' => '<svg onload=alert(1)>', 'hours' => 20.5];
+    $summary['notes'] = [
+      'current' => "Current note <script>alert('xss')</script>",
+      'previous' => "Previous note <b>safe?</b>",
+    ];
+
+    $result = $this->render($summary, $this->reportingConfig());
+
+    $this->assertStringNotContainsString('<script>alert(\'xss\')</script>', $result['html']);
+    $this->assertStringNotContainsString('<img src=x onerror=alert(1)>', $result['html']);
+    $this->assertStringNotContainsString('<svg onload=alert(1)>', $result['html']);
+    $this->assertStringContainsString('&lt;script&gt;alert(&#039;xss&#039;)&lt;/script&gt;', $result['html']);
+    $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $result['html']);
+    $this->assertStringContainsString('&lt;svg onload=alert(1)&gt;', $result['html']);
   }
 }
 
