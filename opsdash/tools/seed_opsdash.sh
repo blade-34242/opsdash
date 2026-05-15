@@ -204,19 +204,20 @@ seed_deck() {
   local colors=("#2563EB" "#F97316" "#0EA5E9" "#10B981" "#A855F7")
   seed_for_user() {
     local user=$1
-    local other=$2
+    local pass=$2
+    local other=$3
     local idx=0
     for title in "${titles[@]}"; do
       local color=${colors[$idx]:-"#2563EB"}
-      QA_USER="$user" QA_PASS="${QA_PASS:-qa}" QA_DECK_BOARD_TITLE="$title" QA_DECK_BOARD_COLOR="$color" QA_DECK_KEEP_STACKS=1 QA_OTHER_USER="$other" \
+      QA_USER="$user" QA_PASS="$pass" QA_DECK_BOARD_TITLE="$title" QA_DECK_BOARD_COLOR="$color" QA_DECK_KEEP_STACKS=1 QA_OTHER_USER="$other" \
         BASE="$BASE" php "${app_path%/}/tools/seed_deck_boards.php"
       idx=$((idx + 1))
     done
   }
 
   # Seed boards for QA (default owner) and also for admin so both users see Deck cards.
-  seed_for_user "$QA_USER" "$QA2_USER"
-  seed_for_user "$ADMIN_USER" "$QA_USER"
+  seed_for_user "$QA_USER" "$QA_PASS" "$QA2_USER"
+  seed_for_user "$ADMIN_USER" "$ADMIN_PASS" "$QA_USER"
 }
 
 deck_available() {
