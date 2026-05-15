@@ -97,6 +97,13 @@ docker exec nc33-mailguard bash -lc 'cd /var/www/html && php occ status'
   - `Calendar + Category Goals`
 - Dashboard presets/layout variants stay in the UI, but they do not affect report rendering.
 - Automatic recap delivery is integrated through the Nextcloud background job system, not an app-managed Unix cron path.
+- Scheduler semantics:
+  - `final` = complete previous week/month after the period closes
+  - `checkpoint_final` = midpoint checkpoint plus final closed-period recap
+  - `sendTimeLocal` = user-local Nextcloud time, not raw server time
+- Current defaults:
+  - weekly enabled: `final` at `06:00`
+  - monthly disabled: `checkpoint_final` at `18:00`
 - Release builds intentionally expose only one Opsdash `occ` command: `php occ opsdash:report`.
 
 Quick smoke check:

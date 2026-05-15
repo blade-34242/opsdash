@@ -143,13 +143,13 @@ class PresetsControllerTest extends TestCase {
         'modes' => [
           'week' => [
             'enabled' => true,
-            'cadence' => 'mid',
-            'reminderLead' => '1d',
+            'delivery' => 'checkpoint_final',
+            'sendTimeLocal' => '06:00',
           ],
           'month' => [
             'enabled' => false,
-            'cadence' => 'end',
-            'reminderLead' => '2d',
+            'delivery' => 'final',
+            'sendTimeLocal' => '18:00',
           ],
         ],
       ],
@@ -195,8 +195,8 @@ class PresetsControllerTest extends TestCase {
     $this->assertSame([], $result['warnings']);
     $this->assertSame('dark', $result['payload']['theme_preference']);
     $this->assertTrue($result['payload']['reporting_config']['modes']['week']['enabled']);
-    $this->assertSame('mid', $result['payload']['reporting_config']['modes']['week']['cadence']);
-    $this->assertSame('2d', $result['payload']['reporting_config']['modes']['month']['reminderLead']);
+    $this->assertSame('checkpoint_final', $result['payload']['reporting_config']['modes']['week']['delivery']);
+    $this->assertSame('18:00', $result['payload']['reporting_config']['modes']['month']['sendTimeLocal']);
     $this->assertSame('mine', $result['payload']['deck_settings']['defaultFilter']);
     $this->assertSame('full_granular', $result['payload']['onboarding']['strategy']);
     $this->assertSame('pro', $result['payload']['onboarding']['dashboardMode']);

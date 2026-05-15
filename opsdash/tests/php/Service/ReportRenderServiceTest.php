@@ -73,8 +73,8 @@ class ReportRenderServiceTest extends TestCase {
     return [
       'enabled' => true,
       'modes' => [
-        'week' => ['enabled' => true, 'cadence' => 'end', 'reminderLead' => '1d'],
-        'month' => ['enabled' => false, 'cadence' => 'end', 'reminderLead' => '2d'],
+        'week' => ['enabled' => true, 'delivery' => 'final', 'sendTimeLocal' => '06:00'],
+        'month' => ['enabled' => false, 'delivery' => 'checkpoint_final', 'sendTimeLocal' => '18:00'],
       ],
       'alertOnRisk' => true,
       'riskThreshold' => 0.85,

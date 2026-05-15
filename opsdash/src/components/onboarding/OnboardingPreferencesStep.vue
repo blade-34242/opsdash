@@ -181,66 +181,41 @@
             </div>
             <div v-if="reportingDraft.modes.week.enabled" class="field-row">
               <div class="field-copy">
-                <strong>Weekly cadence</strong>
-                <p>Choose between daily, half-week, or end-of-week recaps.</p>
+                <strong>Weekly delivery</strong>
+                <p>Final recap sends after the week closes. Checkpoint adds one mid-week update.</p>
               </div>
               <div class="field-actions field-actions--wrap">
                 <button
                   type="button"
                   class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.cadence === 'daily' }"
-                  @click="setReportingModeCadence('week', 'daily')"
+                  :class="{ active: reportingDraft.modes.week.delivery === 'final' }"
+                  @click="setReportingModeDelivery('week', 'final')"
                 >
-                  Daily
+                  Final recap
                 </button>
                 <button
                   type="button"
                   class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.cadence === 'mid' }"
-                  @click="setReportingModeCadence('week', 'mid')"
+                  :class="{ active: reportingDraft.modes.week.delivery === 'checkpoint_final' }"
+                  @click="setReportingModeDelivery('week', 'checkpoint_final')"
                 >
-                  Half-week
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.cadence === 'end' }"
-                  @click="setReportingModeCadence('week', 'end')"
-                >
-                  End of week
+                  Checkpoint + final
                 </button>
               </div>
             </div>
             <div v-if="reportingDraft.modes.week.enabled" class="field-row">
               <div class="field-copy">
-                <strong>Weekly reminder lead</strong>
-                <p>How far ahead the weekly recap reminder should arrive.</p>
+                <strong>Weekly send time</strong>
+                <p>Uses your Nextcloud user timezone. Final recaps send on the first morning after the week ends.</p>
               </div>
-              <div class="field-actions field-actions--wrap">
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.reminderLead === 'none' }"
-                  @click="updateReportingMode('week', { reminderLead: 'none' })"
+              <div class="field-actions">
+                <input
+                  class="time-input"
+                  type="time"
+                  step="900"
+                  :value="reportingDraft.modes.week.sendTimeLocal"
+                  @input="updateReportingMode('week', { sendTimeLocal: ($event.target as HTMLInputElement).value || '06:00' })"
                 >
-                  None
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.reminderLead === '1d' }"
-                  @click="updateReportingMode('week', { reminderLead: '1d' })"
-                >
-                  1 day
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.week.reminderLead === '2d' }"
-                  @click="updateReportingMode('week', { reminderLead: '2d' })"
-                >
-                  2 days
-                </button>
               </div>
             </div>
           </div>
@@ -264,66 +239,41 @@
             </div>
             <div v-if="reportingDraft.modes.month.enabled" class="field-row">
               <div class="field-copy">
-                <strong>Monthly cadence</strong>
-                <p>Choose between daily, half-month, or end-of-month recaps.</p>
+                <strong>Monthly delivery</strong>
+                <p>Final recap sends after the month closes. Checkpoint adds a mid-month update before the final recap.</p>
               </div>
               <div class="field-actions field-actions--wrap">
                 <button
                   type="button"
                   class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.cadence === 'daily' }"
-                  @click="setReportingModeCadence('month', 'daily')"
+                  :class="{ active: reportingDraft.modes.month.delivery === 'final' }"
+                  @click="setReportingModeDelivery('month', 'final')"
                 >
-                  Daily
+                  Final recap
                 </button>
                 <button
                   type="button"
                   class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.cadence === 'mid' }"
-                  @click="setReportingModeCadence('month', 'mid')"
+                  :class="{ active: reportingDraft.modes.month.delivery === 'checkpoint_final' }"
+                  @click="setReportingModeDelivery('month', 'checkpoint_final')"
                 >
-                  Half-month
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.cadence === 'end' }"
-                  @click="setReportingModeCadence('month', 'end')"
-                >
-                  End of month
+                  Checkpoint + final
                 </button>
               </div>
             </div>
             <div v-if="reportingDraft.modes.month.enabled" class="field-row">
               <div class="field-copy">
-                <strong>Monthly reminder lead</strong>
-                <p>How far ahead the monthly recap reminder should arrive.</p>
+                <strong>Monthly send time</strong>
+                <p>Uses your Nextcloud user timezone. Final recaps send on the first configured slot after month-end.</p>
               </div>
-              <div class="field-actions field-actions--wrap">
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.reminderLead === 'none' }"
-                  @click="updateReportingMode('month', { reminderLead: 'none' })"
+              <div class="field-actions">
+                <input
+                  class="time-input"
+                  type="time"
+                  step="900"
+                  :value="reportingDraft.modes.month.sendTimeLocal"
+                  @input="updateReportingMode('month', { sendTimeLocal: ($event.target as HTMLInputElement).value || '18:00' })"
                 >
-                  None
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.reminderLead === '1d' }"
-                  @click="updateReportingMode('month', { reminderLead: '1d' })"
-                >
-                  1 day
-                </button>
-                <button
-                  type="button"
-                  class="choice-pill"
-                  :class="{ active: reportingDraft.modes.month.reminderLead === '2d' }"
-                  @click="updateReportingMode('month', { reminderLead: '2d' })"
-                >
-                  2 days
-                </button>
               </div>
             </div>
           </div>
@@ -423,7 +373,7 @@
 
 <script setup lang="ts">
 import { computed, ref, toRefs } from 'vue'
-import type { ReportingConfig, ReportingCadence, ReportingMode } from '../../services/reporting'
+import type { ReportingConfig, ReportingMode } from '../../services/reporting'
 
 const props = defineProps<{
   themePreference: 'auto' | 'light' | 'dark'
@@ -441,7 +391,7 @@ const props = defineProps<{
   reportingDraft: ReportingConfig
   setReportingEnabled: (enabled: boolean) => void
   setReportingModeEnabled: (mode: ReportingMode, enabled: boolean) => void
-  setReportingModeCadence: (mode: ReportingMode, cadence: ReportingCadence) => void
+  setReportingModeDelivery: (mode: ReportingMode, delivery: ReportingConfig['modes'][ReportingMode]['delivery']) => void
   updateReporting: (patch: Partial<ReportingConfig>) => void
   updateReportingMode: (mode: ReportingMode, patch: Partial<ReportingConfig['modes'][ReportingMode]>) => void
   sendTestReport?: () => Promise<void>
@@ -496,7 +446,7 @@ const {
   onAllDayHoursChange,
   setReportingEnabled,
   setReportingModeEnabled,
-  setReportingModeCadence,
+  setReportingModeDelivery,
   updateReporting,
   updateReportingMode,
   sendTestReport,

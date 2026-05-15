@@ -1,11 +1,10 @@
 export type ReportingMode = 'week' | 'month'
-export type ReportingCadence = 'end' | 'mid' | 'daily'
-export type ReportingReminder = 'none' | '1d' | '2d'
+export type ReportingDelivery = 'final' | 'checkpoint_final'
 
 export interface ReportingModeConfig {
   enabled: boolean
-  cadence: ReportingCadence
-  reminderLead: ReportingReminder
+  delivery: ReportingDelivery
+  sendTimeLocal: string
 }
 
 export interface ReportingConfig {
@@ -65,13 +64,13 @@ export function createDefaultReportingConfig(): ReportingConfig {
     modes: {
       week: {
         enabled: true,
-        cadence: 'end',
-        reminderLead: '1d',
+        delivery: 'final',
+        sendTimeLocal: '06:00',
       },
       month: {
         enabled: false,
-        cadence: 'end',
-        reminderLead: '2d',
+        delivery: 'checkpoint_final',
+        sendTimeLocal: '18:00',
       },
     },
     alertOnRisk: true,
@@ -85,14 +84,20 @@ function normalizeReportingModeConfig(input: any, fallback: ReportingModeConfig)
   if (!input || typeof input !== 'object') {
     return { ...fallback }
   }
-  const cadence: ReportingCadence =
-    input.cadence === 'daily' || input.cadence === 'mid' ? input.cadence : 'end'
-  const reminderLead: ReportingReminder =
-    input.reminderLead === '1d' || input.reminderLead === '2d' ? input.reminderLead : 'none'
+  const delivery: ReportingDelivery =
+    input.delivery === 'checkpoint_final'
+      ? 'checkpoint_final'
+      : input.cadence === 'mid'
+        ? 'checkpoint_final'
+        : 'final'
+  const sendTimeLocal =
+    typeof input.sendTimeLocal === 'string' && /^\d{2}:\d{2}$/.test(input.sendTimeLocal)
+      ? input.sendTimeLocal
+      : fallback.sendTimeLocal
   return {
     enabled: Boolean(input.enabled),
-    cadence,
-    reminderLead,
+    delivery,
+    sendTimeLocal,
   }
 }
 
@@ -112,12 +117,8 @@ export function normalizeReportingConfig(input: any, fallback?: ReportingConfig)
     Number.isFinite(thresholdRaw) && thresholdRaw >= 0 && thresholdRaw <= 1
       ? thresholdRaw
       : base.riskThreshold
-  const legacyCadence: ReportingCadence =
-    input.interim === 'daily' ? 'daily' : input.interim === 'midweek' ? 'mid' : 'end'
-  const legacyReminder: ReportingReminder =
-    input.reminderLead === '1d' || input.reminderLead === '2d' ? input.reminderLead : 'none'
   const legacySchedule = input.schedule === 'week' || input.schedule === 'month' ? input.schedule : 'both'
-  const modes = input.modes && typeof input.modes === 'object'
+  const modes: Record<ReportingMode, ReportingModeConfig> = input.modes && typeof input.modes === 'object'
     ? {
         week: normalizeReportingModeConfig(input.modes.week, base.modes.week),
         month: normalizeReportingModeConfig(input.modes.month, base.modes.month),
@@ -125,13 +126,13 @@ export function normalizeReportingConfig(input: any, fallback?: ReportingConfig)
     : {
         week: {
           enabled: legacySchedule === 'week' || legacySchedule === 'both',
-          cadence: legacyCadence,
-          reminderLead: legacyReminder,
+          delivery: input.interim === 'midweek' ? 'checkpoint_final' : 'final',
+          sendTimeLocal: base.modes.week.sendTimeLocal,
         },
         month: {
           enabled: legacySchedule === 'month' || legacySchedule === 'both',
-          cadence: legacyCadence,
-          reminderLead: legacyReminder,
+          delivery: input.interim === 'midweek' ? 'checkpoint_final' : 'final',
+          sendTimeLocal: base.modes.month.sendTimeLocal,
         },
       }
   return {

@@ -155,7 +155,7 @@
               :reporting-draft="reportingDraft"
               :set-reporting-enabled="setReportingEnabled"
               :set-reporting-mode-enabled="setReportingModeEnabled"
-              :set-reporting-mode-cadence="setReportingModeCadence"
+              :set-reporting-mode-delivery="setReportingModeDelivery"
               :update-reporting="updateReporting"
               :update-reporting-mode="updateReportingMode"
               :send-test-report="handleTestReportSend"
@@ -337,7 +337,7 @@ const {
   reportingDraft,
   setReportingEnabled,
   setReportingModeEnabled,
-  setReportingModeCadence,
+  setReportingModeDelivery,
   updateReporting,
   updateReportingMode,
   dashboardMode,

@@ -340,13 +340,13 @@ describe('useDashboardPersistence', () => {
 
     expect(reportingConfig.value.modes.week).toEqual({
       enabled: true,
-      cadence: 'mid',
-      reminderLead: '1d',
+      delivery: 'checkpoint_final',
+      sendTimeLocal: '06:00',
     })
     expect(reportingConfig.value.modes.month).toEqual({
       enabled: false,
-      cadence: 'end',
-      reminderLead: '1d',
+      delivery: 'final',
+      sendTimeLocal: '18:00',
     })
     expect(reportingConfig.value.notifyEmail).toBe(false)
     expect(reportingConfig.value.notifyNotification).toBe(true)

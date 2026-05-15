@@ -107,7 +107,7 @@ class ReportScheduleService {
                     appName: $appName,
                     uid: $uid,
                     range: $modeKey,
-                    offset: 0,
+                    offset: (int)($dispatch['rangeOffset'] ?? 0),
                     requestedCals: null,
                     groupsOverride: null,
                     targetsConfigOverride: null,
@@ -179,7 +179,7 @@ class ReportScheduleService {
 
     /**
      * @param array<string,mixed> $modeConfig
-     * @return array<string,string>|null
+     * @return array<string,int|string>|null
      */
     private function resolveDispatchContext(
         string $uid,
@@ -189,36 +189,55 @@ class ReportScheduleService {
         int $weekStart,
     ): ?array {
         $range = $modeKey === 'month' ? 'month' : 'week';
-        [$from, $to] = $this->calendarAccess->rangeBounds($range, 0, $now->getTimezone(), $weekStart);
-        $todayKey = $now->format('Y-m-d');
-        $periodKey = $from->format('Y-m-d') . '_' . $to->format('Y-m-d');
-        $cadence = (string)($modeConfig['cadence'] ?? 'end');
-
-        if ($cadence === 'daily') {
-            return [
-                'dispatchKey' => $periodKey . ':daily:' . $todayKey,
-                'cadenceLabel' => $modeKey . '_daily',
-            ];
+        $delivery = (string)($modeConfig['delivery'] ?? (($modeConfig['cadence'] ?? null) === 'mid' ? 'checkpoint_final' : 'final'));
+        if ($delivery !== 'checkpoint_final') {
+            $delivery = 'final';
         }
-
-        $mid = $this->midpointDate($from, $to);
-        if ($cadence === 'mid') {
-            if ($todayKey !== $mid->format('Y-m-d')) {
-                return null;
-            }
-            return [
-                'dispatchKey' => $periodKey . ':mid',
-                'cadenceLabel' => $modeKey . '_mid',
-            ];
-        }
-
-        if ($todayKey !== $to->format('Y-m-d')) {
+        $sendTime = $this->normalizeSendTime((string)($modeConfig['sendTimeLocal'] ?? ($modeKey === 'month' ? '18:00' : '06:00')));
+        if (!$this->isSendTimeReached($now, $sendTime)) {
             return null;
         }
+
+        [$currentFrom, $currentTo] = $this->calendarAccess->rangeBounds($range, 0, $now->getTimezone(), $weekStart);
+        $todayKey = $now->format('Y-m-d');
+
+        if ($delivery === 'checkpoint_final') {
+            $mid = $this->midpointDate($currentFrom, $currentTo);
+            if ($todayKey === $mid->format('Y-m-d')) {
+                $periodKey = $currentFrom->format('Y-m-d') . '_' . $currentTo->format('Y-m-d');
+                return [
+                    'dispatchKey' => $periodKey . ':checkpoint',
+                    'cadenceLabel' => $modeKey . '_checkpoint',
+                    'rangeOffset' => 0,
+                ];
+            }
+        }
+
+        if ($todayKey !== $currentFrom->format('Y-m-d')) {
+            return null;
+        }
+
+        [$previousFrom, $previousTo] = $this->calendarAccess->rangeBounds($range, -1, $now->getTimezone(), $weekStart);
+        $periodKey = $previousFrom->format('Y-m-d') . '_' . $previousTo->format('Y-m-d');
         return [
-            'dispatchKey' => $periodKey . ':end',
-            'cadenceLabel' => $modeKey . '_end',
+            'dispatchKey' => $periodKey . ':final',
+            'cadenceLabel' => $modeKey . '_final',
+            'rangeOffset' => -1,
         ];
+    }
+
+    private function normalizeSendTime(string $value): string {
+        $value = trim($value);
+        if (preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value)) {
+            return $value;
+        }
+        return '06:00';
+    }
+
+    private function isSendTimeReached(\DateTimeImmutable $now, string $sendTime): bool {
+        [$hours, $minutes] = array_map('intval', explode(':', $sendTime, 2));
+        $sendAt = $now->setTime($hours, $minutes, 0);
+        return $now >= $sendAt;
     }
 
     private function midpointDate(\DateTimeImmutable $from, \DateTimeImmutable $to): \DateTimeImmutable {

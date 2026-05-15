@@ -15,7 +15,6 @@ import {
   createDefaultDeckSettings,
   createDefaultReportingConfig,
   type DeckFeatureSettings,
-  type ReportingCadence,
   type ReportingConfig,
   type ReportingMode,
 } from '../src/services/reporting'
@@ -214,15 +213,10 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
       const current = reportingDraft.value.modes[mode]
       if (!current?.enabled) return
       const title = mode === 'week' ? 'Week' : 'Month'
-      const cadence =
-        current.cadence === 'daily'
-          ? 'daily'
-          : current.cadence === 'mid'
-            ? 'mid-cycle'
-            : 'end only'
-      labels.push(`${title}: ${cadence}`)
+      const delivery = current.delivery === 'checkpoint_final' ? 'checkpoint + final recap' : 'final recap'
+      labels.push(`${title}: ${delivery} @ ${current.sendTimeLocal}`)
     })
-    if (!labels.length) return 'Recap enabled • no active cadence'
+    if (!labels.length) return 'Recap enabled • no active modes'
     return labels.join(' • ')
   })
 
@@ -1046,14 +1040,14 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
     reportingDraft.value = { ...reportingDraft.value, ...patch }
   }
 
-  function setReportingModeCadence(mode: ReportingMode, cadence: ReportingCadence) {
+  function setReportingModeDelivery(mode: ReportingMode, delivery: ReportingConfig['modes'][ReportingMode]['delivery']) {
     reportingDraft.value = {
       ...reportingDraft.value,
       modes: {
         ...reportingDraft.value.modes,
         [mode]: {
           ...reportingDraft.value.modes[mode],
-          cadence,
+          delivery,
         },
       },
     }
@@ -1459,7 +1453,7 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
     applySuggestedCategoryTarget,
     setReportingEnabled,
     setReportingModeEnabled,
-    setReportingModeCadence,
+    setReportingModeDelivery,
     updateReporting,
     updateReportingMode,
     canGoBack,

@@ -275,8 +275,8 @@ class OverviewControllerTest extends TestCase {
     $this->assertArrayHasKey('modes', $fixture['reporting_config_read']);
     $this->assertArrayHasKey('week', $fixture['reporting_config_read']['modes']);
     $this->assertArrayHasKey('month', $fixture['reporting_config_read']['modes']);
-    $this->assertSame('mid', $fixture['reporting_config_read']['modes']['week']['cadence']);
-    $this->assertSame('1d', $fixture['reporting_config_read']['modes']['week']['reminderLead']);
+    $this->assertSame('checkpoint_final', $fixture['reporting_config_read']['modes']['week']['delivery']);
+    $this->assertSame('06:00', $fixture['reporting_config_read']['modes']['week']['sendTimeLocal']);
     $this->assertArrayHasKey('deck_settings_read', $fixture);
     $this->assertSame('mine', $fixture['deck_settings_read']['defaultFilter']);
     $this->assertSame([42], $fixture['deck_settings_read']['hiddenBoards']);

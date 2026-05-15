@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
   - `Single Goal`
   - `Calendar Goals`
   - `Calendar + Category Goals`
-- Separate weekly and monthly reporting mode configuration with independent cadence/reminder settings.
+- Separate weekly and monthly reporting mode configuration with independent delivery type and local send time settings.
 - Local Nextcloud 33 + Mailpit mail-test stack documentation and workflow.
 
 ### Changed
@@ -30,9 +30,9 @@ All notable changes to this project will be documented in this file.
 - Hardened E2E onboarding and release-note dismissal helpers so smoke coverage depends less on prior persisted user state.
 - Updated versioned release-note data and current release references to 0.8.1.
 - Report mails now use the native Nextcloud mail shell while rendering the inner recap body in an Opsdash-specific card/block structure instead of a generic list dump.
-- Reporting preferences in onboarding now expose live weekly/monthly recap controls rather than a preview-only placeholder.
+- Reporting preferences in onboarding now expose live weekly/monthly recap controls with `Final recap` or `Checkpoint + final` plus per-mode send times.
 - Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI, background jobs, and the lightweight `opsdash:report` snapshot command using the same internal report core.
-- Automatic recap sending now runs through the Nextcloud background job system instead of any app-managed Unix cron path, with cadence derived from persisted user reporting preferences.
+- Automatic recap sending now runs through the Nextcloud background job system instead of any app-managed Unix cron path, using user-timezone-aware `final` / `checkpoint_final` delivery semantics and local send times.
 - Release command exposure is intentionally minimal: only `occ opsdash:report` is shipped, while QA/seed helpers stay external.
 
 ### Fixed

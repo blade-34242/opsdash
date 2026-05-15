@@ -110,13 +110,13 @@ describe('useDashboard load', () => {
         modes: {
           week: {
             enabled: true,
-            cadence: 'mid',
-            reminderLead: '1d',
+            delivery: 'checkpoint_final',
+            sendTimeLocal: '06:00',
           },
           month: {
             enabled: false,
-            cadence: 'end',
-            reminderLead: '2d',
+            delivery: 'final',
+            sendTimeLocal: '18:00',
           },
         },
         alertOnRisk: true,
@@ -179,13 +179,13 @@ describe('useDashboard load', () => {
     expect(dashboard.stats.totalHours).toBe(12)
     expect(dashboard.reportingConfig.value.modes.week).toEqual({
       enabled: true,
-      cadence: 'mid',
-      reminderLead: '1d',
+      delivery: 'checkpoint_final',
+      sendTimeLocal: '06:00',
     })
     expect(dashboard.reportingConfig.value.modes.month).toEqual({
       enabled: false,
-      cadence: 'end',
-      reminderLead: '2d',
+      delivery: 'final',
+      sendTimeLocal: '18:00',
     })
     expect(dashboard.deckSettings.value.filtersEnabled).toBe(false)
     expect(dashboard.byCal.value).toEqual(response.byCal)

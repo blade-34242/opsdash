@@ -353,25 +353,21 @@ final class PersistSanitizer {
         if (!in_array($legacyCadence, ['none', 'midweek', 'daily'], true)) {
             $legacyCadence = 'none';
         }
-        $legacyReminder = $value['reminderLead'] ?? 'none';
-        if (!in_array($legacyReminder, ['none', '1d', '2d'], true)) {
-            $legacyReminder = 'none';
-        }
         $modes = [
             'week' => $this->sanitizeReportingModeConfig(
                 is_array($value['modes']['week'] ?? null) ? $value['modes']['week'] : null,
                 [
                     'enabled' => $legacySchedule === 'week' || $legacySchedule === 'both',
-                    'cadence' => $legacyCadence === 'daily' ? 'daily' : ($legacyCadence === 'midweek' ? 'mid' : 'end'),
-                    'reminderLead' => $legacyReminder,
+                    'delivery' => $legacyCadence === 'midweek' ? 'checkpoint_final' : 'final',
+                    'sendTimeLocal' => '06:00',
                 ]
             ),
             'month' => $this->sanitizeReportingModeConfig(
                 is_array($value['modes']['month'] ?? null) ? $value['modes']['month'] : null,
                 [
                     'enabled' => $legacySchedule === 'month' || $legacySchedule === 'both',
-                    'cadence' => $legacyCadence === 'daily' ? 'daily' : ($legacyCadence === 'midweek' ? 'mid' : 'end'),
-                    'reminderLead' => $legacyReminder,
+                    'delivery' => $legacyCadence === 'midweek' ? 'checkpoint_final' : 'final',
+                    'sendTimeLocal' => '18:00',
                 ]
             ),
         ];
@@ -491,18 +487,18 @@ final class PersistSanitizer {
         if (!is_array($value)) {
             return $fallback;
         }
-        $cadence = $value['cadence'] ?? 'end';
-        if (!in_array($cadence, ['end', 'mid', 'daily'], true)) {
-            $cadence = $fallback['cadence'] ?? 'end';
+        $delivery = $value['delivery'] ?? null;
+        if ($delivery !== 'final' && $delivery !== 'checkpoint_final') {
+            $delivery = ($value['cadence'] ?? null) === 'mid' ? 'checkpoint_final' : ($fallback['delivery'] ?? 'final');
         }
-        $reminder = $value['reminderLead'] ?? 'none';
-        if (!in_array($reminder, ['none', '1d', '2d'], true)) {
-            $reminder = $fallback['reminderLead'] ?? 'none';
+        $sendTimeLocal = trim((string)($value['sendTimeLocal'] ?? ''));
+        if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $sendTimeLocal)) {
+            $sendTimeLocal = (string)($fallback['sendTimeLocal'] ?? '06:00');
         }
         return [
             'enabled' => array_key_exists('enabled', $value) ? (bool)$value['enabled'] : !empty($fallback['enabled']),
-            'cadence' => $cadence,
-            'reminderLead' => $reminder,
+            'delivery' => $delivery,
+            'sendTimeLocal' => $sendTimeLocal,
         ];
     }
 
@@ -556,13 +552,13 @@ final class PersistSanitizer {
             'modes' => [
                 'week' => [
                     'enabled' => true,
-                    'cadence' => 'end',
-                    'reminderLead' => '1d',
+                    'delivery' => 'final',
+                    'sendTimeLocal' => '06:00',
                 ],
                 'month' => [
                     'enabled' => false,
-                    'cadence' => 'end',
-                    'reminderLead' => '2d',
+                    'delivery' => 'checkpoint_final',
+                    'sendTimeLocal' => '18:00',
                 ],
             ],
             'alertOnRisk' => true,

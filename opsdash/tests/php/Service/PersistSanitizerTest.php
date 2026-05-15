@@ -169,7 +169,6 @@ class PersistSanitizerTest extends TestCase {
       'enabled' => true,
       'schedule' => 'week',
       'interim' => 'midweek',
-      'reminderLead' => '1d',
       'alertOnRisk' => true,
       'riskThreshold' => 0.9,
       'notifyEmail' => false,
@@ -179,10 +178,10 @@ class PersistSanitizerTest extends TestCase {
     $this->assertTrue($result['enabled']);
     $this->assertTrue($result['modes']['week']['enabled']);
     $this->assertFalse($result['modes']['month']['enabled']);
-    $this->assertSame('mid', $result['modes']['week']['cadence']);
-    $this->assertSame('1d', $result['modes']['week']['reminderLead']);
-    $this->assertSame('mid', $result['modes']['month']['cadence']);
-    $this->assertSame('1d', $result['modes']['month']['reminderLead']);
+    $this->assertSame('checkpoint_final', $result['modes']['week']['delivery']);
+    $this->assertSame('06:00', $result['modes']['week']['sendTimeLocal']);
+    $this->assertSame('checkpoint_final', $result['modes']['month']['delivery']);
+    $this->assertSame('18:00', $result['modes']['month']['sendTimeLocal']);
     $this->assertSame(0.9, $result['riskThreshold']);
     $this->assertFalse($result['notifyEmail']);
     $this->assertTrue($result['notifyNotification']);
@@ -194,13 +193,13 @@ class PersistSanitizerTest extends TestCase {
       'modes' => [
         'week' => [
           'enabled' => true,
-          'cadence' => 'broken',
-          'reminderLead' => '5d',
+          'delivery' => 'broken',
+          'sendTimeLocal' => '26:00',
         ],
         'month' => [
           'enabled' => false,
-          'cadence' => 'daily',
-          'reminderLead' => '2d',
+          'delivery' => 'checkpoint_final',
+          'sendTimeLocal' => '19:30',
         ],
       ],
       'riskThreshold' => 9,
@@ -209,10 +208,10 @@ class PersistSanitizerTest extends TestCase {
     ]);
 
     $this->assertTrue($result['enabled']);
-    $this->assertSame('end', $result['modes']['week']['cadence']);
-    $this->assertSame('none', $result['modes']['week']['reminderLead']);
-    $this->assertSame('daily', $result['modes']['month']['cadence']);
-    $this->assertSame('2d', $result['modes']['month']['reminderLead']);
+    $this->assertSame('final', $result['modes']['week']['delivery']);
+    $this->assertSame('06:00', $result['modes']['week']['sendTimeLocal']);
+    $this->assertSame('checkpoint_final', $result['modes']['month']['delivery']);
+    $this->assertSame('19:30', $result['modes']['month']['sendTimeLocal']);
     $this->assertSame(0.85, $result['riskThreshold']);
     $this->assertFalse($result['notifyEmail']);
     $this->assertTrue($result['notifyNotification']);

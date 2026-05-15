@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { createDefaultDeckSettings, normalizeDeckSettings } from '../src/services/reporting'
+import { createDefaultDeckSettings, createDefaultReportingConfig, normalizeDeckSettings, normalizeReportingConfig } from '../src/services/reporting'
 
 describe('Deck feature settings', () => {
   it('provides sane defaults', () => {
@@ -32,5 +32,42 @@ describe('Deck feature settings', () => {
     expect(normalized.mineMode).toBe('creator')
     expect(normalized.solvedIncludesArchived).toBe(false)
     expect(normalized.ticker).toEqual({ autoScroll: false, intervalSeconds: 10, showBoardBadges: false })
+  })
+})
+
+describe('Reporting config', () => {
+  it('provides recap-focused defaults', () => {
+    const defaults = createDefaultReportingConfig()
+    expect(defaults.enabled).toBe(false)
+    expect(defaults.modes.week).toEqual({
+      enabled: true,
+      delivery: 'final',
+      sendTimeLocal: '06:00',
+    })
+    expect(defaults.modes.month).toEqual({
+      enabled: false,
+      delivery: 'checkpoint_final',
+      sendTimeLocal: '18:00',
+    })
+  })
+
+  it('normalizes legacy cadence into delivery modes', () => {
+    const normalized = normalizeReportingConfig({
+      enabled: true,
+      schedule: 'week',
+      interim: 'midweek',
+    })
+
+    expect(normalized.enabled).toBe(true)
+    expect(normalized.modes.week).toEqual({
+      enabled: true,
+      delivery: 'checkpoint_final',
+      sendTimeLocal: '06:00',
+    })
+    expect(normalized.modes.month).toEqual({
+      enabled: false,
+      delivery: 'checkpoint_final',
+      sendTimeLocal: '18:00',
+    })
   })
 })
