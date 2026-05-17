@@ -310,6 +310,8 @@ test('Only the widget configuration row floats below the Nextcloud header in edi
   const appMain = page.locator('.app-main')
   const floatingRow = page.locator('.itb-row')
   const topBar = page.locator('.app-bar')
+  const tabStrip = page.locator('.tab-strip')
+  const editActionsRow = page.locator('.bar-row--edit-actions')
 
   await expect(floatingRow).not.toHaveClass(/itb-row--floating/)
 
@@ -325,20 +327,30 @@ test('Only the widget configuration row floats below the Nextcloud header in edi
     const row = document.querySelector('.itb-row') as HTMLElement | null
     const header = (document.querySelector('#header') || document.querySelector('header')) as HTMLElement | null
     const appBar = document.querySelector('.app-bar') as HTMLElement | null
-    if (!row || !header || !appBar) return null
+    const tabs = document.querySelector('.tab-strip') as HTMLElement | null
+    const editActions = document.querySelector('.bar-row--edit-actions') as HTMLElement | null
+    if (!row || !header || !appBar || !tabs || !editActions) return null
     const rowStyle = getComputedStyle(row)
+    const tabsStyle = getComputedStyle(tabs)
+    const editActionsStyle = getComputedStyle(editActions)
     return {
       rowTop: row.getBoundingClientRect().top,
       headerBottom: header.getBoundingClientRect().bottom,
       rowPosition: rowStyle.position,
       appBarPosition: getComputedStyle(appBar).position,
+      tabsPosition: tabsStyle.position,
+      editActionsPosition: editActionsStyle.position,
     }
   })
 
   expect(metrics).not.toBeNull()
   expect(metrics?.rowPosition).toBe('fixed')
   expect(metrics?.appBarPosition).not.toBe('fixed')
+  expect(metrics?.tabsPosition).not.toBe('fixed')
+  expect(metrics?.editActionsPosition).not.toBe('fixed')
   expect(metrics!.rowTop).toBeGreaterThanOrEqual(metrics!.headerBottom + 8)
+  await expect(tabStrip).toBeVisible()
+  await expect(editActionsRow).toBeVisible()
 })
 
 test('Config preset can be saved via UI', async ({ page, baseURL }) => {

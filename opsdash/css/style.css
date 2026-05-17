@@ -2022,18 +2022,6 @@
   background:linear-gradient(180deg, color-mix(in oklab, var(--brand), transparent 96%), var(--card));
   border-color:color-mix(in oklab, var(--brand), var(--line) 48%);
 }
-#opsdash .app-bar.app-bar--floating{
-  position:fixed;
-  top:calc(var(--header-height, 50px) + 12px);
-  left:calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap));
-  right:16px;
-  z-index:120;
-  box-shadow:0 12px 34px rgba(15,23,42,.18), 0 3px 10px rgba(15,23,42,.10);
-  backdrop-filter:blur(14px);
-}
-#opsdash.opsdash-theme-dark .app-bar.app-bar--floating{
-  box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
-}
 
 /* Floating widget config row only */
 /* ── Bar rows ── */
@@ -2071,11 +2059,6 @@
 #opsdash .bar-flex1{ flex:1 !important; min-width:0; }
 
 @media (max-width: 1100px){
-  #opsdash .app-bar.app-bar--floating{
-    top:calc(var(--header-height, 50px) + 10px);
-    left:12px;
-    right:12px;
-  }
   #opsdash .itb-row.itb-row--floating{
     top:calc(var(--header-height, 50px) + 10px);
     left:12px;

@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - Fixed the `opsdash:report` command path so the registered command works again in the NC33 app runtime.
 - Fixed the report payload/renderer split so dashboard layout mode no longer leaks into report selection and old generic report composition no longer appears for `Single Goal`.
 - Fixed scheduled-job registration so Opsdash keeps exactly one `ScheduledReportJob` in the Nextcloud job list instead of accumulating duplicates on boot.
+- Fixed collapsed-sidebar edit-mode floating so only the inline widget configuration row detaches below the Nextcloud header; the tabs/edit header rows now stay in normal flow.
 
 
 ## 0.8.0 - 2026-05-06
