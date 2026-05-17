@@ -14,6 +14,7 @@ import { formatLookbackLabel, sortLookbackOffsets } from './chartHelpers'
 
 const baseTitle = 'Time Summary'
 const lookbackTitle = 'Period Comparison'
+type TimeSummaryDisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
 const summaryToggleKeys: Array<keyof TargetsConfig['timeSummary']> = [
   'showTotal',
   'showAverage',
@@ -62,6 +63,18 @@ function buildDefaultOptions() {
   }
 }
 
+function detectTimeSummaryDisplayMode(ctx: any): TimeSummaryDisplayMode {
+  const strategy = String(ctx?.onboardingStrategy ?? '')
+  if (strategy === 'total_only') return 'single_goal'
+  if (strategy === 'total_plus_categories') return 'calendar_goals'
+  if (strategy === 'full_granular') return 'category_and_calendar_goals'
+
+  const categories = Array.isArray(ctx?.targetsConfig?.categories) ? ctx.targetsConfig.categories : []
+  if (categories.length > 0) return 'category_and_calendar_goals'
+  const currentTargets = ctx?.currentTargets && typeof ctx.currentTargets === 'object' ? ctx.currentTargets : {}
+  return Object.keys(currentTargets).length > 0 ? 'calendar_goals' : 'single_goal'
+}
+
 function buildTimeSummaryProps(
   def: any,
   ctx: any,
@@ -83,6 +96,7 @@ function buildTimeSummaryProps(
   const showToday = opts.showOverview && def.options?.showToday !== false
   const showActivity = opts.showOverview && def.options?.showActivity !== false
   const showHistoryCoreMetrics = def.options?.showHistoryCoreMetrics !== false
+  const displayMode = detectTimeSummaryDisplayMode(ctx)
   const rawHistoryView = String(def.options?.historyView ?? '').toLowerCase()
   const historyView =
     rawHistoryView === 'accordion' || rawHistoryView === 'pills'
@@ -95,6 +109,16 @@ function buildTimeSummaryProps(
     if (def.options?.[key] === undefined) return
     cfg.timeSummary[key] = !!def.options[key]
   })
+
+  if (def.options?.showCalendarSummary === undefined) {
+    cfg.timeSummary.showCalendarSummary = displayMode !== 'single_goal'
+  }
+  if (def.options?.showTopCategory === undefined) {
+    cfg.timeSummary.showTopCategory = displayMode === 'category_and_calendar_goals'
+  }
+  if (def.options?.showBalance === undefined) {
+    cfg.timeSummary.showBalance = displayMode === 'category_and_calendar_goals'
+  }
 
   const history =
     opts.includeHistory && Number(ctx.lookbackWeeks) > 1
@@ -121,6 +145,7 @@ function buildTimeSummaryProps(
     todayGroups: def.props?.todayGroups ?? ctx.groups,
     title: buildTitle(opts.title, def.options?.titlePrefix),
     cardBg: def.options?.cardBg,
+    displayMode,
     rangeMode: ctx.rangeMode,
     rangeStart: ctx.from,
     rangeEnd: ctx.to,

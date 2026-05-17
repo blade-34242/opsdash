@@ -254,6 +254,58 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.mode).toBe('all')
   })
 
+  it('time summary defaults collapse strategy-specific rows for single goal mode', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    const props = entry.buildProps({ options: {} } as any, {
+      onboardingStrategy: 'total_only',
+      targetsConfig: baseCfg,
+      summary: { rangeLabel: 'Week' },
+      activeDayMode: 'active',
+      currentTargets: {},
+    }) as any
+
+    expect(props.displayMode).toBe('single_goal')
+    expect(props.config.showCalendarSummary).toBe(false)
+    expect(props.config.showTopCategory).toBe(false)
+    expect(props.config.showBalance).toBe(false)
+  })
+
+  it('time summary keeps calendar summary for calendar goals but hides category-specific rows', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    baseCfg.categories = []
+    const props = entry.buildProps({ options: {} } as any, {
+      onboardingStrategy: 'total_plus_categories',
+      targetsConfig: baseCfg,
+      summary: { rangeLabel: 'Week' },
+      activeDayMode: 'active',
+      currentTargets: { 'cal-1': 8 },
+    }) as any
+
+    expect(props.displayMode).toBe('calendar_goals')
+    expect(props.config.showCalendarSummary).toBe(true)
+    expect(props.config.showTopCategory).toBe(false)
+    expect(props.config.showBalance).toBe(false)
+  })
+
+  it('time summary keeps category rows for category and calendar goal mode', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    const props = entry.buildProps({ options: {} } as any, {
+      onboardingStrategy: 'full_granular',
+      targetsConfig: baseCfg,
+      summary: { rangeLabel: 'Week' },
+      activeDayMode: 'active',
+      currentTargets: { 'cal-1': 8 },
+    }) as any
+
+    expect(props.displayMode).toBe('category_and_calendar_goals')
+    expect(props.config.showCalendarSummary).toBe(true)
+    expect(props.config.showTopCategory).toBe(true)
+    expect(props.config.showBalance).toBe(true)
+  })
+
   it('time summary lookback exposes defaults for options', () => {
     const entry = widgetsRegistry.time_summary_lookback
     expect(entry.defaultOptions?.showTotal).toBe(true)

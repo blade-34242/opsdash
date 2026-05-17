@@ -95,6 +95,7 @@ describe('TimeSummaryCard', () => {
         summary: baseSummary,
         mode: 'active',
         showHeader: true,
+        displayMode: 'category_and_calendar_goals',
       },
     })
 
@@ -116,6 +117,63 @@ describe('TimeSummaryCard', () => {
     expect(badge.classes()).toContain('status-risk')
   })
 
+  it('hides calendar and category-specific summary rows in single goal mode', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: baseSummary,
+        mode: 'active',
+        displayMode: 'single_goal',
+        config: {
+          showCalendarSummary: false,
+          showTopCategory: false,
+        },
+      },
+    })
+
+    const text = wrapper.text()
+    expect(text).not.toContain('3 calendars')
+    expect(text).not.toContain('Top category')
+    expect(wrapper.find('.time-summary-row.calendars').exists()).toBe(false)
+    expect(wrapper.find('.time-summary-row.top-category').exists()).toBe(false)
+  })
+
+  it('uses calendar-specific labels in calendar goals mode', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: {
+          ...baseSummary,
+          topCategory: null,
+        },
+        mode: 'active',
+        displayMode: 'calendar_goals',
+        config: {
+          showCalendarSummary: true,
+          showTopCategory: false,
+        },
+        history: [baseHistoryEntry],
+      },
+    })
+
+    const calendarRow = wrapper.find('.time-summary-row.calendars').text().replace(/\s+/g, ' ')
+    expect(calendarRow).toContain('3 calendars')
+    expect(calendarRow).toContain('Cal A 60%, Cal B 40%')
+    expect(wrapper.text()).toContain('Calendars')
+  })
+
+  it('keeps category labels in category and calendar goals mode', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: baseSummary,
+        mode: 'active',
+        displayMode: 'category_and_calendar_goals',
+        history: [baseHistoryEntry],
+      },
+    })
+
+    expect(wrapper.find('.time-summary-row.top-category .label').text()).toBe('Top category')
+    expect(wrapper.text()).toContain('Categories & calendars')
+  })
+
   it('honours config toggles to hide optional rows', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
@@ -124,6 +182,7 @@ describe('TimeSummaryCard', () => {
           topCategory: null,
         },
         mode: 'all',
+        displayMode: 'calendar_goals',
         config: {
           showWeekendShare: false,
           showTopCategory: false,
@@ -148,6 +207,7 @@ describe('TimeSummaryCard', () => {
         summary: baseSummary,
         mode: 'active',
         showHeader: false,
+        displayMode: 'category_and_calendar_goals',
       },
     })
     expect(wrapper.find('.time-summary-firstline').exists()).toBe(false)
@@ -182,6 +242,7 @@ describe('TimeSummaryCard', () => {
           lastHalfDayOff: '2025-02-28',
         },
         mode: 'active',
+        displayMode: 'category_and_calendar_goals',
         showToday: false,
         showActivity: false,
         showHistoryCoreMetrics: false,
@@ -201,10 +262,11 @@ describe('TimeSummaryCard', () => {
 
   it('uses accordion by default and maps legacy list to timeline layout', () => {
     const baseProps = {
-      summary: baseSummary,
-      mode: 'active' as const,
-      history: [baseHistoryEntry],
-    }
+        summary: baseSummary,
+        mode: 'active' as const,
+        displayMode: 'category_and_calendar_goals' as const,
+        history: [baseHistoryEntry],
+      }
 
     const accordion = mount(TimeSummaryCard, { props: baseProps })
     expect(accordion.find('.time-summary-history__accordion').exists()).toBe(true)
@@ -225,6 +287,7 @@ describe('TimeSummaryCard', () => {
       props: {
         summary: baseSummary,
         mode: 'active',
+        displayMode: 'category_and_calendar_goals',
         showOverview: false,
         showLookback: true,
         lookbackWeeks: 1,

@@ -37,14 +37,14 @@
       <span v-if="summaryConfig.showWeekendShare && weekendShareText" class="share">({{ weekendShareText }})</span>
     </div>
     <div class="time-summary-row calendars" v-if="summaryConfig.showCalendarSummary">
-      <span class="label">{{ summary.activeCalendars }} calendars</span>
+      <span class="label">{{ calendarRowLabel }}</span>
       <template v-if="summary.calendarSummary">
         <span class="sep">·</span>
         <span class="text">{{ summary.calendarSummary }}</span>
       </template>
     </div>
     <div class="time-summary-row top-category" v-if="summaryConfig.showTopCategory && topCategoryInfo">
-      <span class="label">Top category</span>
+      <span class="label">{{ topCategoryLabel }}</span>
       <span class="text">{{ topCategoryInfo.text }}</span>
       <span v-if="topCategoryInfo.badge" class="summary-badge" :class="topCategoryInfo.badgeClass">{{ topCategoryInfo.badge }}</span>
     </div>
@@ -163,6 +163,8 @@ type SummaryConfig = {
   showTopCategory: boolean
   showBalance: boolean
 }
+
+type DisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
 
 type HistoryEntry = {
   offset: number
@@ -313,6 +315,7 @@ const props = withDefaults(defineProps<{
   showOverview?: boolean
   showLookback?: boolean
   showDelta?: boolean
+  displayMode?: DisplayMode
 }>(), {
   showHeader: true,
   showToday: true,
@@ -325,6 +328,11 @@ const props = withDefaults(defineProps<{
 })
 
 const summaryConfig = computed<SummaryConfig>(() => Object.assign({}, defaultConfig, props.config ?? {}))
+const displayMode = computed<DisplayMode>(() => {
+  const value = String(props.displayMode ?? '')
+  if (value === 'calendar_goals' || value === 'category_and_calendar_goals') return value
+  return 'single_goal'
+})
 
 const modeLabel = computed(() => (props.mode === 'active' ? 'active days' : 'all days'))
 
@@ -354,6 +362,13 @@ const todayPlannedHours = computed(() => {
 })
 
 const titleText = computed(() => props.title || 'Time Summary')
+const calendarRowLabel = computed(() => displayMode.value === 'single_goal' ? '' : `${props.summary.activeCalendars} calendars`)
+const topCategoryLabel = computed(() => displayMode.value === 'category_and_calendar_goals' ? 'Top category' : 'Top focus')
+const historyGroupLabel = computed(() => {
+  if (displayMode.value === 'calendar_goals') return 'Calendars'
+  if (displayMode.value === 'category_and_calendar_goals') return 'Categories & calendars'
+  return 'Focus'
+})
 const headerText = computed(() => {
   const base = titleText.value
   const range = props.summary?.rangeLabel || ''
@@ -554,7 +569,7 @@ const historyRows = computed<HistoryRow[]>(() => {
     const sections: HistorySection[] = [
       { key: 'core', label: 'Core', metrics: coreMetrics },
       { key: 'pace', label: 'Pace', metrics: paceMetrics },
-      { key: 'category', label: 'Category', metrics: categoryMetrics },
+      { key: 'category', label: historyGroupLabel.value, metrics: categoryMetrics },
       { key: 'pattern', label: 'Pattern', metrics: patternMetrics },
     ].filter((section) => section.metrics.length > 0)
 

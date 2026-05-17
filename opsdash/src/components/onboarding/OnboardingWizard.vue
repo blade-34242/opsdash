@@ -3091,6 +3091,10 @@ function isStepLocked(index: number) {
   grid-template-columns: minmax(0, 38px) auto;
 }
 
+.onboarding-overlay .goal-inline-target .input-unit--small {
+  grid-template-columns: minmax(0, 64px) auto;
+}
+
 .onboarding-overlay .goal-action-block .input-unit--small .unit {
   padding: 6px 8px;
 }
@@ -3451,7 +3455,7 @@ function isStepLocked(index: number) {
 }
 
 .onboarding-overlay .goal-inline-target {
-  min-width: 72px;
+  min-width: 112px;
 }
 
 .onboarding-overlay .goal-category-action-icons {

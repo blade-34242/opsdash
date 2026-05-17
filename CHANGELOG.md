@@ -33,6 +33,10 @@ All notable changes to this project will be documented in this file.
 - Reporting preferences in onboarding now expose live weekly/monthly recap controls with `Final recap` or `Checkpoint + final` plus per-mode send times.
 - Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI, background jobs, and the lightweight `opsdash:report` snapshot command using the same internal report core.
 - Automatic recap sending now runs through the Nextcloud background job system instead of any app-managed Unix cron path, using user-timezone-aware `final` / `checkpoint_final` delivery semantics and local send times.
+- Time Summary is now goal-type-aware:
+  - `Single Goal` hides calendar/category-specific summary rows by default
+  - `Calendar Goals` keeps calendar context without category/balance-heavy rows
+  - `Calendar + Category Goals` keeps the richer category-aware summary and lookback labels
 - Release command exposure is intentionally minimal: only `occ opsdash:report` is shipped, while QA/seed helpers stay external.
 
 ### Fixed
@@ -40,7 +44,9 @@ All notable changes to this project will be documented in this file.
 - Fixed the `opsdash:report` command path so the registered command works again in the NC33 app runtime.
 - Fixed the report payload/renderer split so dashboard layout mode no longer leaks into report selection and old generic report composition no longer appears for `Single Goal`.
 - Fixed scheduled-job registration so Opsdash keeps exactly one `ScheduledReportJob` in the Nextcloud job list instead of accumulating duplicates on boot.
+- Fixed the `Calendar + Category Goals` onboarding row editor so the inline `Weekly target` input is no longer cramped to a near-micro width in the open category action strip.
 - Fixed collapsed-sidebar edit-mode floating so only the inline widget configuration row detaches below the Nextcloud header; the tabs/edit header rows now stay in normal flow.
+- Clarified scheduled recap expectations: `sendTimeLocal` is a not-before threshold evaluated when Nextcloud actually runs the background job, not a guaranteed exact wall-clock send moment.
 
 
 ## 0.8.0 - 2026-05-06
