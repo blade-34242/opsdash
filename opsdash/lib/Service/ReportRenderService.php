@@ -32,7 +32,7 @@ final class ReportRenderService {
         $selectedLabels = array_values(array_map('strval', $summary['selected_labels'] ?? []));
         $selectedLine = empty($selectedLabels)
             ? 'None'
-            : implode(', ', array_map([$this, 'escape'], $selectedLabels));
+            : implode(', ', $selectedLabels);
         $topCalendar = is_array($summary['top_calendar'] ?? null) ? $summary['top_calendar'] : null;
         $topCategory = is_array($summary['top_category'] ?? null) ? $summary['top_category'] : null;
         $targets = is_array($summary['targets'] ?? null) ? $summary['targets'] : [];
