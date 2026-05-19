@@ -168,6 +168,7 @@ final class OverviewLoadContextService {
         $themePreference = $includeTheme
             ? $this->userConfigService->readThemePreference($appName, $uid)
             : 'auto';
+        $activePreset = (string)$this->config->getUserValue($uid, $appName, 'active_preset', '');
 
         $onboardingPayload = [];
         if ($includeOnboarding) {
@@ -232,6 +233,7 @@ final class OverviewLoadContextService {
             'widgets' => $widgets,
             'widgetPresets' => $widgetPresets,
             'onboarding' => $onboardingPayload,
+            'activePreset' => $activePreset,
         ];
 
         return [
@@ -281,6 +283,7 @@ final class OverviewLoadContextService {
             'deckSettings' => $deckSettings,
             'themePreference' => $themePreference,
             'onboardingPayload' => $onboardingPayload,
+            'activePreset' => $activePreset,
             'widgets' => $widgets,
             'widgetPresets' => $widgetPresets,
             'dashboardMode' => $dashboardMode,

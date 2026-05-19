@@ -283,6 +283,7 @@ final class ReportSummaryService {
             'to' => $to->format('Y-m-d'),
             'onboarding_strategy' => (string)($onboardingState['strategy'] ?? ''),
             'report_variant' => $reportVariant,
+            'active_preset' => (string)$this->config->getUserValue($uid, $appName, 'active_preset', ''),
             'selected' => $selectedIds,
             'selected_labels' => $selectedLabels,
             'selected_count' => count($selectedIds),

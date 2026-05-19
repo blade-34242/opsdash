@@ -781,6 +781,7 @@ function toggleLayoutEditing() {
 const showAddWidgetModal = ref(false)
 const inlineOptionsOpen = ref(false)
 const lastLoadedAt = ref<Date | null>(null)
+const activePresetRef = ref<string | null>(null)
 const itbFloating = ref(false)
 const appBarSlotRef = ref<HTMLElement | null>(null)
 const appBarRef = ref<HTMLElement | null>(null)
@@ -912,6 +913,9 @@ const {
       hasInitialLoad.value = true
     }
     evaluateOnboarding(payload?.onboarding ?? null)
+    if (typeof payload?.activePreset === 'string' && payload.activePreset !== '') {
+      activePresetRef.value = payload.activePreset
+    }
   },
 })
 
@@ -1028,6 +1032,7 @@ const { queueSave, isSaving: reportingSaving } = useDashboardPersistence({
   deckSettings,
   widgetTabs: widgetTabsRef,
   onboardingState,
+  activePreset: activePresetRef,
 })
 
 widgetsQueueSaveRef.value = queueSave
@@ -1100,6 +1105,7 @@ const {
   presetSaving,
   presetApplying,
   presetWarnings,
+  lastLoadedPreset,
   refreshPresets,
   savePreset,
   loadPreset,
@@ -1128,6 +1134,8 @@ const {
   applyDashboardPreset: (mode) => { applyDashboardPreset(mode) },
   userChangedSelection,
 })
+
+watch(lastLoadedPreset, (val) => { activePresetRef.value = val }, { immediate: true })
 
 const onboardingActions = useOnboardingActions({
   onboardingState,
@@ -1615,6 +1623,7 @@ const { widgetContext } = useWidgetRenderContext({
   selected,
   calendarTodayHours,
   onboardingStrategy: computed(() => onboardingState.value?.strategy ?? null),
+  activePreset: activePresetRef,
 })
 
 const dashboardModeLabel = computed(() => {

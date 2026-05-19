@@ -66,6 +66,7 @@ interface WidgetRenderContextDeps {
   selected: ValueRef<string[]>
   calendarTodayHours: ValueRef<Record<string, number>>
   onboardingStrategy: ValueRef<string | null>
+  activePreset?: ValueRef<string | null>
 }
 
 function buildDeckBoards(cards: any[]): DeckBoard[] {
@@ -153,6 +154,7 @@ export function useWidgetRenderContext(deps: WidgetRenderContextDeps): {
     selected: deps.selected.value,
     calendarTodayHours: deps.calendarTodayHours.value,
     onboardingStrategy: deps.onboardingStrategy.value,
+    activePreset: deps.activePreset?.value ?? null,
   }))
 
   return { widgetContext }

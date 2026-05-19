@@ -71,6 +71,9 @@ final class OverviewCorePayloadComposer {
         if ($shouldInclude('onboarding') || isset($includes['core'])) {
             $payload['onboarding'] = $context['onboarding'];
         }
+        if (isset($context['activePreset']) && $context['activePreset'] !== '') {
+            $payload['activePreset'] = $context['activePreset'];
+        }
         return $payload;
     }
 }

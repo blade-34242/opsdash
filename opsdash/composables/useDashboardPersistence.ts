@@ -33,6 +33,7 @@ interface DashboardPersistenceDeps {
   deckSettings?: Ref<DeckFeatureSettings>
   widgetTabs?: Ref<WidgetTabsState>
   onboardingState?: Ref<OnboardingState | null>
+  activePreset?: Ref<string | null>
 }
 
 export function useDashboardPersistence(deps: DashboardPersistenceDeps) {
@@ -73,6 +74,9 @@ export function useDashboardPersistence(deps: DashboardPersistenceDeps) {
         }
         if (deps.onboardingState?.value) {
           payload.onboarding = deps.onboardingState.value
+        }
+        if (deps.activePreset !== undefined) {
+          payload.active_preset = deps.activePreset.value ?? null
         }
         const result = await deps.postJson(deps.route('persist'), payload)
         if (requestId !== latestRequestId) {

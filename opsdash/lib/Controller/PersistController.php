@@ -175,6 +175,18 @@ final class PersistController extends Controller {
             $reportingSaved = $cleanReporting;
         }
         $reportingRead = $this->userConfigService->readReportingConfig($this->appName, $uid);
+        if (array_key_exists('active_preset', $data)) {
+            $presetName = $data['active_preset'];
+            if ($presetName === null || $presetName === '') {
+                $this->config->deleteUserValue($uid, $this->appName, 'active_preset');
+            } else {
+                $clean = substr(preg_replace('/[^\p{L}\p{N} _\-\.]/u', '', (string)$presetName) ?? '', 0, 64);
+                if ($clean !== '') {
+                    $this->config->setUserValue($uid, $this->appName, 'active_preset', $clean);
+                }
+            }
+            $didMutate = true;
+        }
         if (isset($data['deck_settings'])) {
             $cleanDeck = $this->persistSanitizer->sanitizeDeckSettings($data['deck_settings']);
             if ($resp = $this->writeUserJsonValue($uid, 'deck_settings', $cleanDeck, 'deck_settings')) {

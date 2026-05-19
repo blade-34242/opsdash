@@ -95,6 +95,7 @@ export interface WidgetRenderContext {
   selected?: string[]
   calendarTodayHours?: Record<string, number>
   onboardingStrategy?: string | null
+  activePreset?: string | null
 }
 
 export type WidgetRenderer = (def: WidgetDefinition, ctx: WidgetRenderContext) => any
