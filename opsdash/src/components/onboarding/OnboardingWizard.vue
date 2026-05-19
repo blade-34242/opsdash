@@ -159,6 +159,7 @@
               :update-reporting="updateReporting"
               :update-reporting-mode="updateReportingMode"
               :send-test-report="handleTestReportSend"
+              :send-checkpoint-report="handleCheckpointReportSend"
             />
           </section>
 
@@ -264,6 +265,12 @@ const props = defineProps<{
   } | null
   persistStep?: (payload: WizardStepSavePayload) => Promise<void>
   sendTestReport?: (payload: {
+    selected: string[]
+    groups: Record<string, number>
+    targetsConfig: TargetsConfig
+    reportingConfig: ReportingConfig
+  }) => Promise<void>
+  sendCheckpointReport?: (payload: {
     selected: string[]
     groups: Record<string, number>
     targetsConfig: TargetsConfig
@@ -447,20 +454,29 @@ async function requestClose() {
   handleClose()
 }
 
-async function handleTestReportSend() {
-  if (!props.sendTestReport) return
+function buildReportPayload() {
   const targetsPayload = buildStepPayload('review') as {
     cals?: string[]
     groups?: Record<string, number>
     targets_config?: TargetsConfig
     reporting_config?: ReportingConfig
   }
-  await props.sendTestReport({
+  return {
     selected: [...(targetsPayload.cals ?? [])],
     groups: { ...(targetsPayload.groups ?? {}) },
     targetsConfig: targetsPayload.targets_config ?? ({} as TargetsConfig),
     reportingConfig: targetsPayload.reporting_config ?? { ...reportingDraft.value },
-  })
+  }
+}
+
+async function handleTestReportSend() {
+  if (!props.sendTestReport) return
+  await props.sendTestReport(buildReportPayload())
+}
+
+async function handleCheckpointReportSend() {
+  if (!props.sendCheckpointReport) return
+  await props.sendCheckpointReport(buildReportPayload())
 }
 
 function isStepDone(step: typeof currentStep.value, index: number) {

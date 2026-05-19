@@ -190,6 +190,7 @@ export function buildCategoryGroups(input: {
       rows: uncategorizedRows,
       summary: fallbackSummary('__uncategorized__', 'Unassigned', uncategorizedRows),
       color: resolveCategoryColor('__uncategorized__'),
+      isUnassigned: true,
     })
   }
 

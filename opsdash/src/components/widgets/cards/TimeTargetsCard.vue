@@ -55,6 +55,11 @@
           <div class="cat-label">
             <span class="dot" :style="{ background: cat.color || 'var(--brand)' }"></span>
             <span class="name">{{ cat.label }}</span>
+            <span
+              v-if="cat.isUnassigned"
+              class="unassigned-hint"
+              title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
+            >ⓘ</span>
           </div>
           <div class="cat-meta">
             <span class="percent">{{ cat.percentText }}%</span>
@@ -225,6 +230,7 @@ const categoryItems = computed(() => categoryGroups.value.map(group => {
     badgeLabel: display.badgeLabel,
     statusClass: display.statusClass,
     color: group.color,
+    isUnassigned: (group as any).isUnassigned === true,
     calendarCount: Array.isArray(group.rows) ? group.rows.length : 0,
     progress: progressPct,
     isEndless: display.isEndless,
@@ -386,6 +392,7 @@ function colorMix(hex: string, factor = 0.5): string {
 .category .cat-label{ display:flex; align-items:center; gap:calc(6px * var(--widget-space, 1)); font-weight:600; color:var(--fg) }
 .category .cat-label .dot{ width:calc(10px * var(--widget-space, 1)); height:calc(10px * var(--widget-space, 1)); border-radius:50%; background:var(--brand); box-shadow:0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent) }
 .category .cat-label .name{ color:var(--fg) }
+.unassigned-hint{ font-size:calc(11px * var(--widget-scale,1)); color:var(--muted); cursor:default; line-height:1; opacity:.7 }
 .category .cat-meta{ display:flex; align-items:center; gap:calc(6px * var(--widget-space, 1)); font-weight:600; color:var(--muted) }
 .category .cat-meta .percent{ font-variant-numeric:tabular-nums; color:var(--fg) }
 .cat-progress .bar{ position:relative; width:100%; overflow:visible }

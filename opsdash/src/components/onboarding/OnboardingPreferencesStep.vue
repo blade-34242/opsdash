@@ -349,19 +349,29 @@
               </button>
             </div>
           </div>
-          <div v-if="reportingDraft.enabled && sendTestReport" class="field-row">
+          <div v-if="reportingDraft.enabled && (sendTestReport || sendCheckpointReport)" class="field-row">
             <div class="field-copy">
               <strong>Test send</strong>
-              <p>Send a manual recap email using the current onboarding draft and your Nextcloud mail address.</p>
+              <p>Send a test email to your Nextcloud address. Recap = completed previous period. Checkpoint = current period snapshot.</p>
             </div>
             <div class="field-actions">
               <button
+                v-if="sendCheckpointReport"
                 type="button"
                 class="action-chip"
-                :disabled="testSendPending"
+                :disabled="checkpointSendPending || testSendPending"
+                @click="handleCheckpointSend"
+              >
+                {{ checkpointSendPending ? 'Sending…' : 'Checkpoint' }}
+              </button>
+              <button
+                v-if="sendTestReport"
+                type="button"
+                class="action-chip"
+                :disabled="testSendPending || checkpointSendPending"
                 @click="handleTestSend"
               >
-                {{ testSendPending ? 'Sending…' : 'Send test recap' }}
+                {{ testSendPending ? 'Sending…' : 'Recap' }}
               </button>
             </div>
           </div>
@@ -395,11 +405,13 @@ const props = defineProps<{
   updateReporting: (patch: Partial<ReportingConfig>) => void
   updateReportingMode: (mode: ReportingMode, patch: Partial<ReportingConfig['modes'][ReportingMode]>) => void
   sendTestReport?: () => Promise<void>
+  sendCheckpointReport?: () => Promise<void>
 }>()
 
 const openCoreEditor = ref<'theme' | 'allDay' | 'lookback'>('theme')
 const reportingOpen = ref(false)
 const testSendPending = ref(false)
+const checkpointSendPending = ref(false)
 const lookbackOptions = [1, 2, 3, 4, 5, 6]
 
 const themeSummaryLabel = computed(() => {
@@ -430,6 +442,16 @@ async function handleTestSend() {
     await props.sendTestReport()
   } finally {
     testSendPending.value = false
+  }
+}
+
+async function handleCheckpointSend() {
+  if (!props.sendCheckpointReport || checkpointSendPending.value) return
+  checkpointSendPending.value = true
+  try {
+    await props.sendCheckpointReport()
+  } finally {
+    checkpointSendPending.value = false
   }
 }
 

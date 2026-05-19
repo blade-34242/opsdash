@@ -249,8 +249,13 @@ final class ReportSummaryService {
             }
         }
 
+        $today = (new \DateTimeImmutable('now', $userTz))->format('Y-m-d');
         $daysOff = 0;
         foreach ($byDayList as $row) {
+            $rowDate = (string)($row['date'] ?? '');
+            if ($rowDate > $today) {
+                continue;
+            }
             if ((float)($row['total_hours'] ?? 0.0) <= 0.0001) {
                 $daysOff++;
             }
@@ -317,6 +322,7 @@ final class ReportSummaryService {
                 'previous' => trim((string)($notes['previous'] ?? '')),
             ],
             'generated_at' => (new \DateTimeImmutable('now', $userTz))->format(\DateTimeInterface::ATOM),
+            'charts' => $this->buildChartData($agg, $categoryMeta, $from, $to),
         ];
     }
 
@@ -523,6 +529,61 @@ final class ReportSummaryService {
             return 'at_risk';
         }
         return 'behind';
+    }
+
+    /**
+     * @param array<string,mixed> $agg
+     * @param array<string,mixed> $categoryMeta
+     * @return array<string,mixed>
+     */
+    private function buildChartData(array $agg, array $categoryMeta, \DateTimeImmutable $from, \DateTimeImmutable $to): array {
+        // DOW averages: total per weekday divided by number of that weekday in the period
+        $dowOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $dowCounts = array_fill_keys($dowOrder, 0);
+        $cursor = $from;
+        while ($cursor <= $to) {
+            $d = $cursor->format('D');
+            if (isset($dowCounts[$d])) {
+                $dowCounts[$d]++;
+            }
+            $cursor = $cursor->modify('+1 day');
+        }
+        $dowTotals = is_array($agg['dowTotals'] ?? null) ? $agg['dowTotals'] : [];
+        $dowAvg = [];
+        foreach ($dowOrder as $d) {
+            $total = (float)($dowTotals[$d] ?? 0.0);
+            $count = max(1, $dowCounts[$d]);
+            $dowAvg[$d] = round($total / $count, 2);
+        }
+
+        // Calendar pie: top 7 by hours
+        $byCalList = is_array($agg['byCalList'] ?? null) ? $agg['byCalList'] : [];
+        $calPie = [];
+        foreach (array_slice($byCalList, 0, 7) as $row) {
+            $hours = round((float)($row['total_hours'] ?? 0.0), 2);
+            if ($hours <= 0) continue;
+            $calPie[] = ['label' => (string)($row['calendar'] ?? ''), 'hours' => $hours];
+        }
+
+        // Category pie: from categoryTotals + colors + labels
+        $categoryTotals = is_array($agg['categoryTotals'] ?? null) ? $agg['categoryTotals'] : [];
+        $categoryColors = is_array($agg['categoryColors'] ?? null) ? $agg['categoryColors'] : [];
+        $catPie = [];
+        foreach ($categoryTotals as $catId => $hours) {
+            $hours = round((float)$hours, 2);
+            if ($hours <= 0) continue;
+            $label = (string)(($categoryMeta[$catId]['label'] ?? null) ?: $catId);
+            $color = (string)($categoryColors[$catId] ?? '');
+            $catPie[] = ['label' => $label, 'hours' => $hours, 'color' => $color !== '' ? $color : null];
+        }
+        usort($catPie, static fn ($a, $b) => $b['hours'] <=> $a['hours']);
+
+        return [
+            'dow_avg' => $dowAvg,
+            'dow_order' => $dowOrder,
+            'cal_pie' => $calPie,
+            'cat_pie' => $catPie,
+        ];
     }
 
     private function computeCalendarPercent(\DateTimeImmutable $from, \DateTimeImmutable $to): float {

@@ -32,4 +32,13 @@ describe('widget defaults', () => {
     expect(workspaceTab).toBeTruthy()
     expect(workspaceTab?.widgets.some((widget) => widget.type === 'deck_stats')).toBe(true)
   })
+
+  it('aligns strategy-owned widget options when creating defaults for calendar goals', () => {
+    const tabs = createDefaultWidgetTabs('pro', 'total_plus_categories')
+    const overview = tabs.tabs.flatMap((tab) => tab.widgets).find((widget) => widget.type === 'time_summary_overview')
+
+    expect(overview?.options?.showCalendarSummary).toBe(true)
+    expect(overview?.options?.showTopCategory).toBe(false)
+    expect(overview?.options?.showBalance).toBe(false)
+  })
 })

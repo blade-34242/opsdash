@@ -20,6 +20,7 @@ import { timeSummaryLookbackEntry, timeSummaryOverviewEntry } from './widgets/ti
 import { createDefaultWidgetTabs as createDefaultWidgetTabsFromDefaults, getWidgetPreset } from '../widgetDefaults'
 
 type StrategyId = 'total_only' | 'total_plus_categories' | 'full_granular'
+type StrategyDisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
 
 const CHART_FILTER_WIDGETS = new Set(['chart_pie', 'chart_stacked', 'chart_per_day', 'chart_dow'])
 
@@ -147,8 +148,94 @@ export function createDefaultWidgets(): WidgetDefinition[] {
   return createDashboardPreset('standard')
 }
 
-export function createDefaultWidgetTabs(mode: DashboardMode): WidgetTabsState {
-  return createDefaultWidgetTabsFromDefaults(mode)
+function resolveStrategyDisplayMode(strategy?: StrategyId | string | null): StrategyDisplayMode | null {
+  if (strategy === 'total_only') return 'single_goal'
+  if (strategy === 'total_plus_categories') return 'calendar_goals'
+  if (strategy === 'full_granular') return 'category_and_calendar_goals'
+  return null
+}
+
+function resolveManagedWidgetDefaults(
+  type: string,
+  mode: StrategyDisplayMode | null,
+): Record<string, boolean> | null {
+  if (type === 'targets_v2') {
+    if (!mode) return { showCategoryBlocks: true }
+    return { showCategoryBlocks: mode !== 'single_goal' }
+  }
+  if (type === 'time_summary_overview' || type === 'time_summary_lookback') {
+    if (!mode) {
+      return {
+        showCalendarSummary: true,
+        showTopCategory: true,
+        showBalance: true,
+      }
+    }
+    return {
+      showCalendarSummary: mode !== 'single_goal',
+      showTopCategory: mode === 'category_and_calendar_goals',
+      showBalance: mode === 'category_and_calendar_goals',
+    }
+  }
+  return null
+}
+
+function syncWidgetDefinitionForStrategy(
+  widget: WidgetDefinition,
+  strategy?: StrategyId | string | null,
+  previousStrategy?: StrategyId | string | null,
+): WidgetDefinition {
+  const nextMode = resolveStrategyDisplayMode(strategy)
+  const nextDefaults = resolveManagedWidgetDefaults(widget.type, nextMode)
+  if (!nextDefaults) return widget
+
+  const compareMode = resolveStrategyDisplayMode(previousStrategy)
+  const compareDefaults = resolveManagedWidgetDefaults(widget.type, compareMode)
+  if (!compareDefaults) return widget
+
+  const currentOptions = widget.options || {}
+  const nextOptions = { ...currentOptions }
+  let changed = false
+
+  Object.entries(nextDefaults).forEach(([key, nextValue]) => {
+    const currentValue = currentOptions[key]
+    const compareValue = compareDefaults[key]
+    if (currentValue === undefined || currentValue === compareValue) {
+      if (currentValue !== nextValue) {
+        nextOptions[key] = nextValue
+        changed = true
+      }
+    }
+  })
+
+  return changed ? { ...widget, options: nextOptions } : widget
+}
+
+export function syncWidgetDefinitionsForStrategy(
+  widgets: WidgetDefinition[],
+  strategy?: StrategyId | string | null,
+  previousStrategy?: StrategyId | string | null,
+): WidgetDefinition[] {
+  return (widgets || []).map((widget) => syncWidgetDefinitionForStrategy(widget, strategy, previousStrategy))
+}
+
+export function syncWidgetTabsForStrategy(
+  state: WidgetTabsState,
+  strategy?: StrategyId | string | null,
+  previousStrategy?: StrategyId | string | null,
+): WidgetTabsState {
+  return {
+    tabs: (state?.tabs || []).map((tab) => ({
+      ...tab,
+      widgets: syncWidgetDefinitionsForStrategy(tab.widgets || [], strategy, previousStrategy),
+    })),
+    defaultTabId: state?.defaultTabId || 'tab-1',
+  }
+}
+
+export function createDefaultWidgetTabs(mode: DashboardMode, strategy?: StrategyId | string | null): WidgetTabsState {
+  const state = createDefaultWidgetTabsFromDefaults(mode)
+  return syncWidgetTabsForStrategy(state, strategy)
 }
 
 export function getRestrictedWidgetTypesForStrategy(strategy?: string | null): string[] {
@@ -240,6 +327,6 @@ export function mapWidgetToComponent(def: WidgetDefinition, ctx: WidgetRenderCon
   return { component: entry.component, props, loading, heightMode }
 }
 
-export function createDashboardPreset(mode: DashboardMode): WidgetDefinition[] {
-  return getWidgetPreset(mode)
+export function createDashboardPreset(mode: DashboardMode, strategy?: StrategyId | string | null): WidgetDefinition[] {
+  return syncWidgetDefinitionsForStrategy(getWidgetPreset(mode), strategy)
 }

@@ -68,7 +68,8 @@ function detectTimeSummaryDisplayMode(ctx: any): TimeSummaryDisplayMode {
   if (strategy === 'total_only') return 'single_goal'
   if (strategy === 'total_plus_categories') return 'calendar_goals'
   if (strategy === 'full_granular') return 'category_and_calendar_goals'
-
+  // Only use config as fallback for legacy users with no strategy set
+  if (strategy !== '') return 'single_goal'
   const categories = Array.isArray(ctx?.targetsConfig?.categories) ? ctx.targetsConfig.categories : []
   if (categories.length > 0) return 'category_and_calendar_goals'
   const currentTargets = ctx?.currentTargets && typeof ctx.currentTargets === 'object' ? ctx.currentTargets : {}
@@ -97,6 +98,7 @@ function buildTimeSummaryProps(
   const showActivity = opts.showOverview && def.options?.showActivity !== false
   const showHistoryCoreMetrics = def.options?.showHistoryCoreMetrics !== false
   const displayMode = detectTimeSummaryDisplayMode(ctx)
+  const todayGroups = resolveTodayGroups(ctx, displayMode)
   const rawHistoryView = String(def.options?.historyView ?? '').toLowerCase()
   const historyView =
     rawHistoryView === 'accordion' || rawHistoryView === 'pills'
@@ -142,7 +144,7 @@ function buildTimeSummaryProps(
     mode,
     config: cfg.timeSummary,
     lookbackWeeks: Number(ctx.lookbackWeeks) || 1,
-    todayGroups: def.props?.todayGroups ?? ctx.groups,
+    todayGroups: def.props?.todayGroups ?? todayGroups,
     title: buildTitle(opts.title, def.options?.titlePrefix),
     cardBg: def.options?.cardBg,
     displayMode,
@@ -161,6 +163,43 @@ function buildTimeSummaryProps(
     showDelta,
     history,
   }
+}
+
+function resolveTodayGroups(ctx: any, displayMode: TimeSummaryDisplayMode) {
+  if (displayMode === 'category_and_calendar_goals') {
+    return Array.isArray(ctx.groups) ? ctx.groups : []
+  }
+  if (displayMode !== 'calendar_goals') {
+    return []
+  }
+
+  const calendarTodayHours = ctx?.calendarTodayHours && typeof ctx.calendarTodayHours === 'object'
+    ? ctx.calendarTodayHours
+    : {}
+  const calendars = Array.isArray(ctx?.calendars) ? ctx.calendars : []
+  const colorById = new Map<string, string | undefined>()
+  const labelById = new Map<string, string>()
+
+  calendars.forEach((calendar: any) => {
+    const id = String(calendar?.id ?? '').trim()
+    if (!id) return
+    labelById.set(id, String(calendar?.displayname ?? calendar?.name ?? id))
+    colorById.set(id, typeof calendar?.color === 'string' ? calendar.color : undefined)
+  })
+
+  return Object.entries(calendarTodayHours)
+    .map(([id, value]) => {
+      const todayHours = Number(value ?? 0)
+      if (!Number.isFinite(todayHours) || todayHours <= 0) return null
+      return {
+        id,
+        label: labelById.get(id) || id,
+        todayHours,
+        color: colorById.get(id),
+      }
+    })
+    .filter(Boolean)
+    .sort((left: any, right: any) => Number(right?.todayHours ?? 0) - Number(left?.todayHours ?? 0))
 }
 
 export const timeSummaryOverviewEntry: RegistryEntry = {

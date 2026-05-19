@@ -25,7 +25,9 @@ final class ReportRenderService {
         $reportVariantLabel = $this->reportVariantLabel($reportVariant);
         $activePreset = trim((string)($summary['active_preset'] ?? ''));
 
-        $subject = sprintf('Opsdash recap · %s · %s', $rangeLabel, $periodLabel);
+        $isCheckpoint = ((int)($summary['offset'] ?? -1)) === 0;
+        $mailTypeLabel = $isCheckpoint ? 'Checkpoint' : 'Recap';
+        $subject = sprintf('Opsdash %s · %s · %s', strtolower($mailTypeLabel), $rangeLabel, $periodLabel);
 
         $selectedLabels = array_values(array_map('strval', $summary['selected_labels'] ?? []));
         $selectedLine = empty($selectedLabels)
@@ -46,10 +48,9 @@ final class ReportRenderService {
         $template = $this->mailer->createEMailTemplate('opsdash.report.test');
         $template->setSubject($subject);
         $template->addHeader();
-        $template->addHeading('Opsdash recap');
         $template->addBodyText(
-            $this->renderHeroHtml($summary, $reportVariant, $displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $activePreset),
-            $this->renderHeroPlain($displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $activePreset),
+            $this->renderHeroHtml($summary, $reportVariant, $displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $activePreset, $mailTypeLabel),
+            $this->renderHeroPlain($displayName, $rangeLabel, $periodLabel, $selectedLine, $reportVariantLabel, $activePreset, $mailTypeLabel),
         );
 
         switch ($reportVariant) {
@@ -62,6 +63,19 @@ final class ReportRenderService {
                     $this->renderTargetBoardHtml('Calendar targets', 'Per-calendar progress for the selected recap period.', $targetTotal, $calendarRows, 'Calendar'),
                     $this->renderTargetBoardPlain('Calendar targets', $targetTotal, $calendarRows),
                 );
+                $charts = is_array($summary['charts'] ?? null) ? $summary['charts'] : [];
+                $calPie = is_array($charts['cal_pie'] ?? null) ? $charts['cal_pie'] : [];
+                $dowAvg = is_array($charts['dow_avg'] ?? null) ? $charts['dow_avg'] : [];
+                $dowOrder = is_array($charts['dow_order'] ?? null) ? $charts['dow_order'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                $totalHours = (float)($summary['total_hours'] ?? 0.0);
+                $calPieHtml = $this->renderPieChartHtml('Calendar split', 'Share of tracked hours by calendar', $calPie, $totalHours);
+                if ($calPieHtml !== '') {
+                    $template->addBodyText($calPieHtml, $this->renderPieChartPlain('Calendar split', $calPie, $totalHours));
+                }
+                $dowHtml = $this->renderDowChartHtml($dowAvg, $dowOrder);
+                if ($dowHtml !== '') {
+                    $template->addBodyText($dowHtml, $this->renderDowChartPlain($dowAvg, $dowOrder));
+                }
                 $template->addBodyText(
                     $this->renderActivityHtml($summary, $busiestDay, $longestSession),
                     $this->renderActivityPlain($summary, $busiestDay, $longestSession),
@@ -81,6 +95,21 @@ final class ReportRenderService {
                     $this->renderBalanceHtml($balance, $balanceWarnings),
                     $this->renderBalancePlain($balance, $balanceWarnings),
                 );
+                $charts = is_array($summary['charts'] ?? null) ? $summary['charts'] : [];
+                $catPie = is_array($charts['cat_pie'] ?? null) ? $charts['cat_pie'] : [];
+                $calPie = is_array($charts['cal_pie'] ?? null) ? $charts['cal_pie'] : [];
+                $dowAvg = is_array($charts['dow_avg'] ?? null) ? $charts['dow_avg'] : [];
+                $dowOrder = is_array($charts['dow_order'] ?? null) ? $charts['dow_order'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                $totalHours = (float)($summary['total_hours'] ?? 0.0);
+                $catPieHtml = $this->renderPieChartHtml('Category split', 'Share of tracked hours by category', $catPie, $totalHours);
+                $calPieHtml = $this->renderPieChartHtml('Calendar split', 'Share of tracked hours by calendar', $calPie, $totalHours);
+                if ($catPieHtml !== '' || $calPieHtml !== '') {
+                    $template->addBodyText($catPieHtml . $calPieHtml, $this->renderPieChartPlain('Category split', $catPie, $totalHours));
+                }
+                $dowHtml = $this->renderDowChartHtml($dowAvg, $dowOrder);
+                if ($dowHtml !== '') {
+                    $template->addBodyText($dowHtml, $this->renderDowChartPlain($dowAvg, $dowOrder));
+                }
                 $template->addBodyText(
                     $this->renderActivityHtml($summary, $busiestDay, $longestSession),
                     $this->renderActivityPlain($summary, $busiestDay, $longestSession),
@@ -112,7 +141,8 @@ final class ReportRenderService {
             'Open Opsdash overview',
             $this->urlGenerator->linkToRouteAbsolute('opsdash.overview.index'),
         );
-        $template->addFooter('You\'re receiving this because you have automatic recaps enabled in Opsdash.');
+        $footerType = $isCheckpoint ? 'checkpoints' : 'recaps';
+        $template->addFooter(sprintf('You\'re receiving this because you have automatic %s enabled in Opsdash.', $footerType));
 
         return [
             'subject' => $template->renderSubject(),
@@ -203,91 +233,122 @@ final class ReportRenderService {
         string $selectedLine,
         string $reportVariantLabel,
         string $activePreset = '',
+        string $mailTypeLabel = 'Recap',
     ): string {
+        $isMonthly = strtolower($rangeLabel) === 'monthly';
+        $periodTitle = $this->formatPeriodTitle((string)($summary['from'] ?? ''), (string)($summary['to'] ?? ''), $isMonthly);
+
         switch ($reportVariant) {
             case 'calendar_goals':
                 $stats = [
-                    ['Total hours',    $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                              '#22d3ee'],
-                    ['Calendar pace',  $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',      '#c4b5fd'],
-                    ['Active days',    (string)(int)($summary['active_days'] ?? 0),                                              '#ffffff'],
-                    ['Future planned', $this->formatHours((float)($summary['future_hours'] ?? 0.0)),                             '#fcd34d'],
+                    ['Total hours',    $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                         '#22d3ee'],
+                    ['Balance index',  $this->formatIndex((float)($summary['balance']['index'] ?? 0.0)),                    '#fcd34d'],
+                    ['Active days',    (string)(int)($summary['active_days'] ?? 0),                                         '#ffffff'],
+                    ['Future planned', $this->formatHours((float)($summary['future_hours'] ?? 0.0)),                        '#c4b5fd'],
                 ];
                 break;
             case 'category_and_calendar_goals':
                 $stats = [
-                    ['Total hours',    $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                              '#22d3ee'],
-                    ['Target',         $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',      '#c4b5fd'],
-                    ['Active days',    (string)(int)($summary['active_days'] ?? 0),                                              '#ffffff'],
-                    ['Balance index',  $this->formatIndex((float)($summary['balance']['index'] ?? 0.0)),                         '#fcd34d'],
+                    ['Total hours',   $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                          '#22d3ee'],
+                    ['Target',        $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',  '#c4b5fd'],
+                    ['Active days',   (string)(int)($summary['active_days'] ?? 0),                                          '#ffffff'],
+                    ['Balance index', $this->formatIndex((float)($summary['balance']['index'] ?? 0.0)),                     '#fcd34d'],
                 ];
                 break;
             default:
                 $stats = [
-                    ['Total hours', $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                                 '#22d3ee'],
-                    ['Target',      $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',         '#c4b5fd'],
-                    ['Active days', (string)(int)($summary['active_days'] ?? 0),                                                 '#ffffff'],
-                    ['Events',      (string)(int)($summary['events'] ?? 0),                                                      '#fcd34d'],
+                    ['Total hours', $this->formatHours((float)($summary['total_hours'] ?? 0.0)),                            '#22d3ee'],
+                    ['Target',      $this->formatPercent((float)($summary['targets']['total']['percent'] ?? 0.0)) . '%',    '#c4b5fd'],
+                    ['Active days', (string)(int)($summary['active_days'] ?? 0),                                            '#ffffff'],
+                    ['Events',      (string)(int)($summary['events'] ?? 0),                                                  '#fcd34d'],
                 ];
         }
 
-        $statCells = '';
-        foreach ($stats as $i => [$label, $value, $color]) {
-            $pr = $i < 3 ? 'padding-right:6px;' : '';
-            $statCells .= sprintf(
-                '<td style="width:25%%;vertical-align:top;%s">
-                    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 10px;">
-                        <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;">%s</div>
-                        <div style="font-size:20px;font-weight:800;color:%s;line-height:1;">%s</div>
-                    </div>
-                </td>',
-                $pr,
-                $this->escape($label),
-                $color,
-                $this->escape($value),
+        // 2×2 stat grid — each card at 50% width, more breathing room than 4-in-a-row
+        $statRows = '';
+        for ($i = 0; $i < 4; $i += 2) {
+            $left  = $stats[$i]     ?? null;
+            $right = $stats[$i + 1] ?? null;
+            $leftHtml  = $left  ? $this->heroStatCell($left[0],  $left[1],  $left[2],  'padding-right:5px;') : '<td style="width:50%;padding-right:5px;"></td>';
+            $rightHtml = $right ? $this->heroStatCell($right[0], $right[1], $right[2], '') : '<td style="width:50%;"></td>';
+            $rowMargin = $i > 0 ? 'margin-top:6px;' : '';
+            $statRows .= sprintf(
+                '<table role="presentation" style="width:100%%;border-collapse:collapse;%s"><tr>%s%s</tr></table>',
+                $rowMargin, $leftHtml, $rightHtml,
             );
         }
 
-        $presetPillHtml = $activePreset !== ''
-            ? sprintf(
-                '<div style="margin-bottom:14px;">
-                    <span style="display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.04em;">%s</span>
-                </div>',
-                $this->escape($activePreset),
-              )
-            : '';
-
-        return sprintf(
-            '<div style="background:linear-gradient(145deg,#0f1f35 0%%,#1e3a5f 55%%,#0c4a78 100%%);border-radius:16px;padding:28px 26px 24px;color:#ffffff;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px;">%s recap</div>
-                <div style="font-size:30px;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;">%s</div>
-                %s<div style="font-size:14px;color:rgba(255,255,255,.55);margin-bottom:22px;">Hey %s — here\'s how your %s went.</div>
-                <table role="presentation" style="width:100%%;border-collapse:collapse;"><tr>%s</tr></table>
-                <table role="presentation" style="width:100%%;border-collapse:collapse;margin-top:14px;">
-                    <tr>
-                        <td style="width:60%%;padding-right:6px;vertical-align:top;">
-                            <div style="padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);">
-                                <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;">Calendars</div>
-                                <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.4;">%s</div>
-                            </div>
-                        </td>
-                        <td style="width:40%%;vertical-align:top;">
-                            <div style="padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);">
-                                <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;">Model</div>
-                                <div style="font-size:12px;color:rgba(255,255,255,.8);">%s</div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div>',
-            $this->escape($rangeLabel),
-            $this->escape($periodLabel),
-            $presetPillHtml,
-            $this->escape($displayName !== '' ? $displayName : 'there'),
-            $this->escape(strtolower($rangeLabel)),
-            $statCells,
-            $selectedLine,
+        // Meta tags: slim inline row at the bottom — calendars, model, optional profile
+        $metaTags = sprintf(
+            '<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:6px;font-size:11px;color:rgba(255,255,255,.7);margin-right:6px;margin-top:4px;"><span style="color:rgba(255,255,255,.4);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-right:5px;">Cal</span>%s</span>',
+            $this->escape($selectedLine),
+        );
+        $metaTags .= sprintf(
+            '<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:6px;font-size:11px;color:rgba(255,255,255,.7);margin-right:6px;margin-top:4px;"><span style="color:rgba(255,255,255,.4);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-right:5px;">Model</span>%s</span>',
             $this->escape($reportVariantLabel),
         );
+        if ($activePreset !== '') {
+            $metaTags .= sprintf(
+                '<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:6px;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);margin-top:4px;"><span style="color:rgba(255,255,255,.4);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-right:5px;">Profile</span>%s</span>',
+                $this->escape($activePreset),
+            );
+        }
+
+        $name = $this->escape($displayName !== '' ? $displayName : 'there');
+        $checkpointLabel = $this->escape(strtoupper($rangeLabel) . ' ' . strtoupper($mailTypeLabel));
+
+        return sprintf(
+            '<div style="background:linear-gradient(145deg,#0f1f35 0%%,#1e3a5f 55%%,#0c4a78 100%%);border-radius:16px;padding:28px 26px 22px;color:#ffffff;">
+                <div style="margin-bottom:18px;">
+                    <span style="display:inline-block;padding:5px 12px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.28);border-radius:6px;font-size:10px;font-family:monospace;letter-spacing:.14em;text-transform:uppercase;color:#67e8f9;">&#9670;&nbsp; Opsdash &middot; %s</span>
+                </div>
+                <div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:10px;">Hey %s,</div>
+                <div style="font-size:32px;line-height:1.0;font-weight:800;letter-spacing:-.025em;margin-bottom:4px;">%s</div>
+                <div style="font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.04em;font-family:monospace;margin-bottom:22px;">%s</div>
+                %s
+                <div style="margin-top:18px;line-height:1;">%s</div>
+            </div>',
+            $checkpointLabel,
+            $name,
+            $this->escape($periodTitle),
+            $this->escape($periodLabel),
+            $statRows,
+            $metaTags,
+        );
+    }
+
+    private function heroStatCell(string $label, string $value, string $color, string $extraStyle): string {
+        return sprintf(
+            '<td style="width:50%%;vertical-align:top;%s">
+                <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 14px 12px;">
+                    <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:8px;">%s</div>
+                    <div style="font-size:22px;font-weight:800;color:%s;line-height:1;word-break:break-word;">%s</div>
+                </div>
+            </td>',
+            $extraStyle,
+            $this->escape($label),
+            $color,
+            $this->escape($value),
+        );
+    }
+
+    private function formatPeriodTitle(string $from, string $to, bool $isMonthly): string {
+        if ($from === '' && $to === '') {
+            return $isMonthly ? 'Monthly recap' : 'Weekly recap';
+        }
+        try {
+            $dtFrom = new \DateTimeImmutable($from);
+            if ($isMonthly) {
+                return $dtFrom->format('F Y');
+            }
+            $dtTo = new \DateTimeImmutable($to);
+            if ($dtFrom->format('Y-m') === $dtTo->format('Y-m')) {
+                return $dtFrom->format('M j') . '–' . $dtTo->format('j, Y');
+            }
+            return $dtFrom->format('M j') . ' – ' . $dtTo->format('M j, Y');
+        } catch (\Throwable) {
+            return $isMonthly ? 'Monthly recap' : 'Weekly recap';
+        }
     }
 
     private function renderHeroPlain(
@@ -297,11 +358,12 @@ final class ReportRenderService {
         string $selectedLine,
         string $reportVariantLabel,
         string $activePreset = '',
+        string $mailTypeLabel = 'Recap',
     ): string {
         $lines = [
             sprintf('Hey %s,', $displayName !== '' ? $displayName : 'there'),
             '',
-            sprintf('%s recap · %s', $rangeLabel, $periodLabel),
+            sprintf('%s %s · %s', $rangeLabel, $mailTypeLabel, $periodLabel),
         ];
         if ($activePreset !== '') {
             $lines[] = sprintf('Profile: %s', $activePreset);
@@ -870,6 +932,138 @@ final class ReportRenderService {
 
     private function unescapeAmp(string $value): string {
         return str_replace('&amp;', '&', $value);
+    }
+
+    private const CHART_PALETTE = ['#0ea5e9', '#22d3ee', '#a78bfa', '#f59e0b', '#22c55e', '#f472b6', '#94a3b8'];
+
+    /**
+     * @param array<int,array{label:string,hours:float,color?:string|null}> $rows
+     */
+    private function renderPieChartHtml(string $title, string $subtitle, array $rows, float $totalHours): string {
+        if (empty($rows) || $totalHours <= 0) {
+            return '';
+        }
+        $bars = '';
+        foreach ($rows as $i => $row) {
+            $pct   = round(($row['hours'] / $totalHours) * 100, 1);
+            $fill  = min(100, (int)round($pct));
+            $color = (string)($row['color'] ?? '');
+            if ($color === '' || !preg_match('/^#[0-9a-fA-F]{3,6}$/', $color)) {
+                $color = self::CHART_PALETTE[$i % count(self::CHART_PALETTE)];
+            }
+            $bars .= sprintf(
+                '<tr>
+                    <td style="width:110px;padding:7px 10px 7px 0;vertical-align:middle;">
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%%;background:%s;vertical-align:middle;margin-right:6px;flex-shrink:0;"></span>
+                        <span style="font-size:12px;font-weight:600;color:#1e293b;vertical-align:middle;">%s</span>
+                    </td>
+                    <td style="padding:7px 8px 7px 0;vertical-align:middle;">
+                        <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden;">
+                            <div style="width:%d%%;height:8px;background:%s;border-radius:4px;"></div>
+                        </div>
+                    </td>
+                    <td style="width:52px;padding:7px 0 7px 6px;vertical-align:middle;text-align:right;white-space:nowrap;">
+                        <span style="font-size:11px;font-weight:700;color:#0f172a;font-variant-numeric:tabular-nums;">%s h</span>
+                    </td>
+                    <td style="width:38px;padding:7px 0 7px 6px;vertical-align:middle;text-align:right;white-space:nowrap;">
+                        <span style="font-size:11px;color:#94a3b8;font-variant-numeric:tabular-nums;">%s%%</span>
+                    </td>
+                </tr>',
+                $color,
+                $this->escape($row['label']),
+                $fill,
+                $color,
+                $this->escape($this->formatHours($row['hours'])),
+                $this->escape((string)$pct),
+            );
+        }
+
+        $inner = $this->widgetTitle($title, $subtitle)
+            . sprintf('<table role="presentation" style="width:100%%;border-collapse:collapse;">%s</table>', $bars);
+
+        return $this->widgetCard($inner);
+    }
+
+    /**
+     * @param array<int,array{label:string,hours:float,color?:string|null}> $rows
+     */
+    private function renderPieChartPlain(string $title, array $rows, float $totalHours): string {
+        if (empty($rows) || $totalHours <= 0) {
+            return '';
+        }
+        $lines = [$title];
+        foreach ($rows as $row) {
+            $pct = $totalHours > 0 ? round(($row['hours'] / $totalHours) * 100, 1) : 0;
+            $lines[] = sprintf('%s: %s h (%s%%)', $row['label'], $this->formatHours($row['hours']), $pct);
+        }
+        return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * @param array<string,float> $dowAvg  keyed Mon..Sun
+     * @param string[]            $dowOrder
+     */
+    private function renderDowChartHtml(array $dowAvg, array $dowOrder): string {
+        if (empty($dowAvg)) {
+            return '';
+        }
+        $maxVal = max(0.001, max(array_values($dowAvg)));
+        $maxBarPx = 64;
+
+        $barCells  = '';
+        $labelCells = '';
+        $valueCells = '';
+
+        foreach ($dowOrder as $d) {
+            $val    = (float)($dowAvg[$d] ?? 0.0);
+            $ratio  = $val / $maxVal;
+            $barH   = max(2, (int)round($ratio * $maxBarPx));
+            $spacerH = $maxBarPx - $barH;
+            $isWeekend = $d === 'Sat' || $d === 'Sun';
+            $barColor  = $isWeekend ? '#c4b5fd' : '#0ea5e9';
+            $labelColor = $isWeekend ? '#a78bfa' : '#64748b';
+
+            $barCells .= sprintf(
+                '<td style="width:14.28%%;padding:0 3px;vertical-align:bottom;text-align:center;">
+                    <div style="height:%dpx;"></div>
+                    <div style="background:%s;border-radius:3px 3px 0 0;height:%dpx;"></div>
+                </td>',
+                $spacerH, $barColor, $barH,
+            );
+            $labelCells .= sprintf(
+                '<td style="width:14.28%%;padding:4px 3px 0;text-align:center;font-size:10px;font-weight:600;color:%s;letter-spacing:.04em;">%s</td>',
+                $labelColor, $this->escape($d),
+            );
+            $valueCells .= sprintf(
+                '<td style="width:14.28%%;padding:2px 3px 0;text-align:center;font-size:9px;color:#94a3b8;font-variant-numeric:tabular-nums;">%s</td>',
+                $val > 0 ? $this->escape($this->formatHours($val)) : '—',
+            );
+        }
+
+        $inner = $this->widgetTitle('Day-of-week pattern', 'Average hours per weekday')
+            . sprintf(
+                '<table role="presentation" style="width:100%%;border-collapse:collapse;">
+                    <tr>%s</tr>
+                    <tr>%s</tr>
+                    <tr>%s</tr>
+                </table>',
+                $barCells, $labelCells, $valueCells,
+            );
+
+        return $this->widgetCard($inner);
+    }
+
+    /**
+     * @param array<string,float> $dowAvg
+     * @param string[]            $dowOrder
+     */
+    private function renderDowChartPlain(array $dowAvg, array $dowOrder): string {
+        $lines = ['Day-of-week pattern (avg h)'];
+        foreach ($dowOrder as $d) {
+            $val = (float)($dowAvg[$d] ?? 0.0);
+            $lines[] = sprintf('%s: %s', $d, $val > 0 ? $this->formatHours($val) . ' h' : '—');
+        }
+        return implode(PHP_EOL, $lines);
     }
 
     private function escape(string $value): string {

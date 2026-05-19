@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { createDefaultTargetsConfig } from '../src/services/targets'
-import { mapWidgetToComponent, widgetsRegistry } from '../src/services/widgetsRegistry'
+import { mapWidgetToComponent, syncWidgetTabsForStrategy, widgetsRegistry } from '../src/services/widgetsRegistry'
 
 describe('widgetsRegistry targets_v2', () => {
   it('overrides UI flags without mutating base config', () => {
@@ -281,12 +281,24 @@ describe('widgetsRegistry targets_v2', () => {
       summary: { rangeLabel: 'Week' },
       activeDayMode: 'active',
       currentTargets: { 'cal-1': 8 },
+      calendarTodayHours: { 'cal-1': 2.5, 'cal-2': 1 },
+      calendars: [
+        { id: 'cal-1', displayname: 'Primary', color: '#ff0000' },
+        { id: 'cal-2', displayname: 'Secondary', color: '#00ff00' },
+      ],
+      groups: [
+        { id: '__uncategorized__', label: 'Unassigned', todayHours: 3.5, isUnassigned: true },
+      ],
     }) as any
 
     expect(props.displayMode).toBe('calendar_goals')
     expect(props.config.showCalendarSummary).toBe(true)
     expect(props.config.showTopCategory).toBe(false)
     expect(props.config.showBalance).toBe(false)
+    expect(props.todayGroups).toEqual([
+      { id: 'cal-1', label: 'Primary', todayHours: 2.5, color: '#ff0000' },
+      { id: 'cal-2', label: 'Secondary', todayHours: 1, color: '#00ff00' },
+    ])
   })
 
   it('time summary keeps category rows for category and calendar goal mode', () => {
@@ -306,11 +318,90 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.config.showBalance).toBe(true)
   })
 
+  it('syncs legacy widget defaults to the current strategy on first normalization', () => {
+    const synced = syncWidgetTabsForStrategy({
+      tabs: [{
+        id: 'tab-1',
+        label: 'Overview',
+        widgets: [
+          {
+            id: 'targets-1',
+            type: 'targets_v2',
+            options: { showCategoryBlocks: true },
+            layout: { width: 'half', height: 'm', order: 10 },
+            version: 1,
+          },
+          {
+            id: 'summary-1',
+            type: 'time_summary_overview',
+            options: {
+              showCalendarSummary: true,
+              showTopCategory: true,
+              showBalance: true,
+            },
+            layout: { width: 'half', height: 'm', order: 20 },
+            version: 1,
+          },
+        ],
+      }],
+      defaultTabId: 'tab-1',
+    }, 'total_plus_categories')
+
+    expect(synced.tabs[0].widgets[0].options?.showCategoryBlocks).toBe(true)
+    expect(synced.tabs[0].widgets[1].options?.showCalendarSummary).toBe(true)
+    expect(synced.tabs[0].widgets[1].options?.showTopCategory).toBe(false)
+    expect(synced.tabs[0].widgets[1].options?.showBalance).toBe(false)
+  })
+
+  it('preserves manual display overrides while migrating strategy-owned defaults', () => {
+    const synced = syncWidgetTabsForStrategy({
+      tabs: [{
+        id: 'tab-1',
+        label: 'Overview',
+        widgets: [
+          {
+            id: 'summary-1',
+            type: 'time_summary_overview',
+            options: {
+              showCalendarSummary: false,
+              showTopCategory: true,
+              showBalance: false,
+            },
+            layout: { width: 'half', height: 'm', order: 20 },
+            version: 1,
+          },
+        ],
+      }],
+      defaultTabId: 'tab-1',
+    }, 'total_plus_categories', 'full_granular')
+
+    expect(synced.tabs[0].widgets[0].options?.showCalendarSummary).toBe(false)
+    expect(synced.tabs[0].widgets[0].options?.showTopCategory).toBe(false)
+    expect(synced.tabs[0].widgets[0].options?.showBalance).toBe(false)
+  })
+
   it('time summary lookback exposes defaults for options', () => {
     const entry = widgetsRegistry.time_summary_lookback
     expect(entry.defaultOptions?.showTotal).toBe(true)
     expect(entry.defaultOptions?.mode).toBe('active')
     expect(entry.defaultOptions?.showDelta).toBe(true)
+  })
+
+  it('calendar table prefers known strategy over stale category config', () => {
+    const entry = widgetsRegistry.calendar_table
+    const cfg = createDefaultTargetsConfig()
+    cfg.categories = [{ id: 'focus', label: 'Focus', targetHours: 12, includeWeekend: true, groupIds: [1] }]
+
+    const props = entry.buildProps({ options: {} } as any, {
+      onboardingStrategy: 'total_only',
+      targetsConfig: cfg,
+      byCal: [{ id: 'cal-1', calendar: 'Primary', total_hours: 6 }],
+      currentTargets: {},
+      calendarGroups: [{ id: 'focus', label: 'Focus' }],
+    }) as any
+
+    expect(props.mode).toBe('single_goal')
+    expect(props.groups).toEqual([])
   })
 
   it('balance_index uses defaults when options/context missing', () => {

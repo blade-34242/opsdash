@@ -14,6 +14,8 @@ function detectCalendarTableMode(ctx: any): 'single_goal' | 'calendar_goals' | '
   if (strategy === 'total_only') return 'single_goal'
   if (strategy === 'total_plus_categories') return 'calendar_goals'
   if (strategy === 'full_granular') return 'category_and_calendar_goals'
+  // Only use config as fallback for legacy users with no strategy set.
+  if (strategy !== '') return 'single_goal'
 
   const categories = Array.isArray(ctx?.targetsConfig?.categories) ? ctx.targetsConfig.categories : []
   if (categories.length > 0) return 'category_and_calendar_goals'

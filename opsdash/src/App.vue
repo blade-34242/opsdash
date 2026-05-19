@@ -26,6 +26,7 @@
       :snapshot-notice="wizardSnapshotNotice"
       :persist-step="handleWizardSaveStep"
       :send-test-report="handleWizardTestReport"
+      :send-checkpoint-report="handleWizardCheckpointReport"
       @close="handleWizardClose"
       @skip="handleWizardSkip"
       @complete="handleWizardComplete"
@@ -516,6 +517,7 @@ import {
   filterWidgetTabsForStrategy,
   getRestrictedWidgetTypesForStrategy,
   normalizeWidgetTabs,
+  syncWidgetTabsForStrategy,
   widgetsRegistry,
 } from './services/widgetsRegistry'
 import { formatDateKey, getWeekNumber, parseDateKey } from './services/dateTime'
@@ -679,9 +681,9 @@ const {
 } = useWidgetLayoutManager({
   storageKey: 'opsdash.widgets.v1',
   widgetsRegistry,
-  createDefaultTabs: () => filterWidgetTabsForStrategy(createDefaultWidgetTabs(dashboardMode.value), widgetStrategy.value),
+  createDefaultTabs: () => filterWidgetTabsForStrategy(createDefaultWidgetTabs(dashboardMode.value, widgetStrategy.value), widgetStrategy.value),
   normalizeWidgetTabs,
-  createDashboardPreset: (mode) => filterWidgetDefinitionsForStrategy(createDashboardPreset(mode), widgetStrategy.value),
+  createDashboardPreset: (mode) => filterWidgetDefinitionsForStrategy(createDashboardPreset(mode, widgetStrategy.value), widgetStrategy.value),
   dashboardMode,
   deckEnabled: deckEnabledForWidgets,
   hasInitialLoad,
@@ -973,8 +975,9 @@ const setDeckFilter = (value: DeckFilterMode) => {
 const onboardingState = onboarding
 watch(
   () => onboardingState.value?.strategy ?? null,
-  (strategy) => {
+  (strategy, previousStrategy) => {
     widgetStrategy.value = strategy
+    enforceStrategyWidgetConstraints(true, previousStrategy ?? null)
   },
   { immediate: true },
 )
@@ -1043,8 +1046,11 @@ const availableWidgetTypesForStrategy = computed(() => {
   return availableWidgetTypes.value.filter((entry) => !restricted.has(entry.type))
 })
 
-function enforceStrategyWidgetConstraints() {
-  const next = filterWidgetTabsForStrategy(widgetTabsState.value as any, onboardingState.value?.strategy)
+function enforceStrategyWidgetConstraints(syncDisplayOptions = false, previousStrategy: string | null = null) {
+  let next = filterWidgetTabsForStrategy(widgetTabsState.value as any, onboardingState.value?.strategy)
+  if (syncDisplayOptions) {
+    next = syncWidgetTabsForStrategy(next, onboardingState.value?.strategy, previousStrategy)
+  }
   const currentJson = JSON.stringify(widgetTabsState.value)
   const nextJson = JSON.stringify(next)
   if (currentJson === nextJson) return
@@ -1062,14 +1068,6 @@ watch(
       newWidgetType.value = ''
     }
   },
-)
-
-watch(
-  () => onboardingState.value?.strategy,
-  () => {
-    enforceStrategyWidgetConstraints()
-  },
-  { immediate: true },
 )
 
 watch(
@@ -1212,27 +1210,35 @@ const handleWizardSaveStep = async (payload: WizardStepSavePayload) => {
   await onboardingActions.saveStep(payload)
 }
 
-const handleWizardTestReport = async (payload: {
+type TestReportPayload = {
   selected: string[]
   groups: Record<string, number>
   targetsConfig: Record<string, unknown>
   reportingConfig: Record<string, unknown>
-}) => {
+}
+
+async function sendTestReportWithOffset(payload: TestReportPayload, offset: number, label: string) {
   try {
     const result = await postJson(route('reportTestSend'), {
       range: range.value,
-      offset: offset.value,
+      offset,
       cals: payload.selected,
       groups: payload.groups,
       targets_config: payload.targetsConfig,
       reporting_config: payload.reportingConfig,
     })
-    notifySuccess(`Test recap sent to ${result.email}`)
+    notifySuccess(`Test ${label} sent to ${result.email}`)
   } catch (error) {
     console.error(error)
-    notifyError('Failed to send test recap')
+    notifyError(`Failed to send test ${label}`)
   }
 }
+
+const handleWizardTestReport = (payload: TestReportPayload) =>
+  sendTestReportWithOffset(payload, -1, 'recap')
+
+const handleWizardCheckpointReport = (payload: TestReportPayload) =>
+  sendTestReportWithOffset(payload, 0, 'checkpoint')
 
 async function performLoad() {
   await load()

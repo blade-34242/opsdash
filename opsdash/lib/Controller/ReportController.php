@@ -45,7 +45,7 @@ final class ReportController extends Controller {
         }
 
         $range = strtolower((string)($data['range'] ?? 'week')) === 'month' ? 'month' : 'week';
-        $offset = (int)($data['offset'] ?? 0);
+        $offset = (int)($data['offset'] ?? -1);
         $offset = max(-self::MAX_OFFSET, min(self::MAX_OFFSET, $offset));
 
         $requestedCals = null;

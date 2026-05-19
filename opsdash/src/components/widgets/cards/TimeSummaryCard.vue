@@ -13,6 +13,11 @@
       <div class="today-cat" v-for="cat in todayItems" :key="cat.id">
         <span class="dot" :style="{ background: cat.color || 'var(--brand)' }"></span>
         <span class="name">{{ cat.label }}</span>
+        <span
+          v-if="(cat as any).isUnassigned"
+          class="unassigned-hint"
+          title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
+        >ⓘ</span>
         <span class="value">{{ n2(cat.todayHours) }} h</span>
       </div>
     </div>
@@ -762,6 +767,7 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   border-radius:50%;
   box-shadow:0 0 0 1px color-mix(in oklab, var(--fg) 10%, transparent);
 }
+.today-cat .unassigned-hint{ font-size:calc(11px * var(--widget-scale,1)); color:var(--muted); cursor:default; opacity:.7 }
 .today-cat .name{
   font-weight:600;
 }
