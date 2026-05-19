@@ -4,29 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-### Added
-- Email hero block completely redesigned:
-  - Period title now formatted as "May 2026" or "May 12–18, 2026" instead of raw date string.
-  - `◆ OPSDASH · MONTHLY RECAP` / `◆ OPSDASH · MONTHLY CHECKPOINT` badge replaces the plain `addHeading` call.
-  - Greeting ("Hey {name},") separated from title for clearer hierarchy.
-  - 2×2 stat grid replaces the cramped 4-column single-row layout.
-  - Calendars, Model, and Profile shown as compact inline tags rather than full-width cells.
-  - Subject line, badge, and footer now differ between Checkpoint and Recap mail types.
-- "Calendar pace" replaced with Balance index in the `calendar_goals` hero stats.
-- Email chart blocks added — rendered as email-safe pure HTML/CSS, no JS or SVG:
-  - **Calendar split**: proportional horizontal bars per calendar (shown for `calendar_goals` and `category_and_calendar_goals`).
-  - **Category split**: proportional horizontal bars per category (shown for `category_and_calendar_goals` only).
-  - **Day-of-week pattern**: 7 vertical bars (Mon–Sun) showing average hours per weekday occurrence; weekends highlighted in violet.
-- `buildChartData()` in `ReportSummaryService` pre-aggregates DOW averages (total divided by weekday count in the period), calendar pie data, and category pie data.
-- Two test-send buttons in onboarding Preferences: **Checkpoint** (offset=0, current period snapshot) and **Recap** (offset=−1, completed previous period).
-
-### Fixed
-- `days_off` in email reports no longer counts future dates in the period as quiet days. The count is now clipped to today, matching the UI behavior in `OverviewHistoryService`.
-- `detectTimeSummaryDisplayMode` and `detectTargetsDisplayMode`: when `onboardingStrategy` is set to a known value, that always wins; stale `targetsConfig.categories` entries from a previous goal type no longer cause the wrong display mode to be returned after switching from `category_and_calendar_goals` to `calendar_goals`.
-- `resolveTodayGroups` in `time_summary_v2.ts` now filters the today groups based on the active display mode so calendar-only users do not see category group rows.
-
-
-
 ## 0.8.1 - 2026-05-10
 ### Added
 - Real recap mail delivery for Opsdash via the shared reporting pipeline:
@@ -43,6 +20,19 @@ All notable changes to this project will be documented in this file.
   - `Calendar + Category Goals`
 - Separate weekly and monthly reporting mode configuration with independent delivery type and local send time settings.
 - Local Nextcloud 33 + Mailpit mail-test stack documentation and workflow.
+- Email hero block completely redesigned:
+  - Period title now formatted as "May 2026" or "May 12–18, 2026" instead of raw date string.
+  - `◆ OPSDASH · MONTHLY RECAP` / `◆ OPSDASH · MONTHLY CHECKPOINT` badge replaces the plain `addHeading` call.
+  - Greeting ("Hey {name},") separated from title for clearer hierarchy.
+  - 2×2 stat grid replaces the cramped 4-column single-row layout.
+  - Calendars, Model, and Profile shown as compact inline tags rather than full-width cells.
+  - Subject line, badge, and footer now differ between Checkpoint and Recap mail types.
+- Email chart blocks added — rendered as email-safe pure HTML/CSS, no JS or SVG:
+  - **Calendar split**: proportional horizontal bars per calendar (shown for `calendar_goals` and `category_and_calendar_goals`).
+  - **Category split**: proportional horizontal bars per category (shown for `category_and_calendar_goals` only).
+  - **Day-of-week pattern**: 7 vertical bars (Mon–Sun) showing average hours per weekday occurrence; weekends highlighted in violet.
+- `buildChartData()` in `ReportSummaryService` pre-aggregates DOW averages (total divided by weekday count in the period), calendar pie data, and category pie data.
+- Two test-send buttons in onboarding Preferences: **Checkpoint** (offset=0, current period snapshot) and **Recap** (offset=−1, completed previous period).
 
 ### Changed
 - Release preparation for 0.8.1.
@@ -53,6 +43,7 @@ All notable changes to this project will be documented in this file.
 - Reporting preferences in onboarding now expose live weekly/monthly recap controls with `Final recap` or `Checkpoint + final` plus per-mode send times.
 - Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI, background jobs, and the lightweight `opsdash:report` snapshot command using the same internal report core.
 - Automatic recap sending now runs through the Nextcloud background job system instead of any app-managed Unix cron path, using user-timezone-aware `final` / `checkpoint_final` delivery semantics and local send times.
+- `Calendar pace` in the `calendar_goals` mail hero stats is replaced with the Balance index.
 - Time Summary is now goal-type-aware:
   - `Single Goal` hides calendar/category-specific summary rows by default
   - `Calendar Goals` keeps calendar context without category/balance-heavy rows
@@ -66,6 +57,9 @@ All notable changes to this project will be documented in this file.
 - Fixed scheduled-job registration so Opsdash keeps exactly one `ScheduledReportJob` in the Nextcloud job list instead of accumulating duplicates on boot.
 - Fixed the `Calendar + Category Goals` onboarding row editor so the inline `Weekly target` input is no longer cramped to a near-micro width in the open category action strip.
 - Fixed collapsed-sidebar edit-mode floating so only the inline widget configuration row detaches below the Nextcloud header; the tabs/edit header rows now stay in normal flow.
+- `days_off` in email reports no longer counts future dates in the period as quiet days. The count is now clipped to today, matching the UI behavior in `OverviewHistoryService`.
+- `detectTimeSummaryDisplayMode` and `detectTargetsDisplayMode`: when `onboardingStrategy` is set to a known value, that always wins; stale `targetsConfig.categories` entries from a previous goal type no longer cause the wrong display mode to be returned after switching from `category_and_calendar_goals` to `calendar_goals`.
+- `resolveTodayGroups` in `time_summary_v2.ts` now filters the today groups based on the active display mode so calendar-only users do not see category group rows.
 - Clarified scheduled recap expectations: `sendTimeLocal` is a not-before threshold evaluated when Nextcloud actually runs the background job, not a guaranteed exact wall-clock send moment.
 
 
