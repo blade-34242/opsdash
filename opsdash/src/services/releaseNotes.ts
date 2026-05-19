@@ -7,7 +7,7 @@ export interface ReleaseNotesImage {
 
 export interface ReleaseNotesAction {
   label: string
-  type: 'link' | 'reload'
+  type: 'link' | 'reload' | 'open_preferences'
   href?: string
 }
 
@@ -41,14 +41,14 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       {
         src: resolveReleaseImagePath('release-notes/release-081-reporting-preferences.png'),
         alt: 'Opsdash onboarding preferences with recap reporting settings',
-        title: 'Weekly and monthly recap controls',
-        caption: 'Reporting now sits inside Preferences, where weekly and monthly recap modes can be enabled and tuned per mode instead of living as a stub setting.',
+        title: 'Reporting now lives in Preferences',
+        caption: 'Weekly and monthly recap settings now sit in one place: enable reporting, choose the delivery mode per period, and set local send times before turning the scheduler loose.',
       },
+    ],
+    actions: [
       {
-        src: resolveReleaseImagePath('release-notes/release-081-report-mail.png'),
-        alt: 'Opsdash recap email preview rendered in Mailpit',
-        title: 'Goal-aware recap emails',
-        caption: 'The recap mail now uses the shared report pipeline and renders a structured Opsdash summary instead of a raw technical dump.',
+        label: 'Open recap settings',
+        type: 'open_preferences',
       },
     ],
     autoShow: true,

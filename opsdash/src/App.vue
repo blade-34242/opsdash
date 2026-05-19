@@ -1313,6 +1313,12 @@ function handleReleaseNotesAction(type: string) {
     // a server save (debounced). Do NOT call performLoad() here — it would
     // race the debounced save and overwrite the reset with stale server data.
     applyDashboardPreset(dashboardMode.value)
+    return
+  }
+
+  if (type === 'open_preferences') {
+    closeReleaseNotesOverlay()
+    openWizardFromSidebar('preferences')
   }
 }
 

@@ -59,13 +59,13 @@
               </div>
             </a>
           </div>
-          <div v-if="reloadActions.length" class="version-notes-overlay__apply-block">
+          <div v-if="ctaActions.length" class="version-notes-overlay__apply-block">
             <div class="version-notes-overlay__apply-text">
-              <strong>Want the new layout right now?</strong>
-              This release ships with an updated default dashboard. Clicking the button below resets your current tab to the default layout for your selected dashboard profile — no manual rebuilding needed.
+              <strong>{{ ctaTitle }}</strong>
+              {{ ctaDescription }}
             </div>
             <button
-              v-for="action in reloadActions"
+              v-for="action in ctaActions"
               :key="`${entry.version}-${action.label}`"
               type="button"
               class="version-notes-overlay__reload-btn"
@@ -148,7 +148,19 @@ const emit = defineEmits<{
 }>()
 
 const linkActions = computed(() => (props.entry.actions ?? []).filter(a => a.type === 'link'))
-const reloadActions = computed(() => (props.entry.actions ?? []).filter(a => a.type === 'reload'))
+const ctaActions = computed(() => (props.entry.actions ?? []).filter(a => a.type !== 'link'))
+const ctaTitle = computed(() => {
+  if (ctaActions.value.some(action => action.type === 'open_preferences')) {
+    return 'Want to turn recap reporting on?'
+  }
+  return 'Want the new layout right now?'
+})
+const ctaDescription = computed(() => {
+  if (ctaActions.value.some(action => action.type === 'open_preferences')) {
+    return 'Reporting stays off by default. Jump straight into Preferences to enable weekly or monthly recaps and set the send times that should drive scheduled delivery.'
+  }
+  return 'This release ships with an updated default dashboard. Clicking the button below resets your current tab to the default layout for your selected dashboard profile — no manual rebuilding needed.'
+})
 
 const formatter = computed(() => new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
