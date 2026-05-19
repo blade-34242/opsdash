@@ -167,6 +167,7 @@ export function buildCategoryGroups(input: {
     rows: any[]
     summary: TargetsProgress
     color?: string
+    isUnassigned?: boolean
   }> = []
 
   configCategories.forEach((category: any) => {
