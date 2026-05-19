@@ -28,14 +28,17 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
     version: '0.8.1',
     date: '2026-05-10',
-    title: 'Scheduled recap emails are now part of the dashboard flow',
-    teaser: 'Opsdash can now turn your planning setup into real recap emails: weekly and monthly modes, local send times, a live test-send path, and goal-aware report layouts.',
-    summary: 'Version 0.8.1 turns reporting into a real feature. You can configure weekly and monthly recaps in Preferences, send a test recap immediately, and let Nextcloud deliver scheduled reports that match your planning model.',
+    title: 'Reporting is live, and planning modes now stay visually consistent',
+    teaser: 'Opsdash now turns your setup into real recap emails and keeps Single Goal, Calendar Goals, and Calendar + Category Goals visually aligned when you switch between them.',
+    summary: 'Version 0.8.1 makes reporting a real part of the dashboard flow and tightens up how strategy-aware widgets behave. You can configure weekly and monthly recaps in Preferences, send a test recap immediately, and rely on widgets to follow your selected planning mode without stale category fallbacks or stray Unassigned labels in calendar-focused views.',
     highlights: [
       'Recap reporting now lives directly in onboarding Preferences with separate weekly and monthly settings, local send times, and a simpler final-checkpoint model.',
       'Test sends now use the real mail pipeline, so you can verify the recap from the UI before relying on scheduled delivery.',
       'Recap content now follows your goal setup: Single Goal, Calendar Goals, and Calendar + Category Goals each render a more fitting summary.',
       'Scheduled recaps use your Nextcloud timezone and run through the built-in background-job system after the configured send time is reached.',
+      'Targets, Time Summary, and Calendar Table now respect known planning strategies more reliably, even if older category mappings are still present in saved config.',
+      'Calendar Goals views stay focused on calendars: category-only fallback rows no longer leak back in after switching down from Calendar + Category Goals.',
+      'Time Summary no longer shows stray Unassigned category labels in the today block when the dashboard is in Calendar Goals mode.',
     ],
     images: [
       {
