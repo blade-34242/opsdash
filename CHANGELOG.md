@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## 0.8.1 - 2026-05-10
+## 0.8.1 - 2026-05-20
 ### Added
 - Real recap mail delivery for Opsdash via the shared reporting pipeline:
   - `ReportSummaryService`
@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
 - Added a dedicated Forgejo must-pass Playwright smoke path instead of leaving browser smoke fully disabled in the Forgejo matrix.
 - Hardened E2E onboarding and release-note dismissal helpers so smoke coverage depends less on prior persisted user state.
 - Updated versioned release-note data and current release references to 0.8.1.
+- The onboarding dashboard templates now use the real current layouts again: `Standard` matches the single-tab `std` setup and `Advanced` matches the multi-tab `pro` setup.
+- The in-app `What's new` overlay now presents the current release more clearly with a stronger intro block, better CTA placement, and a cleaner history presentation.
 - Report mails now use the native Nextcloud mail shell while rendering the inner recap body in an Opsdash-specific card/block structure instead of a generic list dump.
 - Reporting preferences in onboarding now expose live weekly/monthly recap controls with `Final recap` or `Checkpoint + final` plus per-mode send times.
 - Reporting architecture is now explicitly controller/service driven for Nextcloud `30-33`, with UI, background jobs, and the lightweight `opsdash:report` snapshot command using the same internal report core.
@@ -60,6 +62,7 @@ All notable changes to this project will be documented in this file.
 - `days_off` in email reports no longer counts future dates in the period as quiet days. The count is now clipped to today, matching the UI behavior in `OverviewHistoryService`.
 - `detectTimeSummaryDisplayMode` and `detectTargetsDisplayMode`: when `onboardingStrategy` is set to a known value, that always wins; stale `targetsConfig.categories` entries from a previous goal type no longer cause the wrong display mode to be returned after switching from `category_and_calendar_goals` to `calendar_goals`.
 - `resolveTodayGroups` in `time_summary_v2.ts` now filters the today groups based on the active display mode so calendar-only users do not see category group rows.
+- The release-note date for `0.8.1` now reflects the actual release day across the changelog and in-app release data.
 - Clarified scheduled recap expectations: `sendTimeLocal` is a not-before threshold evaluated when Nextcloud actually runs the background job, not a guaranteed exact wall-clock send moment.
 
 
