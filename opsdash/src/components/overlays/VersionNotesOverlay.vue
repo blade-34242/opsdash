@@ -10,9 +10,10 @@
       <div class="onboarding-title version-notes-overlay__title">
         <div class="version-notes-overlay__eyebrow">What&apos;s new</div>
         <h2 id="version-notes-title">Opsdash {{ entry.version }}</h2>
-        <p v-if="entry.summary" class="subtitle">{{ entry.summary }}</p>
+        <p class="version-notes-overlay__teaser">{{ entry.teaser }}</p>
       </div>
       <div class="onboarding-actions version-notes-overlay__actions">
+        <span v-if="entry.version === selectedVersion" class="version-notes-overlay__pill version-notes-overlay__pill--accent">Current</span>
         <span class="version-notes-overlay__pill">{{ formatDate(entry.date) }}</span>
         <button
           type="button"
@@ -28,6 +29,33 @@
 
     <main class="onboarding-body version-notes-overlay__body">
       <section class="version-notes-overlay__content">
+        <section class="version-notes-overlay__section version-notes-overlay__section--intro">
+          <div class="version-notes-overlay__section-head">
+            <h4>Release focus</h4>
+            <span class="version-notes-overlay__section-label">Why this matters</span>
+          </div>
+          <p class="version-notes-overlay__intro-copy">{{ entry.summary || entry.teaser }}</p>
+          <div v-if="ctaActions.length" class="version-notes-overlay__apply-block">
+            <div class="version-notes-overlay__apply-row">
+              <div class="version-notes-overlay__apply-text">
+                <strong>{{ ctaTitle }}</strong>
+                {{ ctaDescription }}
+              </div>
+              <div class="version-notes-overlay__apply-actions">
+                <button
+                  v-for="action in ctaActions"
+                  :key="`${entry.version}-${action.label}`"
+                  type="button"
+                  class="version-notes-overlay__reload-btn"
+                  @click="emit('action', action.type)"
+                >
+                  {{ action.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="version-notes-overlay__section">
           <div class="version-notes-overlay__section-head">
             <h4>Highlights</h4>
@@ -59,21 +87,6 @@
               </div>
             </a>
           </div>
-          <div v-if="ctaActions.length" class="version-notes-overlay__apply-block">
-            <div class="version-notes-overlay__apply-text">
-              <strong>{{ ctaTitle }}</strong>
-              {{ ctaDescription }}
-            </div>
-            <button
-              v-for="action in ctaActions"
-              :key="`${entry.version}-${action.label}`"
-              type="button"
-              class="version-notes-overlay__reload-btn"
-              @click="emit('action', action.type)"
-            >
-              {{ action.label }}
-            </button>
-          </div>
         </section>
       </section>
 
@@ -93,7 +106,7 @@
           >
             <div class="version-notes-overlay__history-top">
               <strong>v{{ item.version }}</strong>
-              <span>{{ formatDate(item.date) }}</span>
+              <span>{{ item.version === entry.version ? 'Open now' : formatDate(item.date) }}</span>
             </div>
             <div class="version-notes-overlay__history-title">{{ item.title }}</div>
             <p>{{ item.teaser }}</p>
@@ -177,18 +190,44 @@ function formatDate(value: string) {
 
 <style scoped>
 .version-notes-overlay {
-  width: min(1080px, 100%);
+  width: min(1120px, calc(100vw - 32px));
+  height: min(860px, calc(100vh - var(--header-height, 50px) - 56px));
+  max-height: calc(100vh - var(--header-height, 50px) - 56px);
 }
 
 .version-notes-overlay__header {
   align-items: flex-start;
   gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-border), transparent 18%);
+  background:
+    radial-gradient(circle at top left, color-mix(in oklab, var(--brand), transparent 88%), transparent 42%);
 }
 
 .version-notes-overlay__title {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.version-notes-overlay__title h2 {
+  margin: 0;
+  font-size: clamp(34px, 4.2vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.version-notes-overlay__teaser {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 18px;
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--color-text), white 12%);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .version-notes-overlay__eyebrow,
@@ -201,6 +240,9 @@ function formatDate(value: string) {
 }
 
 .version-notes-overlay__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-end;
 }
 
@@ -219,16 +261,27 @@ function formatDate(value: string) {
   white-space: nowrap;
 }
 
+.version-notes-overlay__pill--accent {
+  border-color: color-mix(in oklab, #0ea5e9, var(--color-border) 35%);
+  background: color-mix(in oklab, #0ea5e9, transparent 86%);
+  color: color-mix(in oklab, #0b4f6c, var(--color-text) 18%);
+}
+
 .version-notes-overlay__body {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 320px);
+  gap: 18px;
+  align-items: start;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .version-notes-overlay__content {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .version-notes-overlay__section,
@@ -285,10 +338,21 @@ function formatDate(value: string) {
 }
 
 .version-notes-overlay__section {
-  padding: 18px;
+  padding: 18px 18px 17px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.version-notes-overlay__section--intro {
+  gap: 14px;
+  border-color: color-mix(in oklab, var(--brand), var(--color-border) 68%);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, color-mix(in oklab, var(--brand), transparent 90%), transparent 48%),
+    linear-gradient(135deg, color-mix(in oklab, var(--brand), transparent 96%), transparent 58%),
+    color-mix(in oklab, var(--color-main-background), white 3%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .version-notes-overlay__section-head {
@@ -305,6 +369,17 @@ function formatDate(value: string) {
   flex-direction: column;
   gap: 12px;
   line-height: 1.6;
+}
+
+.version-notes-overlay__intro-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text-light);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
 }
 
 .version-notes-overlay__images {
@@ -352,7 +427,12 @@ function formatDate(value: string) {
 .version-notes-overlay__history {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  position: sticky;
+  top: 0;
+  align-self: start;
 }
 
 .version-notes-overlay__section-head--history {
@@ -362,29 +442,37 @@ function formatDate(value: string) {
 .version-notes-overlay__history-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow: auto;
   padding-right: 4px;
+  max-height: 100%;
 }
 
 .version-notes-overlay__history-item {
   appearance: none;
   text-align: left;
   cursor: pointer;
-  padding: 14px;
-  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  padding: 12px 13px;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  border-color: color-mix(in oklab, var(--color-border), transparent 10%);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--color-main-background), white 3%), color-mix(in oklab, var(--color-main-background), black 1%));
 }
 
 .version-notes-overlay__history-item:hover {
   border-color: color-mix(in oklab, var(--brand), var(--color-border) 56%);
-  background: color-mix(in oklab, var(--brand), transparent 94%);
+  background: color-mix(in oklab, var(--brand), transparent 95%);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand), transparent 82%);
+  transform: translateY(-1px);
 }
 
 .version-notes-overlay__history-item.is-active {
   border-color: color-mix(in oklab, var(--brand), var(--color-border) 38%);
-  background: color-mix(in oklab, var(--brand), transparent 88%);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand), transparent 76%);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--brand), transparent 92%), color-mix(in oklab, var(--brand), transparent 96%));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--brand), transparent 76%),
+    0 10px 24px rgba(15, 23, 42, 0.14);
 }
 
 .version-notes-overlay__history-top {
@@ -392,8 +480,8 @@ function formatDate(value: string) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
-  font-size: 12px;
+  margin-bottom: 7px;
+  font-size: 11px;
   color: var(--color-text-light);
 }
 
@@ -402,10 +490,25 @@ function formatDate(value: string) {
   white-space: nowrap;
 }
 
+.version-notes-overlay__history-title {
+  font-size: 14px;
+  line-height: 1.35;
+  color: color-mix(in oklab, var(--color-text), white 6%);
+}
+
+.version-notes-overlay__history-item p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
 .version-notes-overlay__footer {
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in oklab, var(--color-border), transparent 18%);
 }
 
 .version-notes-overlay__footer-note {
@@ -421,14 +524,22 @@ function formatDate(value: string) {
 .version-notes-overlay__apply-block {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   padding: 16px 18px;
   border-radius: 12px;
   background: color-mix(in oklab, var(--brand), transparent 94%);
   border: 1px solid color-mix(in oklab, var(--brand), transparent 78%);
 }
 
+.version-notes-overlay__apply-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
 .version-notes-overlay__apply-text {
+  flex: 1 1 auto;
   font-size: 13px;
   line-height: 1.6;
   color: var(--color-text-light);
@@ -440,6 +551,13 @@ function formatDate(value: string) {
   font-size: 13px;
   font-weight: 700;
   color: var(--color-text);
+}
+
+.version-notes-overlay__apply-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .version-notes-overlay__reload-btn {
@@ -471,9 +589,58 @@ function formatDate(value: string) {
   transform: translateY(0);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .version-notes-overlay__body {
     grid-template-columns: 1fr;
+  }
+
+  .version-notes-overlay__apply-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .version-notes-overlay__apply-actions {
+    justify-content: flex-start;
+  }
+
+  .version-notes-overlay__history {
+    position: static;
+  }
+}
+
+@media (max-height: 760px) {
+  .version-notes-overlay {
+    height: min(820px, calc(100vh - var(--header-height, 50px) - 36px));
+    max-height: calc(100vh - var(--header-height, 50px) - 36px);
+  }
+
+  .version-notes-overlay__header {
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
+  .version-notes-overlay__title h2 {
+    font-size: clamp(28px, 4vw, 34px);
+  }
+
+  .version-notes-overlay__teaser {
+    font-size: 16px;
+  }
+
+  .version-notes-overlay__body {
+    gap: 14px;
+  }
+
+  .version-notes-overlay__section {
+    padding: 15px 15px 14px;
+  }
+
+  .version-notes-overlay__footer {
+    padding-top: 10px;
+  }
+
+  .version-notes-overlay__footer-note {
+    display: none;
   }
 }
 

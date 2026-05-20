@@ -132,7 +132,7 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
       subtitle: 'Balanced default with enough structure to be useful immediately.',
       description: 'Balanced default with enough structure to be useful immediately.',
       badge: 'recommended',
-      widgets: '12 widgets',
+      widgets: '14 widgets',
     },
     {
       id: 'pro' as const,
@@ -140,7 +140,7 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
       subtitle: 'Show more widgets and analysis from the first load.',
       description: 'Show more widgets and analysis from the first load.',
       badge: 'power users',
-      widgets: '16 widgets',
+      widgets: '18 widgets',
     },
   ]
   const categoryPresets: CategoryPreset[] = [
