@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Updated the advertised compatibility window to Nextcloud `30-34` after validating Opsdash on a seeded Nextcloud 34 instance with Calendar and Deck enabled.
 - Updated versioned release-note data and current release references to 0.8.2.
 - Release and contributor docs now describe the Nextcloud 34 lane alongside the existing 31/32/33 local stacks.
+- Updated the CI server-test matrix to validate Nextcloud `31-34` instead of stopping at `33`, and dropped Nextcloud `30` from that active matrix.
 
 ### Fixed
 - Verified the standard Opsdash seed flow on Nextcloud 34, including Calendar install/enable, Deck install/enable, calendar event seeding, and Deck board/card seeding.
