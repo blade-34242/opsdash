@@ -44,7 +44,7 @@ Opsdash supports Nextcloud installations, but it is an independent third-party a
 
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-33 | 0.8.1 |
+| `master` | 30-34 | 0.8.2 |
 | `release/0.5.x` | 30-33 | Store-ready line |
 
 ## Install
@@ -67,6 +67,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:8093 npm run test:e2e
 ```
 
 - `make start` starts the local Nextcloud 33 dev container on `http://localhost:8093`.
+- `make start34` starts the Nextcloud 34 container on `http://localhost:8095`.
 - `make start33` starts the same Nextcloud 33 stack explicitly.
 - `make start32` starts the Nextcloud 32 container on `http://localhost:8092`.
 - `make start31` starts the Nextcloud 31 container on `http://localhost:8088`.
@@ -113,7 +114,7 @@ make smoke
 
 ## Packaging
 ```bash
-make release VERSION=0.8.1
+make release VERSION=0.8.2
 ```
 
 One-step release helper:
@@ -123,21 +124,21 @@ One-step release helper:
 
 Manual packaging only:
 ```bash
-make appstore VERSION=0.8.1
+make appstore VERSION=0.8.2
 ```
 
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  
 Sign separately with:
 ```bash
-make sign VERSION=0.8.1 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
+make sign VERSION=0.8.2 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
 ```
 Upload the signed tarball with:
 ```bash
-FORGEJO_TOKEN=<token> make upload VERSION=0.8.1 RELEASE_TAG=v0.8.1
+FORGEJO_TOKEN=<token> make upload VERSION=0.8.2 RELEASE_TAG=v0.8.2
 ```
 Push to the Nextcloud App Store with:
 ```bash
-APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.8.1.tar.gz make appstore-push VERSION=0.8.1
+APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.8.2.tar.gz make appstore-push VERSION=0.8.2
 ```
 Long-form internal release and runbook documentation now lives in the separate `opsdash-docs` and `opsdash-ops` workspace repos. Keep this repo focused on the app, its generic release commands, and contributor-facing basics.
 

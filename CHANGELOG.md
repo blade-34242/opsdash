@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.8.2 - 2026-07-09
+### Added
+- Added a dedicated Nextcloud 34 local dev lane (`docker-compose34.yml`, `make start34`) on `http://localhost:8095`.
+
+### Changed
+- Release preparation for 0.8.2.
+- Updated the advertised compatibility window to Nextcloud `30-34` after validating Opsdash on a seeded Nextcloud 34 instance with Calendar and Deck enabled.
+- Updated versioned release-note data and current release references to 0.8.2.
+- Release and contributor docs now describe the Nextcloud 34 lane alongside the existing 31/32/33 local stacks.
+
+### Fixed
+- Verified the standard Opsdash seed flow on Nextcloud 34, including Calendar install/enable, Deck install/enable, calendar event seeding, and Deck board/card seeding.
+- Verified the must-pass Playwright smoke path against a seeded Nextcloud 34 instance so the release line is backed by browser-level validation, not just metadata.
+
 ## 0.8.1 - 2026-05-20
 ### Added
 - Real recap mail delivery for Opsdash via the shared reporting pipeline:

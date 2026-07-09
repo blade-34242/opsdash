@@ -6,7 +6,7 @@ APP_BUILD_DIR := $(BUILD_DIR)/$(APP_NAME)
 VERSION ?= $(shell sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' $(SRC_DIR)/appinfo/info.xml | head -n 1)
 
 .PHONY: clean deps build test appstore sign upload appstore-push release
-.PHONY: smoke start start31 start32 start33 stop status logs
+.PHONY: smoke start start31 start32 start33 start34 stop status logs
 
 clean:
 	@echo "[make] Cleaning build artifacts"
@@ -24,6 +24,10 @@ build:
 start:
 	@echo "[make] Starting Nextcloud 33 dev stack on http://localhost:8093"
 	docker compose up -d nextcloud33
+
+start34:
+	@echo "[make] Starting Nextcloud 34 dev stack on http://localhost:8095"
+	docker compose up -d nextcloud34
 
 start33:
 	@echo "[make] Starting Nextcloud 33 dev stack on http://localhost:8093"

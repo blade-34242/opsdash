@@ -26,6 +26,29 @@ export interface ReleaseNotesEntry {
 
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
+    version: '0.8.2',
+    date: '2026-07-09',
+    title: 'Nextcloud 34 is ready for Opsdash',
+    teaser: 'Opsdash 0.8.2 expands the supported Nextcloud window to 34 and hardens the local validation path with seeded Calendar, Deck, and browser smoke coverage.',
+    summary: 'Version 0.8.2 is a compatibility and release-readiness update. Opsdash now officially supports Nextcloud 34, the local development workflow includes a dedicated NC34 stack, and the release line has been verified on a seeded Nextcloud 34 instance with Calendar, Deck, API-level dashboard loads, and the must-pass browser smoke journey.',
+    highlights: [
+      'Opsdash now advertises compatibility with Nextcloud 34 in addition to the existing 30-33 range.',
+      'A dedicated local Nextcloud 34 stack is now part of the repo, so compatibility work no longer depends on manual compose edits.',
+      'The standard seed flow was verified on Nextcloud 34 with both Calendar and Deck installed and enabled before seeding.',
+      'Seeded NC34 validation now covers realistic dashboard data, Deck boards/cards, and the existing overview-load smoke path.',
+      'The must-pass Playwright browser smoke suite was rerun against the seeded Nextcloud 34 lane to confirm the real UI shell still loads and the core overlays still work.',
+      'Release and contributor docs now reflect the NC34 lane so packaging and QA instructions line up with the actual compatibility target.',
+    ],
+    actions: [
+      {
+        label: '↻ Reload dashboard',
+        type: 'reload',
+      },
+    ],
+    autoShow: true,
+    showInHistory: true,
+  },
+  {
     version: '0.8.1',
     date: '2026-05-20',
     title: 'Reporting is live, and planning modes now stay visually consistent',
