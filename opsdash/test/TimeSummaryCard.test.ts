@@ -71,7 +71,7 @@ const baseHistoryEntry = {
 }
 
 describe('TimeSummaryCard', () => {
-  it('renders today badge when provided', () => {
+  it('renders the daily KPI hero when today data is provided', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: {
@@ -84,37 +84,39 @@ describe('TimeSummaryCard', () => {
     })
 
     const text = wrapper.text().replace(/\s+/g, ' ')
-    expect(text).toContain('Total today')
-    expect(text).toContain('6.50 h')
-    expect(text).toContain('Later today 1.50 h planned')
+    expect(text).toContain('Today')
+    expect(text).toContain('6.5h')
+    expect(text).toContain('1.5 h planned later')
   })
 
-  it('renders key metrics, top category badge, and weekend share', () => {
+  it('renders daily metrics, category lanes, and the week mini chart', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: baseSummary,
         mode: 'active',
         showHeader: true,
         displayMode: 'category_and_calendar_goals',
+        categoryTodayItems: [
+          { id: 'work', label: 'Work', todayHours: 4, color: '#2563EB' },
+          { id: '__uncategorized__', label: 'Unassigned', todayHours: 1, color: '#64748b', isUnassigned: true },
+        ],
+        weekDays: [
+          { date: '2025-03-03', label: 'Mon', hours: 2 },
+          { date: '2025-03-04', label: 'Tue', hours: 5, isToday: true },
+        ],
       },
     })
 
     const text = wrapper.text()
     expect(text).toContain('Time Summary · Week 10')
-    expect(text).toContain('12.50 h total')
-    expect(text).toContain('2.50 h planned later')
-    expect(text).toContain('2.50 h/day (active days)')
-    expect(text).toContain('Busiest 2025-03-04 — 5.00 h')
-    expect(text).toContain('Weekend 1.00 h avg · 1.50 h median (40.0%)')
-
-    const calendarRow = wrapper.find('.time-summary-row.calendars').text().replace(/\s+/g, ' ')
-    expect(calendarRow).toContain('3 calendars')
-    expect(calendarRow).toContain('Cal A 60%, Cal B 40%')
-
-    const badge = wrapper.find('.summary-badge')
-    expect(badge.exists()).toBe(true)
-    expect(badge.text()).toBe('At risk')
-    expect(badge.classes()).toContain('status-risk')
+    expect(text).toContain('Daily')
+    expect(text).toContain('Calendars')
+    expect(text).toContain('Categories')
+    expect(text).toContain('Today by category')
+    expect(text).toContain('Work')
+    expect(text).toContain('4.0 h')
+    expect(text).toContain('avg/event')
+    expect(wrapper.find('.time-summary-week').exists()).toBe(true)
   })
 
   it('hides calendar and category-specific summary rows in single goal mode', () => {
@@ -133,11 +135,13 @@ describe('TimeSummaryCard', () => {
     const text = wrapper.text()
     expect(text).not.toContain('3 calendars')
     expect(text).not.toContain('Top category')
+    expect(text).not.toContain('Calendars')
+    expect(text).not.toContain('Categories')
     expect(wrapper.find('.time-summary-row.calendars').exists()).toBe(false)
     expect(wrapper.find('.time-summary-row.top-category').exists()).toBe(false)
   })
 
-  it('uses calendar-specific labels in calendar goals mode', () => {
+  it('uses calendar-specific lanes in calendar goals mode', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: {
@@ -150,31 +154,39 @@ describe('TimeSummaryCard', () => {
           showCalendarSummary: true,
           showTopCategory: false,
         },
-        history: [baseHistoryEntry],
+        calendarTodayItems: [
+          { id: 'cal-a', label: 'Cal A', todayHours: 2.5, color: '#ff0000' },
+          { id: 'cal-b', label: 'Cal B', todayHours: 1, color: '#00ff00' },
+        ],
       },
     })
 
-    const calendarRow = wrapper.find('.time-summary-row.calendars').text().replace(/\s+/g, ' ')
-    expect(calendarRow).toContain('3 calendars')
-    expect(calendarRow).toContain('Cal A 60%, Cal B 40%')
+    const text = wrapper.text()
+    expect(text).toContain('Today by calendar')
+    expect(text).toContain('Cal A')
+    expect(text).toContain('2.5 h')
     expect(wrapper.text()).toContain('Calendars')
+    expect(wrapper.text()).not.toContain('Categories')
   })
 
-  it('keeps category labels in category and calendar goals mode', () => {
+  it('keeps category lanes in category and calendar goals mode', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: baseSummary,
         mode: 'active',
         displayMode: 'category_and_calendar_goals',
-        history: [baseHistoryEntry],
+        categoryTodayItems: [
+          { id: 'work', label: 'Work', todayHours: 3, color: '#2563eb' },
+        ],
       },
     })
 
-    expect(wrapper.find('.time-summary-row.top-category .label').text()).toBe('Top category')
-    expect(wrapper.text()).toContain('Categories & calendars')
+    expect(wrapper.text()).toContain('Today by category')
+    expect(wrapper.text()).toContain('Work')
+    expect(wrapper.text()).toContain('Categories')
   })
 
-  it('honours config toggles to hide optional rows', () => {
+  it('honours new overview toggles', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: {
@@ -188,17 +200,17 @@ describe('TimeSummaryCard', () => {
           showTopCategory: false,
           showBusiest: false,
         },
+        showDailyKpis: false,
+        showWeekMiniChart: false,
+        showActivityNote: false,
       },
     })
 
     const text = wrapper.text()
-    expect(text).toContain('h/day (all days)')
-
-    const weekendRow = wrapper.findAll('.time-summary-row').find((row) => row.text().includes('Weekend'))
-    expect(weekendRow?.text().replace(/\s+/g, ' ')).toBe('Weekend 1.00 h avg · 1.50 h median')
-
-    expect(wrapper.find('.summary-badge').exists()).toBe(false)
-    expect(text).not.toContain('Busiest')
+    expect(text).toContain('Today')
+    expect(wrapper.find('.time-summary-kpis').exists()).toBe(false)
+    expect(wrapper.find('.time-summary-week').exists()).toBe(false)
+    expect(wrapper.find('.time-summary-activity-note').exists()).toBe(false)
   })
 
   it('hides the header when showHeader is false', () => {
@@ -213,7 +225,7 @@ describe('TimeSummaryCard', () => {
     expect(wrapper.find('.time-summary-firstline').exists()).toBe(false)
   })
 
-  it('supports new display toggles for today/activity/history core metrics', () => {
+  it('supports legacy lookback toggles only when lookback is explicitly enabled', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: {
@@ -245,6 +257,7 @@ describe('TimeSummaryCard', () => {
         displayMode: 'category_and_calendar_goals',
         showToday: false,
         showActivity: false,
+        showLookback: true,
         showHistoryCoreMetrics: false,
         history: [baseHistoryEntry],
       },
@@ -265,6 +278,7 @@ describe('TimeSummaryCard', () => {
         summary: baseSummary,
         mode: 'active' as const,
         displayMode: 'category_and_calendar_goals' as const,
+        showLookback: true,
         history: [baseHistoryEntry],
       }
 

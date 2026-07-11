@@ -37,8 +37,7 @@ describe('widget defaults', () => {
     const tabs = createDefaultWidgetTabs('pro', 'total_plus_categories')
     const overview = tabs.tabs.flatMap((tab) => tab.widgets).find((widget) => widget.type === 'time_summary_overview')
 
-    expect(overview?.options?.showCalendarSummary).toBe(true)
-    expect(overview?.options?.showTopCategory).toBe(false)
-    expect(overview?.options?.showBalance).toBe(false)
+    expect(overview?.options?.defaultView ?? 'auto').toBe('auto')
+    expect(overview?.options?.showWeekMiniChart).not.toBe(false)
   })
 })

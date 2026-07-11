@@ -211,6 +211,12 @@ final class PersistWidgetsSanitizer {
                 'activeDayMode'          => ['t' => 'select', 'v' => ['active', 'all']],
             ],
             'time_summary_overview' => $CORE + [
+                'defaultView'            => ['t' => 'select', 'v' => ['auto', 'daily', 'calendars', 'categories']],
+                'showDailyKpis'          => $BOOL,
+                'showWeekMiniChart'      => $BOOL,
+                'showEmptyLanes'         => $BOOL,
+                'maxLanes'               => ['t' => 'number', 'min' => 1.0, 'max' => 12.0],
+                'showActivityNote'       => $BOOL,
                 'showTotal'              => $BOOL,
                 'showAverage'            => $BOOL,
                 'showMedian'             => $BOOL,

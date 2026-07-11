@@ -318,7 +318,7 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.config.showBalance).toBe(true)
   })
 
-  it('syncs legacy widget defaults to the current strategy on first normalization', () => {
+  it('syncs target defaults but leaves the new time summary overview options untouched', () => {
     const synced = syncWidgetTabsForStrategy({
       tabs: [{
         id: 'tab-1',
@@ -349,11 +349,11 @@ describe('widgetsRegistry targets_v2', () => {
 
     expect(synced.tabs[0].widgets[0].options?.showCategoryBlocks).toBe(true)
     expect(synced.tabs[0].widgets[1].options?.showCalendarSummary).toBe(true)
-    expect(synced.tabs[0].widgets[1].options?.showTopCategory).toBe(false)
-    expect(synced.tabs[0].widgets[1].options?.showBalance).toBe(false)
+    expect(synced.tabs[0].widgets[1].options?.showTopCategory).toBe(true)
+    expect(synced.tabs[0].widgets[1].options?.showBalance).toBe(true)
   })
 
-  it('preserves manual display overrides while migrating strategy-owned defaults', () => {
+  it('does not migrate legacy display toggles on the new time summary overview', () => {
     const synced = syncWidgetTabsForStrategy({
       tabs: [{
         id: 'tab-1',
@@ -376,7 +376,7 @@ describe('widgetsRegistry targets_v2', () => {
     }, 'total_plus_categories', 'full_granular')
 
     expect(synced.tabs[0].widgets[0].options?.showCalendarSummary).toBe(false)
-    expect(synced.tabs[0].widgets[0].options?.showTopCategory).toBe(false)
+    expect(synced.tabs[0].widgets[0].options?.showTopCategory).toBe(true)
     expect(synced.tabs[0].widgets[0].options?.showBalance).toBe(false)
   })
 

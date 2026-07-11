@@ -85,7 +85,7 @@ describe('normalizeWidgetTabs', () => {
     expect(result.tabs[1].widgets[0].type).toBe('note_editor')
   })
 
-  it('migrates legacy time_summary_v2 into overview and lookback widgets', () => {
+  it('migrates legacy time_summary_v2 into the overview widget only', () => {
     const fallback = createDefaultWidgetTabs('standard')
     const result = normalizeWidgetTabs({
       tabs: [
@@ -105,11 +105,8 @@ describe('normalizeWidgetTabs', () => {
       defaultTabId: 'tab-a',
     }, fallback)
 
-    expect(result.tabs[0].widgets).toHaveLength(2)
+    expect(result.tabs[0].widgets).toHaveLength(1)
     expect(result.tabs[0].widgets[0].type).toBe('time_summary_overview')
     expect(result.tabs[0].widgets[0].id).toBe('legacy-time')
-    expect(result.tabs[0].widgets[1].type).toBe('time_summary_lookback')
-    expect(result.tabs[0].widgets[1].id).toBe('legacy-time-lookback')
-    expect(result.tabs[0].widgets[1].layout.order).toBeCloseTo(20.1)
   })
 })

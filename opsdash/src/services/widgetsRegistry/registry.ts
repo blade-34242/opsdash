@@ -125,17 +125,7 @@ export function normalizeWidgetLayout(raw: any, fallback: WidgetDefinition[], al
     if (!type) return
     if (type === 'time_summary_v2') {
       const baseId = String(item?.id ?? '') || `widget-time_summary_overview-${idx + 1}`
-      const layout = item?.layout ?? {}
-      const baseOrder = Number(layout.order ?? 0)
-      const safeOrder = Number.isFinite(baseOrder) ? baseOrder : 0
       pushWidget('time_summary_overview', { ...item, id: baseId }, idx)
-      pushWidget(
-        'time_summary_lookback',
-        { ...item, id: `${baseId}-lookback` },
-        idx,
-        undefined,
-        safeOrder + 0.1,
-      )
       return
     }
     pushWidget(type, item, idx)
@@ -163,7 +153,7 @@ function resolveManagedWidgetDefaults(
     if (!mode) return { showCategoryBlocks: true }
     return { showCategoryBlocks: mode !== 'single_goal' }
   }
-  if (type === 'time_summary_overview' || type === 'time_summary_lookback') {
+  if (type === 'time_summary_lookback') {
     if (!mode) {
       return {
         showCalendarSummary: true,

@@ -26,6 +26,38 @@ export interface ReleaseNotesEntry {
 
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
+    version: '0.8.3',
+    date: '2026-07-11',
+    title: 'Time Summary now reads like a daily control panel',
+    teaser: 'Opsdash 0.8.3 turns Time Summary (Overview) into a current-week daily KPI card with goal-type-aware tabs, today lanes, and a compact weekly rhythm view.',
+    summary: 'Version 0.8.3 focuses the Time Summary overview on what you need to read today. The card now starts with today’s hours and events, adapts its tabs to your goal type, shows today’s calendar or category lanes when those concepts exist, and keeps the historical lookback separated so the overview stays fast to scan.',
+    highlights: [
+      'Time Summary (Overview) now centers the current day instead of mixing daily signals with old period-summary text rows.',
+      'Single Goal dashboards stay daily-only, so users are not offered calendar or category tabs that cannot add context.',
+      'Calendar Goals dashboards can switch between Daily and Calendars to inspect today’s calendar lanes without leaving the widget.',
+      'Calendar + Category Goals dashboards can switch between Daily, Calendars, and Categories for the full planning context.',
+      'The compact week chart shows the current week’s rhythm directly inside the card without reintroducing lookback noise.',
+      'Widget configuration now exposes the controls that matter for this card: default view, daily KPIs, week mini chart, empty lanes, max lanes, and the activity note.',
+      'The old lookback companion is no longer created for new overview layouts, while existing lookback widgets remain supported for saved dashboards.',
+    ],
+    images: [
+      {
+        src: resolveReleaseImagePath('release-notes/release-083-time-summary-overview.png'),
+        alt: 'Opsdash Time Summary overview widget with daily KPIs, calendar lanes, and a weekly mini chart',
+        title: 'Daily KPI overview for the current week',
+        caption: 'The overview card now reads from top to bottom: today, goal-type tabs, today lanes, daily KPIs, and the week rhythm.',
+      },
+    ],
+    actions: [
+      {
+        label: '↻ Reload dashboard',
+        type: 'reload',
+      },
+    ],
+    autoShow: true,
+    showInHistory: true,
+  },
+  {
     version: '0.8.2',
     date: '2026-07-09',
     title: 'Nextcloud 34 is ready for Opsdash',

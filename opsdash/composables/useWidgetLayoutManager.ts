@@ -88,11 +88,13 @@ export function useWidgetLayoutManager(options: {
   })
 
   const availableWidgetTypes = computed(() =>
-    Object.keys(widgetsRegistry).map((type) => ({
-      type,
-      label: widgetsRegistry[type]?.label || type,
-      category: widgetsRegistry[type]?.category,
-    })),
+    Object.keys(widgetsRegistry)
+      .filter((type) => type !== 'time_summary_lookback')
+      .map((type) => ({
+        type,
+        label: widgetsRegistry[type]?.label || type,
+        category: widgetsRegistry[type]?.category,
+      })),
   )
 
   function applyDashboardPreset(mode: 'quick' | 'standard' | 'pro') {

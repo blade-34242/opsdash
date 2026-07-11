@@ -15,6 +15,7 @@ import { formatLookbackLabel, sortLookbackOffsets } from './chartHelpers'
 const baseTitle = 'Time Summary'
 const lookbackTitle = 'Period Comparison'
 type TimeSummaryDisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
+type TimeSummaryOverviewView = 'daily' | 'calendars' | 'categories'
 const summaryToggleKeys: Array<keyof TargetsConfig['timeSummary']> = [
   'showTotal',
   'showAverage',
@@ -63,6 +64,17 @@ function buildDefaultOptions() {
   }
 }
 
+function buildOverviewDefaultOptions() {
+  return {
+    defaultView: 'auto',
+    showDailyKpis: true,
+    showWeekMiniChart: true,
+    showEmptyLanes: true,
+    maxLanes: 4,
+    showActivityNote: true,
+  }
+}
+
 function detectTimeSummaryDisplayMode(ctx: any): TimeSummaryDisplayMode {
   const strategy = String(ctx?.onboardingStrategy ?? '')
   if (strategy === 'total_only') return 'single_goal'
@@ -99,6 +111,11 @@ function buildTimeSummaryProps(
   const showHistoryCoreMetrics = def.options?.showHistoryCoreMetrics !== false
   const displayMode = detectTimeSummaryDisplayMode(ctx)
   const todayGroups = resolveTodayGroups(ctx, displayMode)
+  const allowedViews = resolveAllowedViews(displayMode)
+  const defaultView = resolveDefaultView(def.options?.defaultView, displayMode, allowedViews)
+  const calendarTodayItems = resolveCalendarTodayItems(ctx)
+  const categoryTodayItems = resolveCategoryTodayItems(ctx)
+  const weekDays = resolveWeekDays(ctx)
   const rawHistoryView = String(def.options?.historyView ?? '').toLowerCase()
   const historyView =
     rawHistoryView === 'accordion' || rawHistoryView === 'pills'
@@ -145,6 +162,16 @@ function buildTimeSummaryProps(
     config: cfg.timeSummary,
     lookbackWeeks: Number(ctx.lookbackWeeks) || 1,
     todayGroups: def.props?.todayGroups ?? todayGroups,
+    calendarTodayItems,
+    categoryTodayItems,
+    weekDays,
+    allowedViews,
+    defaultView,
+    showDailyKpis: def.options?.showDailyKpis !== false,
+    showWeekMiniChart: def.options?.showWeekMiniChart !== false,
+    showEmptyLanes: def.options?.showEmptyLanes !== false,
+    maxLanes: Number(def.options?.maxLanes ?? 4) || 4,
+    showActivityNote: def.options?.showActivityNote !== false,
     title: buildTitle(opts.title, def.options?.titlePrefix),
     cardBg: def.options?.cardBg,
     displayMode,
@@ -163,6 +190,104 @@ function buildTimeSummaryProps(
     showDelta,
     history,
   }
+}
+
+function resolveAllowedViews(displayMode: TimeSummaryDisplayMode): TimeSummaryOverviewView[] {
+  if (displayMode === 'category_and_calendar_goals') return ['daily', 'calendars', 'categories']
+  if (displayMode === 'calendar_goals') return ['daily', 'calendars']
+  return ['daily']
+}
+
+function resolveDefaultView(input: any, displayMode: TimeSummaryDisplayMode, allowed: TimeSummaryOverviewView[]): TimeSummaryOverviewView {
+  const value = String(input ?? '').toLowerCase()
+  if (value === 'daily' || value === 'calendars' || value === 'categories') {
+    if (allowed.includes(value)) return value
+  }
+  if (displayMode === 'category_and_calendar_goals' && allowed.includes('categories')) return 'categories'
+  if (displayMode === 'calendar_goals' && allowed.includes('calendars')) return 'calendars'
+  return 'daily'
+}
+
+function resolveCalendarTodayItems(ctx: any) {
+  const calendarTodayHours = ctx?.calendarTodayHours && typeof ctx.calendarTodayHours === 'object'
+    ? ctx.calendarTodayHours
+    : {}
+  const calendars = Array.isArray(ctx?.calendars) ? ctx.calendars : []
+  return calendars
+    .map((calendar: any) => {
+      const id = String(calendar?.id ?? '').trim()
+      if (!id) return null
+      return {
+        id,
+        label: String(calendar?.displayname ?? calendar?.name ?? id),
+        todayHours: Number(calendarTodayHours[id] ?? 0) || 0,
+        color: typeof calendar?.color === 'string' ? calendar.color : undefined,
+      }
+    })
+    .filter(Boolean)
+    .sort((left: any, right: any) => Number(right?.todayHours ?? 0) - Number(left?.todayHours ?? 0))
+}
+
+function resolveCategoryTodayItems(ctx: any) {
+  const groups = Array.isArray(ctx?.groups) ? ctx.groups : []
+  return groups
+    .map((group: any) => {
+      const id = String(group?.id ?? '').trim()
+      if (!id) return null
+      return {
+        id,
+        label: String(group?.label ?? id),
+        todayHours: Number(group?.todayHours ?? 0) || 0,
+        color: group?.color,
+        isUnassigned: Boolean(group?.isUnassigned) || id === '__uncategorized__',
+      }
+    })
+    .filter(Boolean)
+    .sort((left: any, right: any) => Number(right?.todayHours ?? 0) - Number(left?.todayHours ?? 0))
+}
+
+function resolveWeekDays(ctx: any) {
+  const todayKey = formatLocalDateKey(new Date())
+  const rows = Array.isArray(ctx?.byDay) ? ctx.byDay : []
+  if (rows.length) {
+    return rows.map((row: any) => {
+      const date = String(row?.date ?? '')
+      return {
+        date,
+        label: shortDayLabel(date),
+        hours: Number(row?.total_hours ?? row?.hours ?? 0) || 0,
+        events: Number(row?.events_count ?? row?.events ?? 0) || 0,
+        isToday: date === todayKey,
+      }
+    })
+  }
+
+  const perDay = ctx?.charts?.perDay
+  const labels = Array.isArray(perDay?.labels) ? perDay.labels : []
+  const data = Array.isArray(perDay?.data) ? perDay.data : []
+  return labels.map((raw: any, idx: number) => {
+    const date = String(raw ?? '')
+    return {
+      date,
+      label: shortDayLabel(date),
+      hours: Number(data[idx] ?? 0) || 0,
+      events: 0,
+      isToday: date === todayKey,
+    }
+  })
+}
+
+function formatLocalDateKey(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function shortDayLabel(date: string) {
+  const parsed = parseDateKey(date)
+  if (!parsed) return date.slice(5) || date
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parsed.getUTCDay()] || date.slice(5)
 }
 
 function resolveTodayGroups(ctx: any, displayMode: TimeSummaryDisplayMode) {
@@ -204,18 +329,30 @@ function resolveTodayGroups(ctx: any, displayMode: TimeSummaryDisplayMode) {
 
 export const timeSummaryOverviewEntry: RegistryEntry = {
   component: TimeSummaryCard,
-  defaultLayout: { width: 'half', height: 'm', order: 9 },
+  defaultLayout: { width: 'half', height: 'l', order: 9 },
+  heightMode: 'auto',
   label: 'Time Summary (Overview)',
   category: 'Time',
   baseTitle: `${baseTitle} (Overview)`,
   configurable: true,
-  defaultOptions: buildDefaultOptions(),
+  defaultOptions: buildOverviewDefaultOptions(),
   controls: [
-    modeControl,
-    { key: 'showToday', label: 'Show today block', type: 'toggle' },
-    { key: 'showActivity', label: 'Show activity section', type: 'toggle' },
-    { key: 'showActivityDetails', label: 'Activity details', type: 'toggle' },
-    ...summaryControls,
+    {
+      key: 'defaultView',
+      label: 'Default view',
+      type: 'select',
+      options: [
+        { value: 'auto', label: 'Auto' },
+        { value: 'daily', label: 'Daily' },
+        { value: 'calendars', label: 'Calendars' },
+        { value: 'categories', label: 'Categories' },
+      ],
+    },
+    { key: 'showDailyKpis', label: 'Daily KPIs', type: 'toggle' },
+    { key: 'showWeekMiniChart', label: 'Week mini chart', type: 'toggle' },
+    { key: 'showEmptyLanes', label: 'Show empty lanes', type: 'toggle' },
+    { key: 'maxLanes', label: 'Max lanes', type: 'number', min: 1, max: 12, step: 1 },
+    { key: 'showActivityNote', label: 'Activity note', type: 'toggle' },
   ],
   buildProps: (def, ctx) =>
     buildTimeSummaryProps(def, ctx, {

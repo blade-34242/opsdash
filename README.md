@@ -44,7 +44,7 @@ Opsdash supports Nextcloud installations, but it is an independent third-party a
 
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-34 | 0.8.2 |
+| `master` | 30-34 | 0.8.3 |
 | `release/0.5.x` | 30-33 | Store-ready line |
 
 ## Install
@@ -114,7 +114,7 @@ make smoke
 
 ## Packaging
 ```bash
-make release VERSION=0.8.2
+make release VERSION=0.8.3
 ```
 
 One-step release helper:
@@ -124,21 +124,21 @@ One-step release helper:
 
 Manual packaging only:
 ```bash
-make appstore VERSION=0.8.2
+make appstore VERSION=0.8.3
 ```
 
 Produces `build/dist/opsdash-<version>.tar.gz` (unsigned).  
 Sign separately with:
 ```bash
-make sign VERSION=0.8.2 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
+make sign VERSION=0.8.3 SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem SIGN_CERT_FILE=/secure/path/cert.crt SIGN_CONTAINER=nc33-dev
 ```
 Upload the signed tarball with:
 ```bash
-FORGEJO_TOKEN=<token> make upload VERSION=0.8.2 RELEASE_TAG=v0.8.2
+FORGEJO_TOKEN=<token> make upload VERSION=0.8.3 RELEASE_TAG=v0.8.3
 ```
 Push to the Nextcloud App Store with:
 ```bash
-APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.8.2.tar.gz make appstore-push VERSION=0.8.2
+APPSTORE_TOKEN=<token> SIGN_PRIVATE_KEY_FILE=/secure/path/privkey.pem DOWNLOAD_URL=https://public-host/opsdash-0.8.3.tar.gz make appstore-push VERSION=0.8.3
 ```
 Long-form internal release and runbook documentation now lives in the separate `opsdash-docs` and `opsdash-ops` workspace repos. Keep this repo focused on the app, its generic release commands, and contributor-facing basics.
 

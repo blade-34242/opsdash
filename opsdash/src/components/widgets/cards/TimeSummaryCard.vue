@@ -3,77 +3,88 @@
       <div class="time-summary-firstline" v-if="showHeader">
       <span>{{ headerText }}</span>
       </div>
-    <div v-if="showOverviewPanel">
-    <div class="today-highlight" v-if="showToday && todayTotal !== null">
-      <div class="today-label">Total today</div>
-      <div class="today-value">{{ n2(todayTotal) }} h</div>
-      <div v-if="todayPlannedHours > 0" class="today-subvalue">Later today {{ n2(todayPlannedHours) }} h planned</div>
-    </div>
-    <div class="today-cats" v-if="showToday && todayItems.length">
-      <div class="today-cat" v-for="cat in todayItems" :key="cat.id">
-        <span class="dot" :style="{ background: cat.color || 'var(--brand)' }"></span>
-        <span class="name">{{ cat.label }}</span>
-        <span
-          v-if="(cat as any).isUnassigned"
-          class="unassigned-hint"
-          title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
-        >ⓘ</span>
-        <span class="value">{{ n2(cat.todayHours) }} h</span>
+    <div v-if="showOverviewPanel" class="time-summary-daily">
+      <div class="time-summary-hero" v-if="showToday && todayTotal !== null">
+        <div>
+          <div class="time-summary-hero__label">Today</div>
+          <div class="time-summary-hero__value">{{ n1(todayTotal) }}<span>h</span></div>
+          <div v-if="todayPlannedHours > 0" class="time-summary-hero__planned">{{ n1(todayPlannedHours) }} h planned later</div>
+        </div>
+        <div class="time-summary-hero__side">
+          <strong>{{ todayEvents }}</strong>
+          <span>events</span>
+          <span v-if="todayEvents > 0 && longestSessionLabel !== '—'">{{ longestSessionLabel }} longest</span>
+        </div>
       </div>
-    </div>
 
-    <div class="time-summary-inline" v-if="summaryConfig.showTotal">
-      <strong>{{ n2(summary.totalHours) }} h</strong> total
-    </div>
-    <div class="time-summary-inline time-summary-inline--planned" v-if="summary.futureHours > 0">
-      {{ n2(summary.futureHours) }} h planned later
-    </div>
-    <div class="time-summary-inline" v-if="inlineStats">
-      {{ inlineStats }}
-    </div>
-    <div class="time-summary-inline" v-if="summaryConfig.showBusiest && busiestText">
-      {{ busiestText }}
-    </div>
-    <div class="time-summary-row" v-if="summaryConfig.showWorkday">
-      <span class="label">Workdays</span> {{ n2(summary.workdayAvg) }} h avg · {{ n2(summary.workdayMedian) }} h median
-    </div>
-    <div class="time-summary-row" v-if="summaryConfig.showWeekend">
-      <span class="label">Weekend</span> {{ n2(summary.weekendAvg) }} h avg · {{ n2(summary.weekendMedian) }} h median
-      <span v-if="summaryConfig.showWeekendShare && weekendShareText" class="share">({{ weekendShareText }})</span>
-    </div>
-    <div class="time-summary-row calendars" v-if="summaryConfig.showCalendarSummary">
-      <span class="label">{{ calendarRowLabel }}</span>
-      <template v-if="summary.calendarSummary">
-        <span class="sep">·</span>
-        <span class="text">{{ summary.calendarSummary }}</span>
-      </template>
-    </div>
-    <div class="time-summary-row top-category" v-if="summaryConfig.showTopCategory && topCategoryInfo">
-      <span class="label">{{ topCategoryLabel }}</span>
-      <span class="text">{{ topCategoryInfo.text }}</span>
-      <span v-if="topCategoryInfo.badge" class="summary-badge" :class="topCategoryInfo.badgeClass">{{ topCategoryInfo.badge }}</span>
-    </div>
-    <div class="time-summary-activity" v-if="showActivity && activity">
-      <div class="time-summary-activity__title">Activity &amp; Schedule</div>
-      <div class="time-summary-activity__line">
-        Events {{ activity.events }} • Active Days {{ activity.activeDays ?? 0 }} • Typical {{ typicalWindow }}{{ activityOffsetSuffix }}
+      <div v-if="showTabs" class="time-summary-tabs" :class="`time-summary-tabs--${availableViews.length}`">
+        <button
+          v-for="view in availableViews"
+          :key="view"
+          type="button"
+          :class="{ active: activeOverviewView === view }"
+          @click="activeOverviewView = view"
+        >{{ viewLabel(view) }}</button>
       </div>
-      <div class="time-summary-activity__line" v-if="showActivityDetails">
-        Weekend {{ pct(activity.weekendShare) }}
-        <span v-if="weekendDeltaLabel" class="time-summary-activity__delta">({{ weekendDeltaLabel }})</span>
-        • Evening {{ pct(activity.eveningShare) }}
-        <span v-if="eveningDeltaLabel" class="time-summary-activity__delta">({{ eveningDeltaLabel }})</span>
+
+      <div v-if="activeOverviewView === 'calendars'" class="time-summary-lanes">
+        <div class="time-summary-section-head">
+          <strong>Today by calendar</strong>
+          <span>{{ calendarTodayVisible.length }} calendar{{ calendarTodayVisible.length === 1 ? '' : 's' }}</span>
+        </div>
+        <div class="time-summary-lane" v-for="item in calendarTodayVisible" :key="item.id">
+          <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
+          <span class="name">{{ item.label }}</span>
+          <span class="value">{{ n1(item.todayHours) }} h</span>
+        </div>
+        <div v-if="calendarTodayMoreCount > 0" class="time-summary-more">+ {{ calendarTodayMoreCount }} more</div>
       </div>
-      <div class="time-summary-activity__line" v-if="showActivityDetails">
-        Earliest/Late {{ earliestLatestLabel }}
+
+      <div v-else-if="activeOverviewView === 'categories'" class="time-summary-lanes">
+        <div class="time-summary-section-head">
+          <strong>Today by category</strong>
+          <span>{{ categoryTodayVisible.length }} lane{{ categoryTodayVisible.length === 1 ? '' : 's' }}</span>
+        </div>
+        <div class="time-summary-lane" v-for="item in categoryTodayVisible" :key="item.id">
+          <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
+          <span class="name">
+            {{ item.label }}
+            <span
+              v-if="(item as any).isUnassigned"
+              class="unassigned-hint"
+              title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
+            >ⓘ</span>
+          </span>
+          <span class="value">{{ n1(item.todayHours) }} h</span>
+        </div>
+        <div v-if="categoryTodayMoreCount > 0" class="time-summary-more">+ {{ categoryTodayMoreCount }} more</div>
       </div>
-      <div class="time-summary-activity__line" v-if="showActivityDetails">
-        Overlaps {{ activity.overlapEvents ?? 0 }} • Longest {{ longestSessionLabel }}
+
+      <div v-if="showDailyKpis" class="time-summary-kpis">
+        <div class="time-summary-kpi">
+          <strong>{{ n2(todayAvgEvent) }} h</strong>
+          <span>avg/event</span>
+        </div>
+        <div class="time-summary-kpi">
+          <strong>{{ latestEndShort }}</strong>
+          <span>latest end</span>
+        </div>
       </div>
-      <div class="time-summary-activity__line" v-if="showActivityDetails">
-        Last day off {{ lastDayOffLabel }}
+
+      <div v-if="showWeekMiniChart && weekDays.length" class="time-summary-week">
+        <div
+          v-for="day in weekDays"
+          :key="day.date"
+          class="time-summary-week__day"
+          :class="{ active: day.isToday }"
+          :title="`${day.label}: ${n1(day.hours)} h`"
+        >
+          <i :style="{ height: `${dayHeight(day.hours)}%` }"></i>
+          <span>{{ day.label }}</span>
+        </div>
       </div>
-    </div>
+
+      <div v-if="showActivityNote && activityNote" class="time-summary-activity-note">{{ activityNote }}</div>
     </div>
     <div class="time-summary-history" v-if="showLookbackPanel && historyRows.length">
       <div class="time-summary-history__header">
@@ -170,6 +181,23 @@ type SummaryConfig = {
 }
 
 type DisplayMode = 'single_goal' | 'calendar_goals' | 'category_and_calendar_goals'
+type OverviewView = 'daily' | 'calendars' | 'categories'
+
+type TodayLane = {
+  id: string
+  label: string
+  todayHours: number
+  color?: string | null
+  isUnassigned?: boolean
+}
+
+type WeekDay = {
+  date: string
+  label: string
+  hours: number
+  events?: number
+  isToday?: boolean
+}
 
 type HistoryEntry = {
   offset: number
@@ -302,7 +330,17 @@ const props = withDefaults(defineProps<{
   } | null
   mode: Mode
   config?: SummaryConfig
-  todayGroups?: Array<{ id: string; label: string; todayHours: number; color?: string | null }>
+  todayGroups?: TodayLane[]
+  calendarTodayItems?: TodayLane[]
+  categoryTodayItems?: TodayLane[]
+  weekDays?: WeekDay[]
+  allowedViews?: OverviewView[]
+  defaultView?: OverviewView
+  showWeekMiniChart?: boolean
+  showDailyKpis?: boolean
+  showEmptyLanes?: boolean
+  maxLanes?: number
+  showActivityNote?: boolean
   title?: string
   cardBg?: string | null
   rangeMode?: 'week' | 'month' | string
@@ -328,8 +366,13 @@ const props = withDefaults(defineProps<{
   showHistoryCoreMetrics: true,
   showActivityDetails: true,
   showOverview: true,
-  showLookback: true,
+  showLookback: false,
   showDelta: true,
+  showWeekMiniChart: true,
+  showDailyKpis: true,
+  showEmptyLanes: true,
+  maxLanes: 4,
+  showActivityNote: true,
 })
 
 const summaryConfig = computed<SummaryConfig>(() => Object.assign({}, defaultConfig, props.config ?? {}))
@@ -394,6 +437,67 @@ const showActivityDetails = computed(() => props.showActivityDetails)
 const showOverviewPanel = computed(() => props.showOverview !== false)
 const showLookbackPanel = computed(() => props.showLookback !== false)
 const showDelta = computed(() => props.showDelta !== false)
+const showWeekMiniChart = computed(() => props.showWeekMiniChart !== false)
+const showDailyKpis = computed(() => props.showDailyKpis !== false)
+const showEmptyLanes = computed(() => props.showEmptyLanes !== false)
+const showActivityNote = computed(() => props.showActivityNote !== false)
+const maxLanes = computed(() => {
+  const value = Number(props.maxLanes ?? 4)
+  return Number.isFinite(value) ? Math.max(1, Math.min(12, Math.trunc(value))) : 4
+})
+const availableViews = computed<OverviewView[]>(() => {
+  const raw = Array.isArray(props.allowedViews) ? props.allowedViews : []
+  const valid = raw.filter((view): view is OverviewView => view === 'daily' || view === 'calendars' || view === 'categories')
+  if (valid.length) return valid
+  if (displayMode.value === 'category_and_calendar_goals') return ['daily', 'calendars', 'categories']
+  if (displayMode.value === 'calendar_goals') return ['daily', 'calendars']
+  return ['daily']
+})
+const activeOverviewView = ref<OverviewView>('daily')
+const overviewViewInitialized = ref(false)
+const defaultOverviewView = computed<OverviewView>(() => {
+  const requested = props.defaultView
+  if (requested && availableViews.value.includes(requested)) return requested
+  if (displayMode.value === 'category_and_calendar_goals' && availableViews.value.includes('categories')) return 'categories'
+  if (displayMode.value === 'calendar_goals' && availableViews.value.includes('calendars')) return 'calendars'
+  return 'daily'
+})
+watch(
+  [availableViews, defaultOverviewView],
+  ([views, view]) => {
+    if (!overviewViewInitialized.value) {
+      activeOverviewView.value = view
+      overviewViewInitialized.value = true
+      return
+    }
+    if (!views.includes(activeOverviewView.value)) {
+      activeOverviewView.value = view
+    }
+  },
+  { immediate: true },
+)
+const showTabs = computed(() => availableViews.value.length > 1)
+const weekDays = computed<WeekDay[]>(() => Array.isArray(props.weekDays) ? props.weekDays : [])
+const todayWeekEntry = computed(() => weekDays.value.find((day) => day.isToday) ?? null)
+const todayEvents = computed(() => {
+  const events = Number(todayWeekEntry.value?.events ?? NaN)
+  if (Number.isFinite(events)) return Math.max(0, Math.trunc(events))
+  return Math.max(0, Math.trunc(Number(activity.value?.events ?? 0)))
+})
+const todayAvgEvent = computed(() => {
+  if (todayEvents.value > 0 && todayTotal.value != null) return todayTotal.value / todayEvents.value
+  if (todayTotal.value != null) return 0
+  return props.summary.avgEvent
+})
+const weekMaxHours = computed(() => Math.max(0, ...weekDays.value.map((day) => Number(day.hours) || 0)))
+const calendarTodayItems = computed<TodayLane[]>(() => normalizeLaneList(props.calendarTodayItems ?? todayItems.value))
+const categoryTodayItems = computed<TodayLane[]>(() => normalizeLaneList(props.categoryTodayItems ?? todayItems.value))
+const calendarTodayFiltered = computed(() => filterLaneList(calendarTodayItems.value))
+const categoryTodayFiltered = computed(() => filterLaneList(categoryTodayItems.value))
+const calendarTodayVisible = computed(() => calendarTodayFiltered.value.slice(0, maxLanes.value))
+const categoryTodayVisible = computed(() => categoryTodayFiltered.value.slice(0, maxLanes.value))
+const calendarTodayMoreCount = computed(() => Math.max(0, calendarTodayFiltered.value.length - calendarTodayVisible.value.length))
+const categoryTodayMoreCount = computed(() => Math.max(0, categoryTodayFiltered.value.length - categoryTodayVisible.value.length))
 const configuredLookbackWeeks = computed(() => {
   const value = Number(props.lookbackWeeks ?? 1)
   return Number.isFinite(value) ? Math.max(1, Math.trunc(value)) : 1
@@ -481,6 +585,18 @@ const longestSessionLabel = computed(() => {
   const longest = activity.value?.longestSession
   if (longest == null) return '—'
   return `${Number(longest).toFixed(1)} h`
+})
+const latestEndShort = computed(() => {
+  const value = timeOf(activity.value?.latestEnd ?? null)
+  return value || '—'
+})
+const activityNote = computed(() => {
+  const parts: string[] = []
+  if (busiestText.value) parts.push(busiestText.value.replace(/^Busiest\s+/, 'busiest '))
+  if (activity.value?.activeDays != null) parts.push(`${activity.value.activeDays} active days`)
+  if (activity.value?.weekendShare != null) parts.push(`weekend ${pct(activity.value.weekendShare)}`)
+  if (activity.value?.eveningShare != null) parts.push(`evening ${pct(activity.value.eveningShare)}`)
+  return parts.join(' · ')
 })
 const weekendDeltaLabel = computed(() => {
   if (!activity.value?.delta) return ''
@@ -617,6 +733,36 @@ function toggleAccordion(offset: number) {
   activeAccordionOffset.value = activeAccordionOffset.value === offset ? null : offset
 }
 
+function viewLabel(view: OverviewView) {
+  if (view === 'calendars') return 'Calendars'
+  if (view === 'categories') return 'Categories'
+  return 'Daily'
+}
+
+function normalizeLaneList(input: TodayLane[]) {
+  return (Array.isArray(input) ? input : [])
+    .map((item) => ({
+      ...item,
+      id: String(item?.id ?? ''),
+      label: String(item?.label ?? item?.id ?? ''),
+      todayHours: Number(item?.todayHours ?? 0) || 0,
+      color: item?.color || 'var(--brand)',
+    }))
+    .filter((item) => item.id && item.label)
+    .sort((left, right) => Number(right.todayHours ?? 0) - Number(left.todayHours ?? 0))
+}
+
+function filterLaneList(input: TodayLane[]) {
+  return showEmptyLanes.value ? input : input.filter((item) => Number(item.todayHours) > 0)
+}
+
+function dayHeight(hours: number) {
+  const value = Math.max(0, Number(hours) || 0)
+  const max = weekMaxHours.value
+  if (max <= 0) return 8
+  return Math.max(8, Math.min(100, (value / max) * 100))
+}
+
 function n1(v: unknown) {
   return Number(v ?? 0).toFixed(1)
 }
@@ -723,6 +869,196 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   color: var(--muted);
   --widget-pad: calc(14px * var(--widget-space, 1));
   padding: var(--widget-pad, 14px);
+}
+.time-summary-daily {
+  display: grid;
+  gap: calc(12px * var(--widget-space, 1));
+}
+.time-summary-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: calc(14px * var(--widget-space, 1));
+  align-items: end;
+  padding: calc(14px * var(--widget-space, 1));
+  border-radius: calc(16px * var(--widget-space, 1));
+  background:
+    radial-gradient(circle at 0 0, color-mix(in oklab, var(--brand, #2563eb) 22%, transparent), transparent 48%),
+    linear-gradient(135deg, color-mix(in oklab, var(--brand, #2563eb) 16%, transparent), color-mix(in oklab, var(--card, #fff) 88%, transparent));
+  border: 1px solid color-mix(in oklab, var(--brand, #2563eb), transparent 72%);
+  color: var(--fg);
+}
+.time-summary-hero__label {
+  margin-bottom: calc(6px * var(--widget-space, 1));
+  color: color-mix(in oklab, var(--fg), transparent 38%);
+  font-size: calc(11px * var(--widget-scale, 1));
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.time-summary-hero__value {
+  color: var(--fg);
+  font-size: calc(42px * var(--widget-scale, 1));
+  line-height: .9;
+  letter-spacing: -.07em;
+  font-weight: 850;
+}
+.time-summary-hero__value span {
+  margin-left: calc(4px * var(--widget-space, 1));
+  color: var(--muted);
+  font-size: calc(17px * var(--widget-scale, 1));
+  letter-spacing: -.03em;
+}
+.time-summary-hero__planned {
+  margin-top: calc(6px * var(--widget-space, 1));
+  color: var(--muted);
+  font-size: calc(12px * var(--widget-scale, 1));
+}
+.time-summary-hero__side {
+  display: grid;
+  justify-items: end;
+  color: var(--muted);
+  font-size: calc(11px * var(--widget-scale, 1));
+  line-height: 1.35;
+  text-align: right;
+}
+.time-summary-hero__side strong {
+  color: var(--fg);
+  font-size: calc(22px * var(--widget-scale, 1));
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+.time-summary-tabs {
+  display: grid;
+  gap: calc(6px * var(--widget-space, 1));
+  padding: calc(5px * var(--widget-space, 1));
+  border-radius: calc(14px * var(--widget-space, 1));
+  background: color-mix(in oklab, var(--fg) 5%, transparent);
+  border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 35%);
+}
+.time-summary-tabs--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.time-summary-tabs--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.time-summary-tabs button {
+  border: 0;
+  border-radius: calc(10px * var(--widget-space, 1));
+  padding: calc(7px * var(--widget-space, 1)) calc(6px * var(--widget-space, 1));
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: calc(11px * var(--widget-scale, 1));
+  font-weight: 800;
+  cursor: pointer;
+}
+.time-summary-tabs button.active {
+  color: var(--brand);
+  background: color-mix(in oklab, var(--brand, #2563eb) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand, #2563eb), transparent 72%);
+}
+.time-summary-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(10px * var(--widget-space, 1));
+  align-items: end;
+  color: var(--muted);
+  font-size: calc(11px * var(--widget-scale, 1));
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.time-summary-section-head strong {
+  color: var(--fg);
+  font-size: calc(12px * var(--widget-scale, 1));
+  letter-spacing: 0;
+  text-transform: none;
+}
+.time-summary-lanes {
+  display: grid;
+  gap: calc(8px * var(--widget-space, 1));
+}
+.time-summary-lane {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: calc(9px * var(--widget-space, 1));
+  align-items: center;
+  padding: calc(9px * var(--widget-space, 1));
+  border-radius: calc(13px * var(--widget-space, 1));
+  background: color-mix(in oklab, var(--card, #fff) 92%, var(--fg) 8%);
+  border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 28%);
+}
+.time-summary-lane .name {
+  min-width: 0;
+  color: var(--fg);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.time-summary-lane .value {
+  color: var(--muted);
+  font-size: calc(12px * var(--widget-scale, 1));
+  font-variant-numeric: tabular-nums;
+}
+.time-summary-more {
+  color: var(--muted);
+  font-size: calc(12px * var(--widget-scale, 1));
+}
+.time-summary-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(9px * var(--widget-space, 1));
+}
+.time-summary-kpi {
+  min-height: calc(62px * var(--widget-space, 1));
+  padding: calc(10px * var(--widget-space, 1));
+  border-radius: calc(14px * var(--widget-space, 1));
+  border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 28%);
+  background: color-mix(in oklab, var(--card, #fff) 94%, var(--fg) 6%);
+}
+.time-summary-kpi strong {
+  display: block;
+  color: var(--fg);
+  font-size: calc(18px * var(--widget-scale, 1));
+  letter-spacing: -.04em;
+}
+.time-summary-kpi span {
+  color: var(--muted);
+  font-size: calc(11px * var(--widget-scale, 1));
+}
+.time-summary-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: calc(6px * var(--widget-space, 1));
+  align-items: end;
+  height: calc(84px * var(--widget-space, 1));
+  padding: calc(10px * var(--widget-space, 1)) calc(9px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1));
+  border-radius: calc(16px * var(--widget-space, 1));
+  border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 35%);
+  background: color-mix(in oklab, var(--fg) 4%, transparent);
+}
+.time-summary-week__day {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: calc(6px * var(--widget-space, 1));
+  color: var(--muted);
+  font-size: calc(10px * var(--widget-scale, 1));
+  text-align: center;
+}
+.time-summary-week__day i {
+  display: block;
+  min-height: calc(5px * var(--widget-space, 1));
+  border-radius: 999px 999px calc(5px * var(--widget-space, 1)) calc(5px * var(--widget-space, 1));
+  background: linear-gradient(180deg, color-mix(in oklab, var(--brand, #2563eb) 70%, white), var(--brand, #2563eb));
+}
+.time-summary-week__day.active span {
+  color: var(--fg);
+  font-weight: 800;
+}
+.time-summary-activity-note {
+  padding-top: calc(8px * var(--widget-space, 1));
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: calc(12px * var(--widget-scale, 1));
+  line-height: 1.45;
 }
 .today-highlight{
   display:flex;

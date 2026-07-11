@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+
+## 0.8.3 - 2026-07-11
+### Added
+- Added a redesigned `Time Summary (Overview)` widget focused on the current day and current week.
+- Added strategy-aware mini tabs for the overview card: `Single Goal` stays daily-only, `Calendar Goals` can switch between Daily and Calendars, and `Calendar + Category Goals` can switch between Daily, Calendars, and Categories.
+- Added today-by-calendar and today-by-category lanes, a compact weekly bar overview, and daily KPI controls for the overview widget.
+
+### Changed
+- Release preparation for 0.8.3.
+- Cleaned up `Time Summary (Overview)` configuration so it exposes daily KPI options instead of the old text-summary toggles.
+- Removed automatic lookback creation from the overview widget defaults and legacy split path. Existing `time_summary_lookback` widgets still render, but new overview layouts stay current-week focused.
+
+### Fixed
+- Daily event count and avg/event now use today's week-row data instead of falling back to full-period values when the current day is empty.
+
+
 ## 0.8.2 - 2026-07-09
 ### Added
 - Added a dedicated Nextcloud 34 local dev lane (`docker-compose34.yml`, `make start34`) on `http://localhost:8095`.
