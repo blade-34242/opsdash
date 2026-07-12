@@ -403,8 +403,9 @@ function formatDate(value: string) {
 .version-notes-overlay__image-card img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: color-mix(in oklab, var(--color-main-background), black 8%);
 }
 
 .version-notes-overlay__image-meta {

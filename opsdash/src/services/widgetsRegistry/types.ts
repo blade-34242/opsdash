@@ -94,6 +94,7 @@ export interface WidgetRenderContext {
   targetsWeek?: Record<string, number>
   selected?: string[]
   calendarTodayHours?: Record<string, number>
+  categoryTodayHours?: Record<string, number>
   onboardingStrategy?: string | null
   activePreset?: string | null
 }

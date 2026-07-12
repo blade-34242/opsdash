@@ -43,6 +43,84 @@ describe('time summary split widgets', () => {
     expect(props.history).toHaveLength(0)
   })
 
+  it('limits overview mini chart to the current widget week only', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    const def: any = { options: {} }
+    const ctx: any = {
+      summary: { rangeLabel: 'Week', totalHours: 10 },
+      rangeMode: 'week',
+      from: '2026-07-05',
+      to: '2026-07-11',
+      byDay: [
+        { date: '2026-07-04', total_hours: 99, events_count: 9 },
+        { date: '2026-07-05', total_hours: 1, events_count: 1 },
+        { date: '2026-07-07', total_hours: 3, events_count: 2 },
+        { date: '2026-07-12', total_hours: 99, events_count: 9 },
+      ],
+      targetsConfig: baseCfg,
+    }
+
+    const props = entry.buildProps(def, ctx) as any
+    expect(props.weekDays.map((day: any) => day.date)).toEqual([
+      '2026-07-05',
+      '2026-07-06',
+      '2026-07-07',
+      '2026-07-08',
+      '2026-07-09',
+      '2026-07-10',
+      '2026-07-11',
+    ])
+    expect(props.weekDays.map((day: any) => day.hours)).toEqual([1, 0, 3, 0, 0, 0, 0])
+    expect(props.weekDays[0].label).toBe('Sun')
+  })
+
+  it('builds category today lanes from calendar groups and today hour maps', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    const props = entry.buildProps({ options: {} } as any, {
+      summary: { rangeLabel: 'Week', totalHours: 10 },
+      rangeMode: 'week',
+      from: '2026-07-05',
+      to: '2026-07-11',
+      onboardingStrategy: 'full_granular',
+      targetsConfig: baseCfg,
+      calendarGroups: [
+        { id: 'work', label: 'Work' },
+        { id: 'sport', label: 'Sport', todayHours: 1.5 },
+      ],
+      categoryTodayHours: {
+        work: 3.25,
+        sport: 1,
+      },
+      categoryColorMap: {
+        work: '#2563eb',
+        sport: '#10b981',
+      },
+    } as any) as any
+
+    expect(props.displayMode).toBe('category_and_calendar_goals')
+    expect(props.categoryTodayItems).toEqual([
+      { id: 'work', label: 'Work', todayHours: 3.25, color: '#2563eb', isUnassigned: false },
+      { id: 'sport', label: 'Sport', todayHours: 1.5, color: '#10b981', isUnassigned: false },
+    ])
+  })
+
+  it('does not build the overview mini week chart in month mode', () => {
+    const entry = widgetsRegistry.time_summary_overview
+    const baseCfg = createDefaultTargetsConfig()
+    const props = entry.buildProps({ options: {} } as any, {
+      summary: { rangeLabel: 'Month', totalHours: 10 },
+      rangeMode: 'month',
+      from: '2026-07-01',
+      to: '2026-07-31',
+      byDay: [{ date: '2026-07-01', total_hours: 1 }],
+      targetsConfig: baseCfg,
+    } as any) as any
+
+    expect(props.weekDays).toEqual([])
+  })
+
   it('lookback widget enables history and hides overview rows', () => {
     const entry = widgetsRegistry.time_summary_lookback
     const baseCfg = createDefaultTargetsConfig()

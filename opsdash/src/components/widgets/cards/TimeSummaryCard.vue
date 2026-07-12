@@ -27,47 +27,76 @@
         >{{ viewLabel(view) }}</button>
       </div>
 
-      <div v-if="activeOverviewView === 'calendars'" class="time-summary-lanes">
-        <div class="time-summary-section-head">
-          <strong>Today by calendar</strong>
-          <span>{{ calendarTodayVisible.length }} calendar{{ calendarTodayVisible.length === 1 ? '' : 's' }}</span>
+      <div class="time-summary-tab-panel">
+        <div v-if="activeOverviewView === 'daily' && showDailyKpis" class="time-summary-kpis">
+          <div class="time-summary-kpi time-summary-kpi--compare">
+            <strong>{{ n2(summary.avgDay) }} h</strong>
+            <span>avg/day</span>
+            <em v-if="avgDayDeltaLabel">{{ avgDayDeltaLabel }}</em>
+          </div>
+          <div class="time-summary-kpi time-summary-kpi--compare">
+            <strong>{{ n2(summary.medianDay) }} h</strong>
+            <span>median/day</span>
+          </div>
+          <div class="time-summary-kpi">
+            <strong>{{ n2(todayAvgEvent) }} h</strong>
+            <span>avg/event</span>
+          </div>
+          <div class="time-summary-kpi">
+            <strong>{{ latestEndShort }}</strong>
+            <span>latest end</span>
+          </div>
+          <div class="time-summary-kpi">
+            <strong>{{ activeDaysLabel }}</strong>
+            <span>active days</span>
+          </div>
+          <div class="time-summary-kpi">
+            <strong>{{ longestSessionLabel }}</strong>
+            <span>longest</span>
+          </div>
         </div>
-        <div class="time-summary-lane" v-for="item in calendarTodayVisible" :key="item.id">
-          <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
-          <span class="name">{{ item.label }}</span>
-          <span class="value">{{ n1(item.todayHours) }} h</span>
-        </div>
-        <div v-if="calendarTodayMoreCount > 0" class="time-summary-more">+ {{ calendarTodayMoreCount }} more</div>
-      </div>
 
-      <div v-else-if="activeOverviewView === 'categories'" class="time-summary-lanes">
-        <div class="time-summary-section-head">
-          <strong>Today by category</strong>
-          <span>{{ categoryTodayVisible.length }} lane{{ categoryTodayVisible.length === 1 ? '' : 's' }}</span>
+        <div v-else-if="activeOverviewView === 'calendars'" class="time-summary-lanes">
+          <div class="time-summary-section-head">
+            <strong>Today by calendar</strong>
+            <span>{{ calendarTodayVisible.length }} calendar{{ calendarTodayVisible.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div
+            class="time-summary-lane"
+            v-for="item in calendarTodayVisible"
+            :key="item.id"
+            :style="{ '--lane-color': item.color || 'var(--brand)' }"
+          >
+            <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
+            <span class="name">{{ item.label }}</span>
+            <span class="value">{{ n1(item.todayHours) }} h</span>
+          </div>
+          <div v-if="calendarTodayMoreCount > 0" class="time-summary-more">+ {{ calendarTodayMoreCount }} more</div>
         </div>
-        <div class="time-summary-lane" v-for="item in categoryTodayVisible" :key="item.id">
-          <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
-          <span class="name">
-            {{ item.label }}
-            <span
-              v-if="(item as any).isUnassigned"
-              class="unassigned-hint"
-              title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
-            >ⓘ</span>
-          </span>
-          <span class="value">{{ n1(item.todayHours) }} h</span>
-        </div>
-        <div v-if="categoryTodayMoreCount > 0" class="time-summary-more">+ {{ categoryTodayMoreCount }} more</div>
-      </div>
 
-      <div v-if="showDailyKpis" class="time-summary-kpis">
-        <div class="time-summary-kpi">
-          <strong>{{ n2(todayAvgEvent) }} h</strong>
-          <span>avg/event</span>
-        </div>
-        <div class="time-summary-kpi">
-          <strong>{{ latestEndShort }}</strong>
-          <span>latest end</span>
+        <div v-else-if="activeOverviewView === 'categories'" class="time-summary-lanes">
+          <div class="time-summary-section-head">
+            <strong>Today by category</strong>
+            <span>{{ categoryTodayVisible.length }} lane{{ categoryTodayVisible.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div
+            class="time-summary-lane"
+            v-for="item in categoryTodayVisible"
+            :key="item.id"
+            :style="{ '--lane-color': item.color || 'var(--brand)' }"
+          >
+            <span class="dot" :style="{ background: item.color || 'var(--brand)' }"></span>
+            <span class="name">
+              {{ item.label }}
+              <span
+                v-if="(item as any).isUnassigned"
+                class="unassigned-hint"
+                title="Hours from calendars not assigned to a category. Open Settings → Categories to assign them."
+              >ⓘ</span>
+            </span>
+            <span class="value">{{ n1(item.todayHours) }} h</span>
+          </div>
+          <div v-if="categoryTodayMoreCount > 0" class="time-summary-more">+ {{ categoryTodayMoreCount }} more</div>
         </div>
       </div>
 
@@ -79,12 +108,13 @@
           :class="{ active: day.isToday }"
           :title="`${day.label}: ${n1(day.hours)} h`"
         >
-          <i :style="{ height: `${dayHeight(day.hours)}%` }"></i>
+          <i class="time-summary-week__bar" :style="{ height: `${dayHeight(day.hours)}%` }">
+            <strong>{{ n1(day.hours) }}h</strong>
+          </i>
           <span>{{ day.label }}</span>
         </div>
       </div>
 
-      <div v-if="showActivityNote && activityNote" class="time-summary-activity-note">{{ activityNote }}</div>
     </div>
     <div class="time-summary-history" v-if="showLookbackPanel && historyRows.length">
       <div class="time-summary-history__header">
@@ -490,6 +520,11 @@ const todayAvgEvent = computed(() => {
   return props.summary.avgEvent
 })
 const weekMaxHours = computed(() => Math.max(0, ...weekDays.value.map((day) => Number(day.hours) || 0)))
+const avgDayDeltaLabel = computed(() => {
+  const delta = props.summary.delta?.avgPerDay
+  if (delta == null || !Number.isFinite(delta) || Math.abs(delta) < 0.005) return ''
+  return `${delta > 0 ? '+' : '−'}${n2(Math.abs(delta))}h`
+})
 const calendarTodayItems = computed<TodayLane[]>(() => normalizeLaneList(props.calendarTodayItems ?? todayItems.value))
 const categoryTodayItems = computed<TodayLane[]>(() => normalizeLaneList(props.categoryTodayItems ?? todayItems.value))
 const calendarTodayFiltered = computed(() => filterLaneList(calendarTodayItems.value))
@@ -589,6 +624,11 @@ const longestSessionLabel = computed(() => {
 const latestEndShort = computed(() => {
   const value = timeOf(activity.value?.latestEnd ?? null)
   return value || '—'
+})
+const activeDaysLabel = computed(() => {
+  const value = activity.value?.activeDays
+  if (value == null || !Number.isFinite(Number(value))) return '—'
+  return String(Math.max(0, Math.trunc(Number(value))))
 })
 const activityNote = computed(() => {
   const parts: string[] = []
@@ -973,15 +1013,24 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   display: grid;
   gap: calc(8px * var(--widget-space, 1));
 }
+.time-summary-tab-panel {
+  display: grid;
+  min-height: calc(142px * var(--widget-space, 1));
+}
 .time-summary-lane {
+  --lane-color: var(--brand, #2563eb);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: calc(9px * var(--widget-space, 1));
   align-items: center;
+  min-height: calc(38px * var(--widget-space, 1));
   padding: calc(9px * var(--widget-space, 1));
   border-radius: calc(13px * var(--widget-space, 1));
-  background: color-mix(in oklab, var(--card, #fff) 92%, var(--fg) 8%);
-  border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 28%);
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--lane-color) 22%, transparent), transparent 68%),
+    color-mix(in oklab, var(--card, #fff) 92%, var(--fg) 8%);
+  border: 1px solid color-mix(in oklab, var(--lane-color) 30%, var(--line, #e5e7eb));
+  box-shadow: inset 3px 0 0 color-mix(in oklab, var(--lane-color) 82%, transparent);
 }
 .time-summary-lane .name {
   min-width: 0;
@@ -1022,32 +1071,116 @@ function shareDeltaLabel(current: number | null | undefined, delta: number | nul
   color: var(--muted);
   font-size: calc(11px * var(--widget-scale, 1));
 }
+.time-summary-kpi--compare {
+  position: relative;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--brand, #2563eb) 10%, transparent), transparent 62%),
+    color-mix(in oklab, var(--card, #fff) 94%, var(--fg) 6%);
+}
+.time-summary-kpi--compare em {
+  position: absolute;
+  right: calc(10px * var(--widget-space, 1));
+  bottom: calc(10px * var(--widget-space, 1));
+  color: color-mix(in oklab, var(--brand, #2563eb) 78%, var(--fg));
+  font-size: calc(11px * var(--widget-scale, 1));
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: -.02em;
+}
 .time-summary-week {
+  --week-chart-accent: var(--brand, #2563eb);
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: calc(6px * var(--widget-space, 1));
   align-items: end;
-  height: calc(84px * var(--widget-space, 1));
-  padding: calc(10px * var(--widget-space, 1)) calc(9px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1));
+  height: calc(96px * var(--widget-space, 1));
+  padding: calc(12px * var(--widget-space, 1)) calc(10px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1));
   border-radius: calc(16px * var(--widget-space, 1));
   border: 1px solid color-mix(in oklab, var(--line, #e5e7eb), transparent 35%);
-  background: color-mix(in oklab, var(--fg) 4%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--week-chart-accent) 8%, transparent), transparent 58%),
+    color-mix(in oklab, var(--fg) 4%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, #fff 42%, transparent);
 }
 .time-summary-week__day {
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: end;
-  gap: calc(6px * var(--widget-space, 1));
+  gap: calc(7px * var(--widget-space, 1));
   color: var(--muted);
   font-size: calc(10px * var(--widget-scale, 1));
   text-align: center;
+  position: relative;
+}
+.time-summary-week__day::before {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: calc(20px * var(--widget-space, 1));
+  height: 1px;
+  background: color-mix(in oklab, var(--line, #e5e7eb), transparent 35%);
+}
+.time-summary-week__day::after {
+  content: '';
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: calc(2px * var(--widget-space, 1));
+  bottom: calc(20px * var(--widget-space, 1));
+  border-radius: 999px 999px calc(8px * var(--widget-space, 1)) calc(8px * var(--widget-space, 1));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--fg) 4%, transparent), transparent),
+    color-mix(in oklab, var(--card, #fff) 78%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--line, #e5e7eb), transparent 48%);
 }
 .time-summary-week__day i {
   display: block;
-  min-height: calc(5px * var(--widget-space, 1));
-  border-radius: 999px 999px calc(5px * var(--widget-space, 1)) calc(5px * var(--widget-space, 1));
-  background: linear-gradient(180deg, color-mix(in oklab, var(--brand, #2563eb) 70%, white), var(--brand, #2563eb));
+  width: 100%;
+  min-height: calc(20px * var(--widget-space, 1));
+  border-radius: 999px 999px calc(7px * var(--widget-space, 1)) calc(7px * var(--widget-space, 1));
+  background:
+    radial-gradient(circle at 50% 10%, color-mix(in oklab, #fff 72%, transparent), transparent 31%),
+    linear-gradient(90deg, transparent, color-mix(in oklab, #fff 18%, transparent), transparent),
+    linear-gradient(180deg, color-mix(in oklab, var(--week-chart-accent) 72%, white), var(--week-chart-accent));
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow:
+    0 7px 14px color-mix(in oklab, var(--week-chart-accent) 26%, transparent),
+    inset 0 1px 0 color-mix(in oklab, #fff 44%, transparent);
+  transition: transform .16s ease, filter .16s ease;
+}
+.time-summary-week__day:hover i {
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+}
+.time-summary-week__bar strong {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: calc(9px * var(--widget-scale, 1));
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(15, 23, 42, .38);
+  white-space: nowrap;
+}
+.time-summary-week__day span {
+  position: relative;
+  z-index: 1;
+}
+.time-summary-week__day.active i {
+  background:
+    radial-gradient(circle at 50% 10%, color-mix(in oklab, #fff 70%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in oklab, #38bdf8 42%, var(--week-chart-accent)), var(--week-chart-accent));
+  box-shadow:
+    0 9px 18px color-mix(in oklab, var(--week-chart-accent) 34%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--week-chart-accent) 35%, transparent),
+    inset 0 1px 0 color-mix(in oklab, #fff 50%, transparent);
 }
 .time-summary-week__day.active span {
   color: var(--fg);

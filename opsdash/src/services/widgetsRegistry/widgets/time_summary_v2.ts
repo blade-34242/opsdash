@@ -8,7 +8,7 @@ import { buildTitle } from '../helpers'
 import { createDefaultTargetsConfig, convertWeekToMonth } from '../../targets'
 import type { TargetsConfig } from '../../targets'
 import { computeIndexForShares } from '../../balanceIndex'
-import { parseDateKey } from '../../dateTime'
+import { addDaysUtc, parseDateKey } from '../../dateTime'
 import type { RegistryEntry } from '../types'
 import { formatLookbackLabel, sortLookbackOffsets } from './chartHelpers'
 
@@ -71,7 +71,6 @@ function buildOverviewDefaultOptions() {
     showWeekMiniChart: true,
     showEmptyLanes: true,
     maxLanes: 4,
-    showActivityNote: true,
   }
 }
 
@@ -171,7 +170,6 @@ function buildTimeSummaryProps(
     showWeekMiniChart: def.options?.showWeekMiniChart !== false,
     showEmptyLanes: def.options?.showEmptyLanes !== false,
     maxLanes: Number(def.options?.maxLanes ?? 4) || 4,
-    showActivityNote: def.options?.showActivityNote !== false,
     title: buildTitle(opts.title, def.options?.titlePrefix),
     cardBg: def.options?.cardBg,
     displayMode,
@@ -229,16 +227,25 @@ function resolveCalendarTodayItems(ctx: any) {
 }
 
 function resolveCategoryTodayItems(ctx: any) {
-  const groups = Array.isArray(ctx?.groups) ? ctx.groups : []
+  const groups = Array.isArray(ctx?.groups)
+    ? ctx.groups
+    : (Array.isArray(ctx?.calendarGroups) ? ctx.calendarGroups : [])
+  const categoryTodayHours = ctx?.categoryTodayHours && typeof ctx.categoryTodayHours === 'object'
+    ? ctx.categoryTodayHours
+    : {}
+  const categoryColorMap = ctx?.categoryColorMap && typeof ctx.categoryColorMap === 'object'
+    ? ctx.categoryColorMap
+    : {}
   return groups
     .map((group: any) => {
       const id = String(group?.id ?? '').trim()
       if (!id) return null
+      const todayHours = Number(group?.todayHours ?? categoryTodayHours[id] ?? 0) || 0
       return {
         id,
         label: String(group?.label ?? id),
-        todayHours: Number(group?.todayHours ?? 0) || 0,
-        color: group?.color,
+        todayHours,
+        color: group?.color || categoryColorMap[id],
         isUnassigned: Boolean(group?.isUnassigned) || id === '__uncategorized__',
       }
     })
@@ -247,40 +254,65 @@ function resolveCategoryTodayItems(ctx: any) {
 }
 
 function resolveWeekDays(ctx: any) {
+  const rangeMode = String(ctx?.rangeMode || 'week').toLowerCase() === 'month' ? 'month' : 'week'
+  if (rangeMode !== 'week') return []
+
+  const from = parseDateKey(String(ctx?.from ?? ''))
+  const to = parseDateKey(String(ctx?.to ?? ''))
+  if (!from || !to) return []
+
   const todayKey = formatLocalDateKey(new Date())
   const rows = Array.isArray(ctx?.byDay) ? ctx.byDay : []
-  if (rows.length) {
-    return rows.map((row: any) => {
-      const date = String(row?.date ?? '')
-      return {
-        date,
-        label: shortDayLabel(date),
-        hours: Number(row?.total_hours ?? row?.hours ?? 0) || 0,
-        events: Number(row?.events_count ?? row?.events ?? 0) || 0,
-        isToday: date === todayKey,
-      }
+  const byDate = new Map<string, { hours: number; events: number }>()
+  rows.forEach((row: any) => {
+    const date = String(row?.date ?? '')
+    if (!date) return
+    byDate.set(date, {
+      hours: Number(row?.total_hours ?? row?.hours ?? 0) || 0,
+      events: Number(row?.events_count ?? row?.events ?? 0) || 0,
     })
-  }
+  })
 
   const perDay = ctx?.charts?.perDay
   const labels = Array.isArray(perDay?.labels) ? perDay.labels : []
   const data = Array.isArray(perDay?.data) ? perDay.data : []
-  return labels.map((raw: any, idx: number) => {
+  labels.forEach((raw: any, idx: number) => {
     const date = String(raw ?? '')
-    return {
-      date,
-      label: shortDayLabel(date),
+    if (!date || byDate.has(date)) return
+    byDate.set(date, {
       hours: Number(data[idx] ?? 0) || 0,
       events: 0,
-      isToday: date === todayKey,
-    }
+    })
   })
+
+  const days = []
+  for (let idx = 0; idx < 7; idx++) {
+    const current = addDaysUtc(from, idx)
+    if (current.getTime() > to.getTime()) break
+    const date = formatUtcDateKey(current)
+    const row = byDate.get(date)
+    days.push({
+      date,
+      label: shortDayLabel(date),
+      hours: row?.hours ?? 0,
+      events: row?.events ?? 0,
+      isToday: date === todayKey,
+    })
+  }
+  return days
 }
 
 function formatLocalDateKey(date: Date) {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function formatUtcDateKey(date: Date) {
+  const y = date.getUTCFullYear()
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(date.getUTCDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
 
@@ -352,7 +384,6 @@ export const timeSummaryOverviewEntry: RegistryEntry = {
     { key: 'showWeekMiniChart', label: 'Week mini chart', type: 'toggle' },
     { key: 'showEmptyLanes', label: 'Show empty lanes', type: 'toggle' },
     { key: 'maxLanes', label: 'Max lanes', type: 'number', min: 1, max: 12, step: 1 },
-    { key: 'showActivityNote', label: 'Activity note', type: 'toggle' },
   ],
   buildProps: (def, ctx) =>
     buildTimeSummaryProps(def, ctx, {

@@ -80,4 +80,22 @@ class ReportScheduleServiceTest extends TestCase {
     $this->assertSame('2026-05-01_2026-05-31:final', $hit['dispatchKey']);
     $this->assertSame(-1, $hit['rangeOffset']);
   }
+
+  public function testMonthlyFinalDispatchCatchesUpAfterMissedFirstDay(): void {
+    $hit = $this->resolveDispatch('month', ['delivery' => 'final', 'sendTimeLocal' => '18:00'], '2026-06-02 18:00:00', '2026-06-01', '2026-06-30', '2026-05-01', '2026-05-31');
+    $tooLate = $this->resolveDispatch('month', ['delivery' => 'final', 'sendTimeLocal' => '18:00'], '2026-06-09 18:00:00', '2026-06-01', '2026-06-30', '2026-05-01', '2026-05-31');
+
+    $this->assertSame('2026-05-01_2026-05-31:final', $hit['dispatchKey']);
+    $this->assertSame(-1, $hit['rangeOffset']);
+    $this->assertNull($tooLate);
+  }
+
+  public function testWeeklyFinalDispatchCatchesUpAfterMissedFirstDay(): void {
+    $hit = $this->resolveDispatch('week', ['delivery' => 'final', 'sendTimeLocal' => '06:00'], '2026-05-19 06:00:00', '2026-05-18', '2026-05-24', '2026-05-11', '2026-05-17');
+    $tooLate = $this->resolveDispatch('week', ['delivery' => 'final', 'sendTimeLocal' => '06:00'], '2026-05-21 06:00:00', '2026-05-18', '2026-05-24', '2026-05-11', '2026-05-17');
+
+    $this->assertSame('2026-05-11_2026-05-17:final', $hit['dispatchKey']);
+    $this->assertSame(-1, $hit['rangeOffset']);
+    $this->assertNull($tooLate);
+  }
 }

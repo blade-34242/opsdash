@@ -65,6 +65,7 @@ interface WidgetRenderContextDeps {
   targetsWeek: ValueRef<Record<string, number>>
   selected: ValueRef<string[]>
   calendarTodayHours: ValueRef<Record<string, number>>
+  categoryTodayHours: ValueRef<Record<string, number>>
   onboardingStrategy: ValueRef<string | null>
   activePreset?: ValueRef<string | null>
 }
@@ -143,7 +144,7 @@ export function useWidgetRenderContext(deps: WidgetRenderContextDeps): {
     charts: deps.charts.value,
     calendarChartData: deps.calendarChartData.value,
     categoryChartsById: deps.categoryChartsById.value,
-    calendarGroups: deps.calendarGroups.value,
+    calendarGroups: deps.calendarGroupsWithToday.value,
     calendars: deps.calendars.value,
     calendarCategoryMap: deps.calendarCategoryMap.value,
     categoryColorMap: deps.categoryColorMap.value,
@@ -153,6 +154,7 @@ export function useWidgetRenderContext(deps: WidgetRenderContextDeps): {
     targetsWeek: deps.targetsWeek.value,
     selected: deps.selected.value,
     calendarTodayHours: deps.calendarTodayHours.value,
+    categoryTodayHours: deps.categoryTodayHours.value,
     onboardingStrategy: deps.onboardingStrategy.value,
     activePreset: deps.activePreset?.value ?? null,
   }))

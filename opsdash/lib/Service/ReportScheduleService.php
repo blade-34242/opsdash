@@ -213,7 +213,7 @@ class ReportScheduleService {
             }
         }
 
-        if ($todayKey !== $currentFrom->format('Y-m-d')) {
+        if (!$this->isFinalDispatchWindow($modeKey, $currentFrom, $now)) {
             return null;
         }
 
@@ -238,6 +238,15 @@ class ReportScheduleService {
         [$hours, $minutes] = array_map('intval', explode(':', $sendTime, 2));
         $sendAt = $now->setTime($hours, $minutes, 0);
         return $now >= $sendAt;
+    }
+
+    private function isFinalDispatchWindow(string $modeKey, \DateTimeImmutable $currentFrom, \DateTimeImmutable $now): bool {
+        $daysSinceCurrentStart = (int)$currentFrom->setTime(0, 0, 0)->diff($now->setTime(0, 0, 0))->format('%r%a');
+        if ($daysSinceCurrentStart < 0) {
+            return false;
+        }
+        $maxCatchupDays = $modeKey === 'month' ? 7 : 1;
+        return $daysSinceCurrentStart <= $maxCatchupDays;
     }
 
     private function midpointDate(\DateTimeImmutable $from, \DateTimeImmutable $to): \DateTimeImmutable {

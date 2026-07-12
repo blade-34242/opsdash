@@ -1628,6 +1628,7 @@ const { widgetContext } = useWidgetRenderContext({
   targetsWeek,
   selected,
   calendarTodayHours,
+  categoryTodayHours,
   onboardingStrategy: computed(() => onboardingState.value?.strategy ?? null),
   activePreset: activePresetRef,
 })

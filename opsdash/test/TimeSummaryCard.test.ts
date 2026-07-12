@@ -89,7 +89,7 @@ describe('TimeSummaryCard', () => {
     expect(text).toContain('1.5 h planned later')
   })
 
-  it('renders daily metrics, category lanes, and the week mini chart', () => {
+  it('renders category lanes and the week mini chart by default in granular mode', () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {
         summary: baseSummary,
@@ -115,8 +115,74 @@ describe('TimeSummaryCard', () => {
     expect(text).toContain('Today by category')
     expect(text).toContain('Work')
     expect(text).toContain('4.0 h')
-    expect(text).toContain('avg/event')
+    expect(text).not.toContain('avg/event')
     expect(wrapper.find('.time-summary-week').exists()).toBe(true)
+  })
+
+  it('fills the daily tab with average and median KPI cards in granular mode', async () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: {
+          ...baseSummary,
+          avgDay: 4.25,
+          medianDay: 3.5,
+        },
+        mode: 'active',
+        displayMode: 'category_and_calendar_goals',
+        categoryTodayItems: [
+          { id: 'work', label: 'Work', todayHours: 4, color: '#2563EB' },
+        ],
+      },
+    })
+
+    const dailyButton = wrapper.findAll('button').find((button) => button.text() === 'Daily')
+    expect(dailyButton).toBeTruthy()
+    await dailyButton!.trigger('click')
+
+    const text = wrapper.text().replace(/\s+/g, ' ')
+    expect(text).toContain('4.25 havg/day')
+    expect(text).toContain('3.50 hmedian/day')
+    expect(text).toContain('avg/event')
+    expect(text).toContain('latest end')
+    expect(text).not.toContain('Today by category')
+  })
+
+  it('shows average and median KPI cards in single goal mode without the activity note', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: {
+          ...baseSummary,
+          avgDay: 4.25,
+          medianDay: 3.5,
+          delta: { totalHours: 1, avgPerDay: 0.75, avgPerEvent: 0, events: 0 },
+        },
+        activitySummary: {
+          events: 9,
+          activeDays: 3,
+          typicalStart: '08:00',
+          typicalEnd: '17:00',
+          weekendShare: 0,
+          eveningShare: 56.3,
+          delta: null,
+          earliestStart: '07:30',
+          latestEnd: '19:30',
+          overlapEvents: 0,
+          longestSession: 2,
+          lastDayOff: null,
+          lastHalfDayOff: null,
+        },
+        mode: 'active',
+        displayMode: 'single_goal',
+      },
+    })
+
+    const text = wrapper.text().replace(/\s+/g, ' ')
+    expect(text).toContain('4.25 havg/day+0.75h')
+    expect(text).toContain('3.50 hmedian/day')
+    expect(text).toContain('3active days')
+    expect(text).toContain('2.0 hlongest')
+    expect(text).not.toContain('busiest')
+    expect(text).not.toContain('evening')
   })
 
   it('hides calendar and category-specific summary rows in single goal mode', () => {
@@ -165,6 +231,7 @@ describe('TimeSummaryCard', () => {
     expect(text).toContain('Today by calendar')
     expect(text).toContain('Cal A')
     expect(text).toContain('2.5 h')
+    expect(wrapper.find('.time-summary-lane').attributes('style')).toContain('--lane-color')
     expect(wrapper.text()).toContain('Calendars')
     expect(wrapper.text()).not.toContain('Categories')
   })
