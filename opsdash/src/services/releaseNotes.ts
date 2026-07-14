@@ -44,6 +44,7 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'Deck cards now starts with a Focus queue for dated active work, including overdue cards, instead of opening an unbounded list of every open item.',
       'Undated work is available through a dedicated Backlog view; the queue starts with eight cards and expands only when you ask for the full list.',
       'Deck card configuration now centers boards, stacks, starting view, list size, and compact rows rather than the previous broad filter matrix.',
+      'Time Off Trend can now ignore selected calendars or assigned calendar categories, so personal sport and trip calendars do not make every day look occupied.',
       'Scheduled monthly final reports now catch up after missed first-day runs and keep reporting the completed previous month.',
     ],
     images: [

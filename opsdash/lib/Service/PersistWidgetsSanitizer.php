@@ -141,6 +141,8 @@ final class PersistWidgetsSanitizer {
                 'interpretation'  => ['t' => 'select', 'v' => ['more_off_positive', 'more_off_warning']],
                 'toneLowColor'    => $COLOR,
                 'toneHighColor'   => $COLOR,
+                'ignoreCalendarIds' => $ID_LIST,
+                'ignoreCategoryIds' => $ID_LIST,
             ],
             'deck_cards' => $CORE + [
                 'allowMine'       => $BOOL,

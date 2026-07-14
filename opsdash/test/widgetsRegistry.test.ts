@@ -520,6 +520,53 @@ describe('widgetsRegistry targets_v2', () => {
     expect(props.lookback).toBe(2)
   })
 
+  it('dayoff_trend excludes configured calendars and categories across the full trend', () => {
+    const entry = widgetsRegistry.dayoff_trend
+    const def: any = {
+      options: { ignoreCalendarIds: ['trip'], ignoreCategoryIds: ['sport'] },
+      layout: {},
+      type: 'dayoff_trend',
+      id: 'd1',
+      version: 1,
+    }
+    const trend = [
+      { offset: 0, label: 'This week', from: '2026-07-13', to: '2026-07-14', totalDays: 2, daysOff: 0, daysWorked: 2 },
+      { offset: 1, label: '-1 wk', from: '2026-07-06', to: '2026-07-12', totalDays: 7, daysOff: 0, daysWorked: 7 },
+    ]
+    const ctx: any = {
+      activityDayOffTrend: trend,
+      calendarCategoryMap: { work: 'work', sport: 'sport', trip: 'personal' },
+      charts: {
+        perDaySeriesByOffset: [
+          {
+            offset: 0,
+            labels: ['2026-07-13', '2026-07-14'],
+            series: [
+              { id: 'work', data: [8, 0] },
+              { id: 'sport', data: [1, 1] },
+              { id: 'trip', data: [1, 1] },
+            ],
+          },
+          {
+            offset: 1,
+            labels: ['2026-07-06', '2026-07-07', '2026-07-08', '2026-07-09', '2026-07-10', '2026-07-11', '2026-07-12'],
+            series: [
+              { id: 'work', data: [8, 0, 0, 0, 0, 0, 0] },
+              { id: 'sport', data: [0, 1, 1, 1, 1, 1, 1] },
+              { id: 'trip', data: [0, 0, 0, 0, 0, 0, 1] },
+            ],
+          },
+        ],
+      },
+    }
+
+    const props = entry.buildProps(def, ctx) as any
+    expect(props.trend).toEqual([
+      { ...trend[0], daysOff: 1, daysWorked: 1 },
+      { ...trend[1], daysOff: 6, daysWorked: 1 },
+    ])
+  })
+
   it('common title prefix is applied when provided', () => {
     const entry = widgetsRegistry.balance_index
     const def: any = {
