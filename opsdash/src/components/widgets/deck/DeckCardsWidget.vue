@@ -14,6 +14,7 @@
     :auto-scroll="props.autoScroll !== false"
     :interval-seconds="props.intervalSeconds"
     :show-count="props.showCount !== false"
+    :max-visible="props.maxVisible"
     :compact="props.compactList === true"
     :title="props.title"
     :card-bg="props.cardBg"
@@ -58,6 +59,7 @@ const props = withDefaults(defineProps<{
   autoScroll?: boolean
   intervalSeconds?: number
   showCount?: boolean
+  maxVisible?: number
   minFilterCount?: number
   showHeader?: boolean
   title?: string
@@ -83,19 +85,11 @@ defineEmits<{
 }>()
 
 const defaultFilters: DeckFilterMode[] = [
+  'focus_all',
+  'focus_mine',
+  'backlog_all',
+  'backlog_mine',
   'all',
-  'open_all',
-  'open_mine',
-  'done_all',
-  'done_mine',
-  'archived_all',
-  'archived_mine',
-  'due_all',
-  'due_mine',
-  'due_today_all',
-  'due_today_mine',
-  'created_today_all',
-  'created_today_mine',
 ]
 
 const baseCards = computed(() => {
@@ -173,6 +167,10 @@ const allFilterOptionDefs = computed(() => {
   const labels: Record<DeckFilterMode, string> = {
     all: 'All cards',
     mine: 'Mine (any status)',
+    focus_all: 'Focus',
+    focus_mine: 'My focus',
+    backlog_all: 'Backlog',
+    backlog_mine: 'My backlog',
     open_all: 'Open · All',
     open_mine: 'Open · Mine',
     done_all: 'Done · All',

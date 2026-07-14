@@ -19,6 +19,10 @@ export interface ReportingConfig {
 export type DeckFilterMode =
   | 'all'
   | 'mine'
+  | 'focus_all'
+  | 'focus_mine'
+  | 'backlog_all'
+  | 'backlog_mine'
   | 'open_all'
   | 'open_mine'
   | 'done_all'
@@ -35,10 +39,6 @@ export type DeckFilterMode =
   | 'created_range_all'
   | 'created_range_mine'
   | `tag_${string}`
-  | 'created_today_all'
-  | 'created_today_mine'
-  | 'created_range_all'
-  | 'created_range_mine'
 
 export type DeckMineMode = 'assignee' | 'creator' | 'both'
 
@@ -188,6 +188,10 @@ export function normalizeDeckSettings(input: any, fallback?: DeckFeatureSettings
   const allowedFilters: DeckFilterMode[] = [
     'all',
     'mine',
+    'focus_all',
+    'focus_mine',
+    'backlog_all',
+    'backlog_mine',
     'open_all',
     'open_mine',
     'done_all',

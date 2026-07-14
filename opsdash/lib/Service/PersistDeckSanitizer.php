@@ -18,6 +18,10 @@ final class PersistDeckSanitizer {
         $allowedFilters = [
             'all',
             'mine',
+            'focus_all',
+            'focus_mine',
+            'backlog_all',
+            'backlog_mine',
             'open_all',
             'open_mine',
             'done_all',

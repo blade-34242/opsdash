@@ -29,10 +29,11 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
     version: '0.8.3',
     date: '2026-07-11',
     title: 'Time Summary now reads like a daily control panel',
-    teaser: 'Opsdash 0.8.3 turns Time Summary (Overview) into a current-week daily KPI card and fixes missed monthly final recaps after month-end.',
-    summary: 'Version 0.8.3 focuses the Time Summary overview on what you need to read today. The card now starts with today’s hours and events, adapts its tabs to your goal type, fills Daily with six KPI cards, shows color-filled calendar or category lanes when those concepts exist, and keeps the historical lookback separated so the overview stays fast to scan. Monthly final reports also get a safer catch-up path: if the background job misses the first send slot after month-end, Opsdash still sends the completed previous month instead of dropping the recap.',
+    teaser: 'Opsdash 0.8.3 turns Time Summary (Overview) into a current-week daily KPI card, adds a focused Deck action queue, and fixes missed monthly final recaps after month-end.',
+    summary: 'Version 0.8.3 focuses the Time Summary overview on what you need to read today and makes Deck cards useful as an operational queue. Time Summary starts with today’s hours and events, adapts its tabs to your goal type, fills Daily with six KPI cards, and keeps historical lookback separate. Deck cards now opens on dated active work, separates undated items into Backlog, limits the initial list, and relies on normal user-controlled scrolling. Monthly final reports also get a safer catch-up path: if the background job misses the first send slot after month-end, Opsdash still sends the completed previous month instead of dropping the recap.',
     highlights: [
       'Time Summary (Overview) now centers the current day instead of mixing daily signals with old period-summary text rows.',
+      "The overview heading is now Today's time summary, so the weekly context supports the card instead of repeating in its title.",
       'The Daily tab now uses a six-card KPI grid for average, median, avg/event, latest end, active days, and longest session.',
       'Single Goal dashboards stay daily-only, so users are not offered calendar or category tabs that cannot add context.',
       'Calendar Goals dashboards can switch between Daily and Calendars to inspect today’s color-filled calendar lanes without leaving the widget.',
@@ -40,6 +41,9 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'The compact week chart shows the current week’s rhythm directly inside the card without reintroducing lookback noise.',
       'Widget configuration now exposes the controls that matter for this card: default view, daily KPIs, week mini chart, empty lanes, and max lanes.',
       'The old lookback companion is no longer created for new overview layouts, while existing lookback widgets remain supported for saved dashboards.',
+      'Deck cards now starts with a Focus queue for dated active work, including overdue cards, instead of opening an unbounded list of every open item.',
+      'Undated work is available through a dedicated Backlog view; the queue starts with eight cards and expands only when you ask for the full list.',
+      'Deck card configuration now centers boards, stacks, starting view, list size, and compact rows rather than the previous broad filter matrix.',
       'Scheduled monthly final reports now catch up after missed first-day runs and keep reporting the completed previous month.',
     ],
     images: [

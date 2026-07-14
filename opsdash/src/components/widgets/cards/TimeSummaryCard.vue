@@ -371,6 +371,7 @@ const props = withDefaults(defineProps<{
   showEmptyLanes?: boolean
   maxLanes?: number
   showActivityNote?: boolean
+  showRangeInTitle?: boolean
   title?: string
   cardBg?: string | null
   rangeMode?: 'week' | 'month' | string
@@ -403,6 +404,7 @@ const props = withDefaults(defineProps<{
   showEmptyLanes: true,
   maxLanes: 4,
   showActivityNote: true,
+  showRangeInTitle: true,
 })
 
 const summaryConfig = computed<SummaryConfig>(() => Object.assign({}, defaultConfig, props.config ?? {}))
@@ -450,7 +452,7 @@ const historyGroupLabel = computed(() => {
 const headerText = computed(() => {
   const base = titleText.value
   const range = props.summary?.rangeLabel || ''
-  return range ? `${base} · ${range}` : base
+  return props.showRangeInTitle !== false && range ? `${base} · ${range}` : base
 })
 const cardStyle = computed(() => ({ background: props.cardBg || undefined }))
 const showHeader = computed(() => props.showHeader)

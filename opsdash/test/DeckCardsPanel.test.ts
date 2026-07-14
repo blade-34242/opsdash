@@ -168,6 +168,20 @@ describe('DeckCardsPanel', () => {
     expect(wrapper.find('.deck-panel__header').exists()).toBe(false)
   })
 
+  it('shows a focused subset until the user expands the queue', async () => {
+    const queue = Array.from({ length: 4 }, (_, index) => ({
+      ...cards[0],
+      id: `queue-${index}`,
+      title: `Queue card ${index + 1}`,
+    }))
+    const wrapper = mountPanel({ cards: queue, maxVisible: 3 })
+
+    expect(wrapper.findAll('.deck-card')).toHaveLength(3)
+    await wrapper.get('.deck-panel__show-all').trigger('click')
+    expect(wrapper.findAll('.deck-card')).toHaveLength(4)
+    expect(wrapper.get('.deck-panel__show-all').text()).toContain('Show fewer')
+  })
+
   it('emits reorder event when filters are dragged in edit mode', async () => {
     const wrapper = mountPanel({
       filtersEnabled: true,

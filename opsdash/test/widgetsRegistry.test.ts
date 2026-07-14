@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { createDefaultTargetsConfig } from '../src/services/targets'
-import { mapWidgetToComponent, syncWidgetTabsForStrategy, widgetsRegistry } from '../src/services/widgetsRegistry'
+import { mapWidgetToComponent, normalizeWidgetLayout, syncWidgetTabsForStrategy, widgetsRegistry } from '../src/services/widgetsRegistry'
 
 describe('widgetsRegistry targets_v2', () => {
   it('overrides UI flags without mutating base config', () => {
@@ -556,6 +556,40 @@ describe('widgetsRegistry targets_v2', () => {
     expect(mapWidgetToComponent(defSummary, { ...baseCtx, isInitialLoading: true })?.loading).toBe(true)
     expect(mapWidgetToComponent(defDeck, { ...baseCtx, deckLoading: true })?.loading).toBe(false)
     expect(mapWidgetToComponent({ ...defSummary, type: 'unknown' }, baseCtx)).toBeNull()
+  })
+
+  it('keeps Deck card widgets fixed-height unless auto height is explicitly requested', () => {
+    const def: any = {
+      id: 'deck-cards-scrollable',
+      type: 'deck_cards',
+      layout: { width: 'full', height: 'm', order: 1 },
+      options: {},
+      version: 1,
+    }
+    const ctx: any = { deckCards: [], rangeLabel: 'This week' }
+
+    expect(mapWidgetToComponent(def, ctx)?.heightMode).toBe('fixed')
+    expect(mapWidgetToComponent({ ...def, options: { heightMode: 'auto' } }, ctx)?.heightMode).toBe('auto')
+  })
+
+  it('upgrades the legacy Deck Cards default to the Focus Queue', () => {
+    const legacyFilters = [
+      'open_all', 'open_mine', 'done_all', 'done_mine', 'archived_all', 'archived_mine',
+      'due_all', 'due_mine', 'due_today_all', 'due_today_mine',
+      'created_today_all', 'created_today_mine',
+    ]
+    const widgets = normalizeWidgetLayout([{
+      id: 'deck-cards',
+      type: 'deck_cards',
+      options: { filters: legacyFilters, defaultFilter: 'open_all', autoScroll: true },
+      layout: { width: 'full', height: 'm', order: 1 },
+      version: 1,
+    }], [])
+
+    expect(widgets[0].options?.defaultFilter).toBe('focus_all')
+    expect(widgets[0].options?.filters).toEqual(['focus_all', 'focus_mine', 'backlog_all', 'backlog_mine', 'all'])
+    expect(widgets[0].options?.maxVisible).toBe(8)
+    expect(widgets[0].options?.autoScroll).toBe(false)
   })
 
   it('deck_stats builds compact props from widget options', () => {

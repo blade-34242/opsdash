@@ -71,6 +71,7 @@ function buildOverviewDefaultOptions() {
     showWeekMiniChart: true,
     showEmptyLanes: true,
     maxLanes: 4,
+    showRangeInTitle: false,
   }
 }
 
@@ -96,6 +97,7 @@ function buildTimeSummaryProps(
     showOverview: boolean
     showLookback: boolean
     showDelta: boolean
+    showRangeInTitle?: boolean
   },
 ) {
   const baseConfig: TargetsConfig = ctx.targetsConfig ? JSON.parse(JSON.stringify(ctx.targetsConfig)) : createDefaultTargetsConfig()
@@ -178,6 +180,7 @@ function buildTimeSummaryProps(
     rangeEnd: ctx.to,
     offset: ctx.offset,
     showHeader: def.options?.showHeader !== false,
+    showRangeInTitle: opts.showRangeInTitle !== false,
     showToday,
     showActivity,
     showHistoryCoreMetrics,
@@ -363,9 +366,9 @@ export const timeSummaryOverviewEntry: RegistryEntry = {
   component: TimeSummaryCard,
   defaultLayout: { width: 'half', height: 'l', order: 9 },
   heightMode: 'auto',
-  label: 'Time Summary (Overview)',
+  label: "Today's time summary",
   category: 'Time',
-  baseTitle: `${baseTitle} (Overview)`,
+  baseTitle: "Today's time summary",
   configurable: true,
   defaultOptions: buildOverviewDefaultOptions(),
   controls: [
@@ -387,11 +390,12 @@ export const timeSummaryOverviewEntry: RegistryEntry = {
   ],
   buildProps: (def, ctx) =>
     buildTimeSummaryProps(def, ctx, {
-      title: `${baseTitle} (Overview)`,
+      title: "Today's time summary",
       includeHistory: false,
       showOverview: true,
       showLookback: false,
       showDelta: false,
+      showRangeInTitle: false,
     }),
 }
 
@@ -427,6 +431,7 @@ export const timeSummaryLookbackEntry: RegistryEntry = {
       showOverview: false,
       showLookback: true,
       showDelta: true,
+      showRangeInTitle: true,
     }),
 }
 

@@ -110,6 +110,27 @@ describe('deckWidgetMetrics', () => {
     expect(filtered.map((card) => card.id)).toEqual([1, 2, 3])
   })
 
+  it('separates dated active work from the undated backlog', () => {
+    const withBacklog = [...cards, {
+      id: 5,
+      title: 'Undated backlog card',
+      boardId: 1,
+      boardTitle: 'Work',
+      stackId: 101,
+      stackTitle: 'Doing',
+      status: 'active',
+      archived: false,
+      match: 'due',
+      labels: [],
+      assignees: [],
+      createdTs: now,
+    }]
+    const options = { uid: 'me', mineMode: 'assignee' as const }
+
+    expect(filterDeckCardsForMode('focus_all', withBacklog as any, options).map((card) => card.id)).toEqual([1, 2])
+    expect(filterDeckCardsForMode('backlog_all', withBacklog as any, options).map((card) => card.id)).toEqual([5])
+  })
+
   it('filters stat populations by scope and tags', () => {
     const filtered = filterDeckStatsPopulation(cards as any, {
       scope: 'mine',

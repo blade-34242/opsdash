@@ -357,18 +357,11 @@ export function parseFilters(input: any): string[] {
       .filter(Boolean)
   }
   return [
-    'open_all',
-    'open_mine',
-    'done_all',
-    'done_mine',
-    'archived_all',
-    'archived_mine',
-    'due_all',
-    'due_mine',
-    'due_today_all',
-    'due_today_mine',
-    'created_today_all',
-    'created_today_mine',
+    'focus_all',
+    'focus_mine',
+    'backlog_all',
+    'backlog_mine',
+    'all',
   ]
 }
 
@@ -376,6 +369,10 @@ export function prettyFilterLabel(key: string): string {
   switch (key) {
     case 'all': return 'All cards'
     case 'mine': return 'Mine (any status)'
+    case 'focus_all': return 'Focus'
+    case 'focus_mine': return 'My focus'
+    case 'backlog_all': return 'Backlog'
+    case 'backlog_mine': return 'My backlog'
     case 'open_all': return 'Open · All'
     case 'open_mine': return 'Open · Mine'
     case 'done_all': return 'Done · All'

@@ -236,6 +236,16 @@ export function filterDeckCardsForMode(mode: DeckFilterMode, cleaned: DeckCardSu
   const includeCompleted = opts.includeCompleted !== false
   if (mode === 'all') return cleaned
   if (mode === 'mine') return cleaned.filter((card) => mineMatch(card))
+  if (mode === 'focus_all' || mode === 'focus_mine') {
+    return cleaned.filter((card) =>
+      card.status === 'active' && card.dueTs != null && (mode === 'focus_all' || mineMatch(card)),
+    )
+  }
+  if (mode === 'backlog_all' || mode === 'backlog_mine') {
+    return cleaned.filter((card) =>
+      card.status === 'active' && card.dueTs == null && (mode === 'backlog_all' || mineMatch(card)),
+    )
+  }
   if (mode.startsWith('created_today')) {
     return cleaned.filter((card) => {
       const mineOk = mode.endsWith('_mine') ? mineMatch(card) : true

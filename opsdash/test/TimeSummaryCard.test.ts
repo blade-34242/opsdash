@@ -119,6 +119,20 @@ describe('TimeSummaryCard', () => {
     expect(wrapper.find('.time-summary-week').exists()).toBe(true)
   })
 
+  it('can use a concise overview title without repeating the selected range', () => {
+    const wrapper = mount(TimeSummaryCard, {
+      props: {
+        summary: baseSummary,
+        mode: 'active',
+        title: "Today's time summary",
+        showRangeInTitle: false,
+      },
+    })
+
+    expect(wrapper.text()).toContain("Today's time summary")
+    expect(wrapper.text()).not.toContain("Today's time summary · Week 10")
+  })
+
   it('fills the daily tab with average and median KPI cards in granular mode', async () => {
     const wrapper = mount(TimeSummaryCard, {
       props: {

@@ -154,6 +154,7 @@ final class PersistWidgetsSanitizer {
                 'autoTagSelection'=> $ID_LIST,
                 'intervalSeconds' => ['t' => 'number', 'min' => 3.0, 'max' => 10.0],
                 'minFilterCount'  => ['t' => 'number', 'min' => 0.0, 'max' => 999.0],
+                'maxVisible'      => ['t' => 'number', 'min' => 3.0, 'max' => 50.0],
                 'defaultFilter'   => $TEXT,
             ],
             'deck_stats' => $CORE + [

@@ -16,7 +16,7 @@ Opsdash is not affiliated with, endorsed by, sponsored by, or officially maintai
 - ✨ **Release notes in-app** – new versions can auto-open a `What's new` view with short highlights, preview images, a clickable version history, and remembered dismissal per app version.
 - 🗓️ **Activity & schedule** – event and active-day KPIs plus “Days off” trend heatmaps.
 - 🔐 **Runs inside Nextcloud** – same session, same permissions, CSRF-protected writes, no external API calls.
-- 🗂️ **Deck widgets** – a management-focused `Deck cards` widget plus a compact `Deck stats` widget, both with per-widget board/stack/tag filters and range-aware Deck summaries.
+- 🗂️ **Deck widgets** – `Deck cards` now starts as a focused, manually scrollable action queue with separate Backlog access and an explicit expand control; `Deck stats` provides compact range-aware summaries.
 - 📨 **Reporting & recap mail** – configure separate weekly/monthly recap modes, trigger a live test send from the UI, and render goal-type-aware mails inside the native Nextcloud email shell.
 - 📐 **Widget sizing controls** – per-widget width/height plus scale/dense options for layout tuning.
 

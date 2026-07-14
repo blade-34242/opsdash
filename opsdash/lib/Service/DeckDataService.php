@@ -104,6 +104,7 @@ class DeckDataService {
         }
 
         $cards = [];
+        $nowTs = (int)floor(microtime(true) * 1000);
         foreach ($boardMap as $boardId => $board) {
             foreach ($this->loadStacks($stackService, (int)$boardId, $includeArchived) as $stack) {
                 if (empty($stack['cards'])) {
@@ -125,7 +126,11 @@ class DeckDataService {
                         continue;
                     }
 
-                    $dueOk = isset($normalized['dueTs']) && $this->inRange($normalized['dueTs'], $fromTs, $toTs);
+                    $isActive = $normalized['status'] === 'active';
+                    $dueOk = isset($normalized['dueTs']) && (
+                        $this->inRange($normalized['dueTs'], $fromTs, $toTs)
+                        || ($isActive && $normalized['dueTs'] < $nowTs)
+                    );
                     $doneOk = $includeCompleted && isset($normalized['doneTs']) && $this->inRange($normalized['doneTs'], $fromTs, $toTs);
                     $isCompleted = $normalized['status'] !== 'active';
                     $completionMatch = $includeCompleted && ($doneOk || ($isCompleted && $dueOk));

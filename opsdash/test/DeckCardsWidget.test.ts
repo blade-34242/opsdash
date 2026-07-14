@@ -373,6 +373,8 @@ describe('DeckCardsWidget', () => {
       props: {
         cards,
         rangeLabel: 'This week',
+        filters: ['all'],
+        defaultFilter: 'all',
         compactList: true,
       },
       global: { stubs },

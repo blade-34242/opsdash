@@ -87,7 +87,7 @@
         :description="`No cards matched this ${rangeLabel.toLowerCase()}. Confirm Deck due dates or rerun seeding.`"
       />
       <ul v-else class="deck-card-list" ref="listEl">
-        <li v-for="(card, idx) in cards" :key="card.id" class="deck-card" :data-idx="idx">
+        <li v-for="(card, idx) in visibleCards" :key="card.id" class="deck-card" :data-idx="idx">
           <template v-if="props.compact">
             <div class="deck-card__row">
               <span class="deck-card__status" :class="card.status">
@@ -170,6 +170,14 @@
           </template>
         </li>
       </ul>
+      <button
+        v-if="hasHiddenCards"
+        type="button"
+        class="deck-panel__show-all"
+        @click="showAllCards = !showAllCards"
+      >
+        {{ showAllCards ? 'Show fewer cards' : `Show all ${cards.length} cards` }}
+      </button>
     </template>
   </div>
   </div>
@@ -214,6 +222,7 @@ const props = defineProps<{
   autoScroll?: boolean
   intervalSeconds?: number
   showCount?: boolean
+  maxVisible?: number
   compact?: boolean
   title?: string
   cardBg?: string | null
@@ -227,6 +236,13 @@ const emit = defineEmits<{
 }>()
 
 const activeFilter = computed(() => props.filter ?? 'all')
+const maxVisible = computed(() => {
+  const value = Number(props.maxVisible ?? 8)
+  return Number.isFinite(value) ? Math.max(3, Math.min(50, Math.trunc(value))) : 8
+})
+const showAllCards = ref(false)
+const visibleCards = computed(() => showAllCards.value ? props.cards : props.cards.slice(0, maxVisible.value))
+const hasHiddenCards = computed(() => props.cards.length > maxVisible.value)
 const titleLabel = computed(() => props.title || 'Deck cards')
 const cardStyle = computed(() => ({ background: props.cardBg || undefined }))
 const showHeader = computed(() => props.showHeader !== false)
@@ -283,10 +299,16 @@ watch(
   },
 )
 
+watch(showAllCards, () => {
+  resetAutoScroll()
+  startAutoScroll()
+})
+
 watch(
   () => props.cards,
   () => {
     activeIndex.value = 0
+    showAllCards.value = false
     resetAutoScroll()
     startAutoScroll()
   },
@@ -353,12 +375,12 @@ function resetAutoScroll() {
 }
 
 function startAutoScroll() {
-  if (!props.autoScroll || (props.cards || []).length <= 1) {
+  if (!props.autoScroll || !showAllCards.value || visibleCards.value.length <= 1) {
     return
   }
   resetAutoScroll()
   autoTimer.value = window.setInterval(() => {
-    const total = (props.cards || []).length
+    const total = visibleCards.value.length
     activeIndex.value = (activeIndex.value + 1) % total
     scrollToIndex(activeIndex.value)
   }, intervalMs.value)
@@ -524,6 +546,16 @@ function statusLabel(status: DeckCardSummary['status']) {
   min-height: 0;
   overflow: auto;
   padding-right: calc(4px * var(--widget-space, 1));
+}
+.deck-panel__show-all {
+  margin-top: calc(10px * var(--widget-space, 1));
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
 }
 .deck-filter-btn {
   border: 1px solid var(--line);

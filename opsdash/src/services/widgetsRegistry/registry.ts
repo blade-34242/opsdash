@@ -59,6 +59,30 @@ function migrateChartFilters(type: string, options: Record<string, any>): Record
   return next
 }
 
+const LEGACY_DECK_FILTERS = [
+  'open_all', 'open_mine', 'done_all', 'done_mine', 'archived_all', 'archived_mine',
+  'due_all', 'due_mine', 'due_today_all', 'due_today_mine',
+  'created_today_all', 'created_today_mine',
+]
+
+function migrateDeckFocusQueue(type: string, options: Record<string, any>): Record<string, any> {
+  if (type !== 'deck_cards') return options
+  const filters = Array.isArray(options.filters) ? options.filters : []
+  const isLegacyDefault =
+    options.defaultFilter === 'open_all' &&
+    filters.length === LEGACY_DECK_FILTERS.length &&
+    filters.every((value, index) => value === LEGACY_DECK_FILTERS[index])
+  if (!isLegacyDefault) return options
+
+  return {
+    ...options,
+    autoScroll: false,
+    maxVisible: 8,
+    filters: ['focus_all', 'focus_mine', 'backlog_all', 'backlog_mine', 'all'],
+    defaultFilter: 'focus_all',
+  }
+}
+
 export const widgetsRegistry: Record<string, RegistryEntry> = {
   time_summary_overview: timeSummaryOverviewEntry,
   time_summary_lookback: timeSummaryLookbackEntry,
@@ -111,6 +135,7 @@ export function normalizeWidgetLayout(raw: any, fallback: WidgetDefinition[], al
       delete options.textSize
     }
     options = migrateChartFilters(type, options)
+    options = migrateDeckFocusQueue(type, options)
     cleaned.push({
       id,
       type,

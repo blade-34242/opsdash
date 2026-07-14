@@ -474,6 +474,7 @@ class PersistSanitizerTest extends TestCase {
         'options' => [
           'intervalSeconds' => 1,
           'minFilterCount'  => 9999,
+          'maxVisible'      => 100,
           'defaultFilter'   => 'open_all',
           'scope'           => 'evil',
           'boardIds'        => ['board1', '', 'board2', 42],
@@ -488,6 +489,7 @@ class PersistSanitizerTest extends TestCase {
 
     $this->assertSame(3.0, $opts['intervalSeconds'], 'Below min clamped to 3');
     $this->assertSame(999.0, $opts['minFilterCount'], 'Above max clamped to 999');
+    $this->assertSame(50.0, $opts['maxVisible'], 'Above max clamped to 50');
     $this->assertSame('open_all', $opts['defaultFilter']);
     $this->assertArrayNotHasKey('scope', $opts, 'Unknown key for this type dropped');
     $this->assertSame(['board1', 'board2', '42'], $opts['boardIds'], 'Empty strings dropped, ints cast');
