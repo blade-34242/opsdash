@@ -44,7 +44,7 @@ Opsdash supports Nextcloud installations, but it is an independent third-party a
 
 | Branch | Nextcloud | App version |
 | --- | --- | --- |
-| `master` | 30-34 | 0.8.3 |
+| `master` | 31-34 | 0.8.3 |
 | `release/0.5.x` | 30-33 | Store-ready line |
 
 ## Install

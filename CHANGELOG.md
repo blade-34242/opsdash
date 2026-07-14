@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- Raised the supported Nextcloud minimum from `30` to `31`; app metadata and contributor-facing compatibility references now match the active Forgejo server-test matrix (`31-34`).
 
 
 ## 0.8.3 - 2026-07-11
