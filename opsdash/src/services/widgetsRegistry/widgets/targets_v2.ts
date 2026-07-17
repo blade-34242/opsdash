@@ -147,7 +147,6 @@ export const targetsV2Entry: RegistryEntry = {
       neverFinishedMode: def.options?.neverFinishedMode === true,
       showToday: def.options?.showToday !== false,
       title: buildTitle(baseTitle, def.options?.titlePrefix),
-      presetLabel: ctx.activePreset ?? undefined,
       cardBg: def.options?.cardBg,
     }
   },

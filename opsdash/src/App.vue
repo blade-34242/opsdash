@@ -83,7 +83,7 @@
           @update:offset="(v)=>{ offset=v as number; performLoad() }"
           @toggle-nav="toggleNav"
           @rerun-onboarding="openWizardFromSidebar"
-          @open-profiles="profilesOverlayOpen = true"
+          @open-profiles="openProfilesPanel"
           @open-release-notes="openCurrentReleaseNotes"
           @open-shortcuts="(el) => openShortcuts(el)"
         />
@@ -168,6 +168,13 @@
                     </div>
                   </div>
                   <div class="bar-flex1" />
+                  <button
+                    v-if="activePresetRef"
+                    class="active-profile-badge"
+                    type="button"
+                    title="Open profiles"
+                    @click="openProfilesPanel"
+                  >{{ activePresetRef }}</button>
                   <span v-if="isRefreshing" class="refresh-badge" role="status" aria-live="polite">Updating…</span>
                   <button class="btn-ghost" type="button" @click="toggleLayoutEditing">Edit layout</button>
                 </div>
@@ -211,6 +218,14 @@
                     </div>
                     <button type="button" class="tab tab--add" @click="addTab()">+ Tab</button>
                   </div>
+                  <div class="bar-flex1" />
+                  <button
+                    v-if="activePresetRef"
+                    class="active-profile-badge"
+                    type="button"
+                    title="Open profiles"
+                    @click="openProfilesPanel"
+                  >{{ activePresetRef }}</button>
                 </div>
 
                 <!-- Row 2: edit context + actions -->
@@ -590,6 +605,11 @@ function ensureSidebarVisible() {
   if (!navOpen.value) {
     toggleNav()
   }
+}
+
+function openProfilesPanel() {
+  ensureSidebarVisible()
+  profilesOverlayOpen.value = true
 }
 
 watch(

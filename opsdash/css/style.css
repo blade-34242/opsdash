@@ -2057,6 +2057,15 @@
   box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
 }
 #opsdash .bar-flex1{ flex:1 !important; min-width:0; }
+#opsdash .active-profile-badge{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--brand,#2563eb) 22%,transparent);
+  background:color-mix(in srgb,var(--brand,#2563eb) 12%,transparent);
+  color:var(--brand,#2563eb);font-size:10px;font-weight:600;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+#opsdash .active-profile-badge:hover{ background:color-mix(in srgb,var(--brand,#2563eb) 20%,transparent); }
 
 @media (max-width: 1100px){
   #opsdash .itb-row.itb-row--floating{

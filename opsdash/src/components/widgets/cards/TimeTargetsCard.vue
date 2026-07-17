@@ -4,7 +4,6 @@
     <div class="targets-header" v-if="showHeader">
       <div class="targets-header__title">
         <strong>{{ title || 'Targets' }}</strong>
-        <span v-if="presetLabel" class="targets-preset-pill">{{ presetLabel }}</span>
       </div>
       <span class="hint" v-if="total.targetHours > 0">{{ totalDisplay.percentText }}%</span>
     </div>
@@ -139,7 +138,6 @@ const props = withDefaults(defineProps<{
   neverFinishedMode?: boolean
   showHeader?: boolean
   title?: string
-  presetLabel?: string
   cardBg?: string | null
 }>(), {
   showDelta: true,
@@ -367,7 +365,6 @@ function colorMix(hex: string, factor = 0.5): string {
 }
 .targets-header{ display:flex; justify-content:space-between; align-items:center }
 .targets-header__title{ display:flex; align-items:center; gap:calc(6px * var(--widget-space, 1)) }
-.targets-preset-pill{ display:inline-flex; align-items:center; padding:calc(2px * var(--widget-space, 1)) calc(8px * var(--widget-space, 1)); border-radius:999px; font-size:calc(10px * var(--widget-scale, 1)); font-weight:600; background:color-mix(in srgb, var(--brand, #2563eb) 12%, transparent); color:var(--brand, #2563eb); border:1px solid color-mix(in srgb, var(--brand, #2563eb) 22%, transparent) }
 .targets-header strong{ font-size:var(--widget-title-size, calc(14px * var(--widget-scale, 1))) }
 .targets-main{ display:flex; flex-direction:column; gap:calc(4px * var(--widget-space, 1)); font-size:calc(13px * var(--widget-scale, 1)) }
 .targets-main .line{ display:flex; flex-wrap:wrap; gap:calc(6px * var(--widget-space, 1)) }
