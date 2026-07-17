@@ -127,4 +127,24 @@ class DeckControllerTest extends TestCase {
     $response = $this->controller->cards();
     $this->assertSame(Http::STATUS_REQUEST_URI_TOO_LONG, $response->getStatus());
   }
+
+  public function testCreateReturnsCreatedStatus(): void {
+    $user = $this->createMock(IUser::class);
+    $user->method('getUID')->willReturn('admin');
+    $this->userSession->method('getUser')->willReturn($user);
+    $this->request->method('getParam')->willReturnMap([
+      ['title', '', 'Prepare release'],
+      ['stackId', 0, 42],
+    ]);
+    $this->deckService
+      ->expects($this->once())
+      ->method('createCard')
+      ->with('admin', 'Prepare release', 42)
+      ->willReturn(['id' => 7, 'title' => 'Prepare release']);
+
+    $response = $this->controller->create();
+
+    $this->assertSame(201, $response->getStatus());
+    $this->assertSame(['ok' => true, 'card' => ['id' => 7, 'title' => 'Prepare release']], $response->getData());
+  }
 }

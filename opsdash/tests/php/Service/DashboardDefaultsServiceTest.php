@@ -17,16 +17,18 @@ final class DashboardDefaultsServiceTest extends TestCase {
         $this->assertContains('deck_stats', array_column($widgets, 'type'));
     }
 
-    public function testProTabsIncludeDeckStatsInOverviewTab(): void {
+    public function testProTabsUseWorkspaceForDeckAndCalendarStats(): void {
         $service = new DashboardDefaultsService();
 
         $tabs = $service->createDefaultTabs('pro');
-        $overview = array_values(array_filter(
+        $workspace = array_values(array_filter(
             $tabs['tabs'] ?? [],
-            static fn (array $tab): bool => ($tab['label'] ?? '') === 'Overview',
+            static fn (array $tab): bool => ($tab['label'] ?? '') === 'Workspace',
         ));
 
-        $this->assertCount(1, $overview);
-        $this->assertContains('deck_stats', array_column($overview[0]['widgets'] ?? [], 'type'));
+        $this->assertCount(1, $workspace);
+        $types = array_column($workspace[0]['widgets'] ?? [], 'type');
+        $this->assertContains('deck_stats', $types);
+        $this->assertContains('calendar_stats', $types);
     }
 }

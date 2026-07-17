@@ -131,6 +131,7 @@ const VARIANTS: Record<string, string> = {
   chart_pie:             'pie',
   chart_stacked:         'stacked',
   calendar_table:        'heatmap',
+  calendar_stats:        'deckstats',
   deck_cards:            'deck',
   deck_stats:            'deckstats',
 }

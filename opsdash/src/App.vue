@@ -511,9 +511,7 @@ import { buildTargetsSummary, normalizeTargetsConfig, createEmptyTargetsSummary,
 import { normalizeReportingConfig, normalizeDeckSettings, type DeckFilterMode } from './services/reporting'
 import { ONBOARDING_VERSION, getStrategyDefinitions } from './services/onboarding'
 import {
-  createDashboardPreset,
   createDefaultWidgetTabs,
-  filterWidgetDefinitionsForStrategy,
   filterWidgetTabsForStrategy,
   getRestrictedWidgetTypesForStrategy,
   normalizeWidgetTabs,
@@ -670,7 +668,6 @@ const {
   widgetsRegistry,
   createDefaultTabs: () => filterWidgetTabsForStrategy(createDefaultWidgetTabs(dashboardMode.value, widgetStrategy.value), widgetStrategy.value),
   normalizeWidgetTabs,
-  createDashboardPreset: (mode) => filterWidgetDefinitionsForStrategy(createDashboardPreset(mode, widgetStrategy.value), widgetStrategy.value),
   dashboardMode,
   deckEnabled: deckEnabledForWidgets,
   hasInitialLoad,

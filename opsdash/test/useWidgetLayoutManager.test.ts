@@ -20,7 +20,6 @@ describe('useWidgetLayoutManager', () => {
         defaultTabId: 'tab-1',
       }),
       normalizeWidgetTabs: (input, fallback) => (input ? input : fallback),
-      createDashboardPreset: () => [],
       dashboardMode: ref('standard'),
       deckEnabled: ref(true),
       hasInitialLoad: ref(true),
@@ -45,7 +44,6 @@ describe('useWidgetLayoutManager', () => {
         defaultTabId: 'tab-1',
       }),
       normalizeWidgetTabs: (input, fallback) => (input ? input : fallback),
-      createDashboardPreset: () => [],
       dashboardMode: ref('standard'),
       deckEnabled: ref(true),
       hasInitialLoad,
@@ -71,6 +69,41 @@ describe('useWidgetLayoutManager', () => {
     manager.renameTab(manager.layoutTabs.value[1].id, 'Weekly')
     expect(manager.layoutTabs.value[1].label).toBe('Weekly')
     expect(manager.layoutTabs.value[0].label).toBe('Overview')
+  })
+
+  it('applies the complete dashboard template, including Workspace widgets', () => {
+    const dashboardMode = ref<'quick' | 'standard' | 'pro'>('standard')
+    const manager = useWidgetLayoutManager({
+      storageKey: 'opsdash.widgets.test',
+      widgetsRegistry: registry,
+      createDefaultTabs: () => dashboardMode.value === 'pro'
+        ? {
+            tabs: [
+              { id: 'tab-1', label: 'Overview', widgets: [
+                { id: 'legacy-deck-stats', type: 'deck_stats', options: {}, layout: { width: 'half', height: 'm', order: 30 }, version: 1 },
+              ] },
+              { id: 'workspace', label: 'Workspace', widgets: [
+                { id: 'deck-cards', type: 'deck_cards', options: {}, layout: { width: 'half', height: 'xl', order: 89 }, version: 1 },
+                { id: 'calendar-stats', type: 'calendar_stats', options: {}, layout: { width: 'quarter', height: 'xl', order: 99 }, version: 1 },
+              ] },
+            ],
+            defaultTabId: 'tab-1',
+          }
+        : { tabs: [{ id: 'tab-1', label: 'Overview', widgets: [] }], defaultTabId: 'tab-1' },
+      normalizeWidgetTabs: (input, fallback) => (input ? input : fallback),
+      dashboardMode,
+      deckEnabled: ref(true),
+      hasInitialLoad: ref(true),
+      queueSaveRef: ref(vi.fn()),
+    })
+
+    manager.applyDashboardPreset('pro')
+
+    expect(manager.layoutTabs.value.map((tab) => tab.label)).toEqual(['Overview', 'Workspace'])
+    expect(manager.layoutTabs.value[0].widgets).toEqual([])
+    expect(manager.layoutTabs.value[1].widgets.map((widget) => widget.type)).toEqual(['deck_cards', 'calendar_stats'])
+    expect(manager.defaultTabId.value).toBe('tab-1')
+    expect(manager.activeTabId.value).toBe('tab-1')
   })
 
   it('switches active widgets per tab', () => {
@@ -168,7 +201,6 @@ describe('useWidgetLayoutManager', () => {
         defaultTabId: 'tab-1',
       }),
       normalizeWidgetTabs: (input, fallback) => (input ? input : fallback),
-      createDashboardPreset: () => [],
       dashboardMode: ref('standard'),
       deckEnabled,
       hasInitialLoad: ref(true),

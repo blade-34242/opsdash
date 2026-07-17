@@ -106,7 +106,8 @@ final class DeckController extends Controller {
         }
         try {
             $card = $this->deckDataService->createCard($uid, $title, $stackId);
-            return new DataResponse(['ok' => true, 'card' => $card], Http::STATUS_CREATED);
+            // STATUS_CREATED is not available in every supported OCP Http version.
+            return new DataResponse(['ok' => true, 'card' => $card], 201);
         } catch (\Throwable $e) {
             $this->logger->error('Deck card create failed: ' . $e->getMessage(), ['app' => 'opsdash']);
             return new DataResponse(['message' => 'deck_card_create_failed'], Http::STATUS_SERVICE_UNAVAILABLE);

@@ -15,6 +15,7 @@ final class PersistWidgetsSanitizer {
         'activity_schedule' => true,
         'balance_index' => true,
         'calendar_table' => true,
+        'calendar_stats' => true,
         'category_mix_trend' => true,
         'chart_dow' => true,
         'chart_hod' => true,
@@ -77,6 +78,9 @@ final class PersistWidgetsSanitizer {
             'calendar_table' => $CORE + [
                 'calendarFilter' => $ID_LIST,
                 'compact'        => $BOOL,
+            ],
+            'calendar_stats' => $CORE + [
+                'metrics' => $ID_LIST,
             ],
             'category_mix_trend' => $CORE + [
                 'density'          => ['t' => 'select', 'v' => ['normal', 'dense']],

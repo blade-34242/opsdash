@@ -10,6 +10,7 @@ import { chartPerDayEntry } from './widgets/chart_per_day'
 import { chartPieEntry } from './widgets/chart_pie'
 import { chartStackedEntry } from './widgets/chart_stacked'
 import { calendarTableEntry } from './widgets/calendar_table'
+import { calendarStatsEntry } from './widgets/calendar_stats'
 import { dayOffTrendEntry } from './widgets/dayoff_trend'
 import { deckCardsEntry } from './widgets/deck_cards'
 import { deckStatsEntry } from './widgets/deck_stats'
@@ -94,6 +95,7 @@ export const widgetsRegistry: Record<string, RegistryEntry> = {
   chart_dow: chartDowEntry,
   chart_hod: chartHodEntry,
   calendar_table: calendarTableEntry,
+  calendar_stats: calendarStatsEntry,
   deck_cards: deckCardsEntry,
   deck_stats: deckStatsEntry,
 }

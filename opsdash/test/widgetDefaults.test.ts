@@ -25,12 +25,19 @@ describe('widget defaults', () => {
     expect(tabs.tabs[0].widgets.some((widget) => widget.type === 'deck_stats')).toBe(true)
   })
 
-  it('includes deck stats in the advanced Workspace tab', () => {
+  it('uses the supplied Pro Workspace layout for Deck and Calendar stats', () => {
     const tabs = createDefaultWidgetTabs('pro')
+    const overviewTab = tabs.tabs.find((tab) => tab.label === 'Overview')
     const workspaceTab = tabs.tabs.find((tab) => tab.label === 'Workspace')
 
     expect(workspaceTab).toBeTruthy()
-    expect(workspaceTab?.widgets.some((widget) => widget.type === 'deck_stats')).toBe(true)
+    expect(overviewTab?.widgets.some((widget) => widget.type === 'deck_stats')).toBe(false)
+    expect(workspaceTab?.widgets.map((widget) => widget.type)).toEqual([
+      'deck_stats',
+      'deck_cards',
+      'calendar_stats',
+    ])
+    expect(workspaceTab?.widgets[2].layout).toEqual({ width: 'quarter', height: 'xl', order: 99 })
   })
 
   it('aligns strategy-owned widget options when creating defaults for calendar goals', () => {

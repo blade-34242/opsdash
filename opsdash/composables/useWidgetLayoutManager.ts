@@ -14,7 +14,6 @@ export function useWidgetLayoutManager(options: {
   widgetsRegistry: Record<string, WidgetRegistryEntry>
   createDefaultTabs: () => WidgetTabsState
   normalizeWidgetTabs: (input: any, fallback: WidgetTabsState) => WidgetTabsState
-  createDashboardPreset: (mode: 'quick' | 'standard' | 'pro') => WidgetDefinition[]
   dashboardMode: Ref<'quick' | 'standard' | 'pro'>
   deckEnabled: Ref<boolean>
   hasInitialLoad: Ref<boolean>
@@ -25,7 +24,6 @@ export function useWidgetLayoutManager(options: {
     widgetsRegistry,
     createDefaultTabs,
     normalizeWidgetTabs,
-    createDashboardPreset,
     dashboardMode,
     deckEnabled,
     hasInitialLoad,
@@ -99,11 +97,10 @@ export function useWidgetLayoutManager(options: {
 
   function applyDashboardPreset(mode: 'quick' | 'standard' | 'pro') {
     dashboardMode.value = mode
-    const tabId = activeTab.value?.id || 'tab-1'
-    const nextTabs = layoutTabs.value.map((tab) =>
-      tab.id === tabId ? { ...tab, widgets: createDashboardPreset(mode) } : tab,
-    )
-    layoutTabs.value = nextTabs
+    const next = createDefaultTabs()
+    layoutTabs.value = removeProOverviewDeckStats(next.tabs, mode)
+    defaultTabId.value = next.defaultTabId
+    activeTabId.value = next.defaultTabId
     widgetsDirty.value = true
     persistWidgets()
   }
@@ -332,11 +329,21 @@ export function useWidgetLayoutManager(options: {
   }
 
   function resetWidgets() {
-    const tabId = activeTab.value?.id
-    if (!tabId) return
-    updateTabWidgets(tabId, () => createDashboardPreset(dashboardMode.value))
+    const next = createDefaultTabs()
+    layoutTabs.value = removeProOverviewDeckStats(next.tabs, dashboardMode.value)
+    defaultTabId.value = next.defaultTabId
+    activeTabId.value = next.defaultTabId
     widgetsDirty.value = true
     persistWidgets()
+  }
+
+  function removeProOverviewDeckStats(tabs: WidgetTab[], mode: 'quick' | 'standard' | 'pro'): WidgetTab[] {
+    if (mode !== 'pro') return tabs
+    return tabs.map((tab) =>
+      tab.id === 'tab-1'
+        ? { ...tab, widgets: tab.widgets.filter((widget) => widget.type !== 'deck_stats') }
+        : tab,
+    )
   }
 
   function addTab(label?: string) {
