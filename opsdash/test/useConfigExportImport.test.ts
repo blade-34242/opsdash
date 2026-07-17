@@ -107,14 +107,14 @@ describe('useConfigExportImport', () => {
     const legacyPayload = {
       cals: ['personal'],
       widgets: [
-        { type: 'note_editor', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
+        { type: 'deck_cards', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
       ],
     }
 
     await ctx.applyConfigSource(legacyPayload)
 
     expect(ctx.widgetTabs.value.tabs).toHaveLength(1)
-    expect(ctx.widgetTabs.value.tabs[0].widgets[0].type).toBe('note_editor')
+    expect(ctx.widgetTabs.value.tabs[0].widgets[0].type).toBe('deck_cards')
   })
 
   it('migrates chart filters when importing widget tabs', async () => {

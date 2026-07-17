@@ -36,16 +36,8 @@ interface WidgetRenderContextDeps {
   deckSettings: ValueRef<any>
   deckUrl: ValueRef<string>
   deckCards: ValueRef<any[]>
+  refreshDeck: (force?: boolean) => Promise<void>
   uid: ValueRef<string>
-  notesPrev: ValueRef<string>
-  notesCurrDraft: ValueRef<string>
-  notesHistory: ValueRef<Array<{ id: string; label: string; title: string; content: string }>>
-  notesLabelPrev: ValueRef<string>
-  notesLabelCurr: ValueRef<string>
-  notesLabelPrevTitle: ValueRef<string>
-  notesLabelCurrTitle: ValueRef<string>
-  isSavingNote: ValueRef<boolean>
-  saveNotes: () => Promise<void>
   isLoading: ValueRef<boolean>
   isInitialLoading: ValueRef<boolean>
   isRefreshing: ValueRef<boolean>
@@ -119,20 +111,9 @@ export function useWidgetRenderContext(deps: WidgetRenderContextDeps): {
     deckShowBoardBadges: deps.deckSettings.value?.ticker?.showBoardBadges !== false,
     deckUrl: deps.deckUrl.value,
     deckCards: deps.deckCards.value,
+    onDeckCardsChanged: () => deps.refreshDeck(true),
     deckBoards: buildDeckBoards(deps.deckCards.value || []),
     uid: deps.uid.value,
-    notesPrev: deps.notesPrev.value,
-    notesCurr: deps.notesCurrDraft.value,
-    notesHistory: deps.notesHistory.value,
-    notesLabelPrev: deps.notesLabelPrev.value,
-    notesLabelCurr: deps.notesLabelCurr.value,
-    notesLabelPrevTitle: deps.notesLabelPrevTitle.value,
-    notesLabelCurrTitle: deps.notesLabelCurrTitle.value,
-    isSavingNote: deps.isSavingNote.value,
-    onSaveNote: () => deps.saveNotes(),
-    onUpdateNotes: (val: string) => {
-      deps.notesCurrDraft.value = val
-    },
     isLoading: deps.isLoading.value,
     isInitialLoading: deps.isInitialLoading.value,
     isRefreshing: deps.isRefreshing.value,

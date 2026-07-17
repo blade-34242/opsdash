@@ -20,6 +20,8 @@
     :card-bg="props.cardBg"
     :show-header="props.showHeader !== false"
     :editable="props.editable === true"
+    :on-cards-changed="props.onDeckCardsChanged"
+    :boards="boards"
     :orderable-values="filterOrder"
     @refresh="$emit('refresh')"
     @update:filter="onFilter"
@@ -28,9 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import DeckCardsPanel from '../../panels/DeckCardsPanel.vue'
-import type { DeckCardSummary } from '../../../services/deck'
+import { fetchDeckBoardsMeta, type DeckCardSummary, type DeckStackMeta } from '../../../services/deck'
 import type { DeckFilterMode, DeckMineMode } from '../../../services/reporting'
 import {
   buildDeckTagControlOptions,
@@ -76,6 +78,7 @@ const props = withDefaults(defineProps<{
   compactList?: boolean
   editable?: boolean
   onUpdateFilters?: (filters: DeckFilterMode[]) => void
+  onDeckCardsChanged?: () => void | Promise<void>
 }>(), {
   autoTagsEnabled: true,
 })
@@ -91,6 +94,17 @@ const defaultFilters: DeckFilterMode[] = [
   'backlog_mine',
   'all',
 ]
+
+const boards = ref<Array<{ id: number; title: string }>>([])
+const stacksByBoard = ref<Record<number, DeckStackMeta[]>>({})
+
+onMounted(async () => {
+  try {
+    boards.value = await fetchDeckBoardsMeta()
+  } catch {
+    boards.value = []
+  }
+})
 
 const baseCards = computed(() => {
   return filterDeckBaseCards(props.cards || [], {

@@ -65,16 +65,7 @@ export interface WidgetRenderContext {
   deckBoards?: Array<{ id: number; title: string; color?: string }>
   uid?: string
   deckUrl?: string
-  notesPrev?: string
-  notesCurr?: string
-  notesHistory?: Array<{ id: string; label: string; title: string; content: string }>
-  notesLabelPrev?: string
-  notesLabelCurr?: string
-  notesLabelPrevTitle?: string
-  notesLabelCurrTitle?: string
-  isSavingNote?: boolean
-  onSaveNote?: () => void
-  onUpdateNotes?: (val: string) => void
+  onDeckCardsChanged?: () => void | Promise<void>
   isLoading?: boolean
   isInitialLoading?: boolean
   isRefreshing?: boolean

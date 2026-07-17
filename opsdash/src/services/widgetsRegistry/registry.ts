@@ -13,8 +13,6 @@ import { calendarTableEntry } from './widgets/calendar_table'
 import { dayOffTrendEntry } from './widgets/dayoff_trend'
 import { deckCardsEntry } from './widgets/deck_cards'
 import { deckStatsEntry } from './widgets/deck_stats'
-import { noteEditorEntry } from './widgets/note_editor'
-import { noteSnippetEntry } from './widgets/note_snippet'
 import { targetsV2Entry } from './widgets/targets_v2'
 import { timeSummaryLookbackEntry, timeSummaryOverviewEntry } from './widgets/time_summary_v2'
 import { createDefaultWidgetTabs as createDefaultWidgetTabsFromDefaults, getWidgetPreset } from '../widgetDefaults'
@@ -98,8 +96,6 @@ export const widgetsRegistry: Record<string, RegistryEntry> = {
   calendar_table: calendarTableEntry,
   deck_cards: deckCardsEntry,
   deck_stats: deckStatsEntry,
-  note_snippet: noteSnippetEntry,
-  note_editor: noteEditorEntry,
 }
 
 /**

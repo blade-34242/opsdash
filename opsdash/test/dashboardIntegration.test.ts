@@ -155,7 +155,6 @@ describe('Dashboard integration fixtures', () => {
     expect(harness.getJson).toHaveBeenCalledTimes(1)
     expect(harness.postJson).toHaveBeenCalledTimes(1)
     expect(harness.scheduleDraw).toHaveBeenCalledTimes(1)
-    expect(harness.fetchNotes).toHaveBeenCalledTimes(1)
 
     expect(harness.dashboard.uid.value).toBe('admin')
     expect(harness.dashboard.targetsConfig.value.allDayHours).toBe(15)

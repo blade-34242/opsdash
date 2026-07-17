@@ -174,20 +174,6 @@ final class DashboardDefaultsService {
                     'label' => 'Workspace',
                     'widgets' => [
                         [
-                            'id' => 'widget-note_editor-1768297159393',
-                            'type' => 'note_editor',
-                            'options' => [],
-                            'layout' => ['width' => 'half', 'height' => 'l', 'order' => 69],
-                            'version' => 1,
-                        ],
-                        [
-                            'id' => 'widget-note_snippet-1768297161989',
-                            'type' => 'note_snippet',
-                            'options' => [],
-                            'layout' => ['width' => 'quarter', 'height' => 'm', 'order' => 79],
-                            'version' => 1,
-                        ],
-                        [
                             'id' => 'widget-deck_cards-1768297173746',
                             'type' => 'deck_cards',
                             'options' => [

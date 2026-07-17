@@ -393,7 +393,7 @@ describe('useDashboardPersistence', () => {
         tabs: [
           { id: 'tab-empty', label: 'Empty', widgets: [] },
           { id: 'tab-full', label: 'Full', widgets: [
-            { type: 'note_editor', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
+            { type: 'deck_cards', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
           ] },
         ],
         defaultTabId: 'tab-empty',
@@ -411,7 +411,7 @@ describe('useDashboardPersistence', () => {
     expect(widgetTabs.value.tabs).toHaveLength(2)
     expect(widgetTabs.value.defaultTabId).toBe('tab-empty')
     expect(widgetTabs.value.tabs[0].widgets).toEqual([])
-    expect(widgetTabs.value.tabs[1].widgets[0].type).toBe('note_editor')
+    expect(widgetTabs.value.tabs[1].widgets[0].type).toBe('deck_cards')
   })
 
   it('migrates chart filters from persisted widget tabs', async () => {

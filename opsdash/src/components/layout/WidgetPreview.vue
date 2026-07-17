@@ -133,8 +133,6 @@ const VARIANTS: Record<string, string> = {
   calendar_table:        'heatmap',
   deck_cards:            'deck',
   deck_stats:            'deckstats',
-  note_snippet:          'note',
-  note_editor:           'note',
 }
 
 const variant = VARIANTS[props.type] ?? 'generic'

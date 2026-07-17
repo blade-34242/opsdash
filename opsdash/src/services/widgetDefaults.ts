@@ -468,13 +468,6 @@ const PRO_TABS: WidgetTabsState = {
       label: 'Workspace',
       widgets: [
         {
-          id: 'widget-note_editor-1768297159393',
-          type: 'note_editor',
-          options: {},
-          layout: { width: 'half', height: 'l', order: 69 },
-          version: 1,
-        },
-        {
           id: 'widget-deck_stats-1768297160410',
           type: 'deck_stats',
           options: {
@@ -492,13 +485,6 @@ const PRO_TABS: WidgetTabsState = {
             ],
           },
           layout: { width: 'quarter', height: 'xl', order: 78 },
-          version: 1,
-        },
-        {
-          id: 'widget-note_snippet-1768297161989',
-          type: 'note_snippet',
-          options: {},
-          layout: { width: 'quarter', height: 'm', order: 79 },
           version: 1,
         },
         {

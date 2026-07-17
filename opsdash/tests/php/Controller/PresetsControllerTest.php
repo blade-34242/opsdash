@@ -171,8 +171,8 @@ class PresetsControllerTest extends TestCase {
             'label' => 'Overview',
             'widgets' => [
               [
-                'id' => 'widget-note',
-                'type' => 'note_editor',
+                'id' => 'widget-deck',
+                'type' => 'deck_cards',
                 'layout' => ['width' => 'half', 'height' => 'm', 'order' => 1],
                 'options' => [],
               ],
@@ -201,7 +201,7 @@ class PresetsControllerTest extends TestCase {
     $this->assertSame('full_granular', $result['payload']['onboarding']['strategy']);
     $this->assertSame('pro', $result['payload']['onboarding']['dashboardMode']);
     $this->assertSame('tab-1', $result['payload']['widgets']['defaultTabId']);
-    $this->assertSame('note_editor', $result['payload']['widgets']['tabs'][0]['widgets'][0]['type']);
+    $this->assertSame('deck_cards', $result['payload']['widgets']['tabs'][0]['widgets'][0]['type']);
   }
 
   public function testTrimPresetsKeepsMostRecent(): void {

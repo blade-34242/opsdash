@@ -22,13 +22,6 @@ export const KEYBOARD_SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    id: 'notes',
-    title: 'Notes',
-    items: [
-      { id: 'notes-save', label: 'Save note', combo: ['Ctrl / ⌘', 'S'], description: 'Persist the current note draft' },
-    ],
-  },
-  {
     id: 'targets',
     title: 'Targets',
     items: [

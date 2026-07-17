@@ -271,13 +271,13 @@ class PersistSanitizerTest extends TestCase {
   public function testSanitizeWidgets(): void {
     $result = $this->sanitizer->sanitizeWidgets([
       ['type' => '', 'id' => 'bad'],
-      ['type' => 'note_editor', 'layout' => ['width' => 'giant', 'height' => 'x', 'order' => 'oops'], 'options' => 'not-array'],
+      ['type' => 'text_block', 'layout' => ['width' => 'giant', 'height' => 'x', 'order' => 'oops'], 'options' => 'not-array'],
       ['type' => 'deck_cards', 'layout' => ['width' => 'half', 'height' => 'l', 'order' => 7]],
       ['type' => 'category_mix_trend', 'layout' => ['width' => 'quarter', 'height' => 'xl', 'order' => 12]],
     ]);
 
     $this->assertCount(3, $result, 'Invalid widget types should be skipped');
-    $this->assertSame('note_editor', $result[0]['type']);
+    $this->assertSame('text_block', $result[0]['type']);
     $this->assertSame('full', $result[0]['layout']['width']);
     $this->assertSame('m', $result[0]['layout']['height']);
     $this->assertSame(0.0, $result[0]['layout']['order']);
@@ -298,7 +298,7 @@ class PersistSanitizerTest extends TestCase {
   public function testSanitizeWidgetsCapsTabsAndTotals(): void {
     $widgets = [];
     for ($i = 0; $i < 120; $i++) {
-      $widgets[] = ['type' => 'note_editor', 'id' => 'widget-' . $i];
+      $widgets[] = ['type' => 'text_block', 'id' => 'widget-' . $i];
     }
     $tabs = [];
     for ($t = 0; $t < 12; $t++) {
@@ -325,11 +325,11 @@ class PersistSanitizerTest extends TestCase {
       ['type' => 'unknown_widget', 'id' => 'w1'],
       ['type' => '../../evil', 'id' => 'w2'],
       ['type' => '<script>alert(1)</script>', 'id' => 'w3'],
-      ['type' => 'note_editor', 'id' => 'w4'],
+      ['type' => 'text_block', 'id' => 'w4'],
     ]);
 
     $this->assertCount(1, $result, 'Only known widget types should be kept');
-    $this->assertSame('note_editor', $result[0]['type']);
+    $this->assertSame('text_block', $result[0]['type']);
   }
 
   public function testSanitizeWidgetOptionsPerSchema(): void {
@@ -426,15 +426,6 @@ class PersistSanitizerTest extends TestCase {
   public function testSanitizeWidgetOptionsDropsXssPayloads(): void {
     $result = $this->sanitizer->sanitizeWidgets([
       [
-        'type' => 'note_editor',
-        'id' => 'w1',
-        'options' => [
-          'prevLabel' => '<script>alert(1)</script>',
-          'currLabel' => str_repeat('a', 300),
-          'injected'  => '<img src=x onerror=alert(1)>',
-        ],
-      ],
-      [
         'type' => 'balance_index',
         'id' => 'w2',
         'options' => [
@@ -446,17 +437,9 @@ class PersistSanitizerTest extends TestCase {
       ],
     ]);
 
-    $this->assertCount(2, $result);
+    $this->assertCount(1, $result);
 
-    $noteOpts = $result[0]['options'];
-    // prevLabel stored as raw text — XSS tags passed through as text (Vue escapes at render).
-    $this->assertStringContainsString('script', $noteOpts['prevLabel']);
-    // currLabel truncated to MAX_TEXT_LEN (128).
-    $this->assertSame(128, mb_strlen($noteOpts['currLabel']));
-    // Unknown keys dropped.
-    $this->assertArrayNotHasKey('injected', $noteOpts);
-
-    $balanceOpts = $result[1]['options'];
+    $balanceOpts = $result[0]['options'];
     // Non-hex color rejected.
     $this->assertArrayNotHasKey('trendColor', $balanceOpts);
     // Numbers clamped to [0, 1].

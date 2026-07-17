@@ -534,7 +534,6 @@ function notifyError(msg: string){
 }
 
 import { ref, watch, computed, onBeforeUnmount } from 'vue'
-import { useNotes } from '../composables/useNotes'
 import { useDashboard, type OnboardingState } from '../composables/useDashboard'
 import { useDashboardPersistence } from '../composables/useDashboardPersistence'
 import { useDashboardSelection } from '../composables/useDashboardSelection'
@@ -553,7 +552,6 @@ import { useVersionOverlay } from '../composables/useVersionOverlay'
 import { useRangeToolbar } from '../composables/useRangeToolbar'
 import { useConfigExportImport } from '../composables/useConfigExportImport'
 import { useDetailsToggle } from '../composables/useDetailsToggle'
-import { useNotesLabels } from '../composables/useNotesLabels'
 import { useSidebarState } from '../composables/useSidebarState'
 import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts'
 import { useOnboardingActions, type WizardStepSavePayload } from '../composables/useOnboardingActions'
@@ -631,17 +629,6 @@ const { scheduleDraw } = useChartScheduler()
 const { route, getJson, postJson, deleteJson, root } = useOcHttp()
 
 const { calendarDayLink } = useCalendarLinks({ root })
-
-const notes = useNotes({
-  range,
-  offset,
-  route: (name) => route(name),
-  getJson,
-  postJson,
-  notifySuccess,
-  notifyError,
-})
-const { notesPrev, notesCurrDraft, notesHistory, isSavingNote, fetchNotes, saveNotes } = notes
 
 // Widget layout storage must be declared before downstream composables consume it
 const hasInitialLoad = ref(false)
@@ -906,7 +893,6 @@ const {
   postJson,
   notifyError,
   scheduleDraw,
-  fetchNotes,
   isDebug: isDbg,
   includeLookback: () => shouldIncludeLookback(),
   widgetTabs: widgetTabsRef,
@@ -1276,7 +1262,6 @@ const {
   goPrevious,
   goNext,
   toggleRange: toggleRangeCollapsed,
-  saveNotes: () => saveNotes(),
   openConfigPanel: () => ensureSidebarVisible(),
   toggleEditLayout: () => {
     isLayoutEditing.value = !isLayoutEditing.value
@@ -1435,17 +1420,7 @@ const trendLookbackWeeks = computed(() =>
   Math.max(1, Math.min(6, balanceConfigFull.value.trend?.lookbackWeeks ?? 1)),
 )
 
-const balanceNote = computed(() => {
-  if (!balanceConfigFull.value.ui.showNotes) {
-    return ''
-  }
-  const current = (notesCurrDraft.value ?? '').trim()
-  if (current) {
-    return current
-  }
-  const previousNote = (notesPrev.value ?? '').trim()
-  return previousNote
-})
+const balanceNote = computed(() => '')
 
 const { categoryLabelById, categoryColorMap, calendarCategoryMap, calendarGroups } = useCategories({
   calendars,
@@ -1561,13 +1536,6 @@ const { timeSummary, activitySummary, activityDayOffTrend } = useSummaries({
 const { detailsIndex, toggle: toggleDetails } = useDetailsToggle()
 function isDbg(){ return false }
 
-const {
-  notesLabelPrev,
-  notesLabelCurr,
-  notesLabelPrevTitle,
-  notesLabelCurrTitle,
-} = useNotesLabels(range)
-
 const { widgetContext } = useWidgetRenderContext({
   timeSummary,
   activeDayMode,
@@ -1599,16 +1567,8 @@ const { widgetContext } = useWidgetRenderContext({
   deckSettings,
   deckUrl,
   deckCards,
+  refreshDeck,
   uid,
-  notesPrev,
-  notesCurrDraft,
-  notesHistory,
-  notesLabelPrev,
-  notesLabelCurr,
-  notesLabelPrevTitle,
-  notesLabelCurrTitle,
-  isSavingNote,
-  saveNotes,
   isLoading: isInitialLoading,
   isInitialLoading,
   isRefreshing,

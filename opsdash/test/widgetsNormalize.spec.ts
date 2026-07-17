@@ -6,17 +6,17 @@ describe('normalizeWidgetTabs', () => {
   it('cleans and clamps incoming widget payloads', () => {
     const fallback = createDefaultWidgetTabs('standard')
     const result = normalizeWidgetTabs([
-      { type: 'note_editor', layout: { width: 'giant', height: 'x', order: 'oops' }, options: 'not-an-object' },
+      { type: 'deck_cards', layout: { width: 'giant', height: 'x', order: 'oops' }, options: 'not-an-object' },
       { type: '', layout: {} },
     ], fallback)
 
     expect(result.tabs).toHaveLength(1)
     const widget = result.tabs[0].widgets[0]
-    expect(widget.type).toBe('note_editor')
+    expect(widget.type).toBe('deck_cards')
     expect(widget.layout.width).toBe('full')
     expect(widget.layout.height).toBe('m')
     expect(widget.layout.order).toBe(0)
-    expect(widget.options).toEqual({})
+    expect(widget.options).toMatchObject({ defaultFilter: 'focus_all' })
     expect(widget.id).toBeTruthy()
   })
 
@@ -28,7 +28,7 @@ describe('normalizeWidgetTabs', () => {
           id: 'tab-a',
           label: 'Alpha',
           widgets: [
-            { type: 'note_editor', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
+            { type: 'deck_cards', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
           ],
         },
       ],
@@ -38,7 +38,7 @@ describe('normalizeWidgetTabs', () => {
     expect(result.defaultTabId).toBe('tab-a')
     expect(result.tabs).toHaveLength(1)
     expect(result.tabs[0].id).toBe('tab-a')
-    expect(result.tabs[0].widgets[0].type).toBe('note_editor')
+    expect(result.tabs[0].widgets[0].type).toBe('deck_cards')
   })
 
   it('migrates chart filter options to the new selector', () => {
@@ -72,7 +72,7 @@ describe('normalizeWidgetTabs', () => {
       tabs: [
         { id: 'tab-a', label: 'Alpha', widgets: [] },
         { id: 'tab-b', label: 'Beta', widgets: [
-          { type: 'note_editor', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
+          { type: 'deck_cards', layout: { width: 'half', height: 'm', order: 1 }, options: {} },
         ] },
       ],
       defaultTabId: 'tab-a',
@@ -82,7 +82,7 @@ describe('normalizeWidgetTabs', () => {
     expect(result.tabs).toHaveLength(2)
     expect(result.tabs[0].id).toBe('tab-a')
     expect(result.tabs[0].widgets).toEqual([])
-    expect(result.tabs[1].widgets[0].type).toBe('note_editor')
+    expect(result.tabs[1].widgets[0].type).toBe('deck_cards')
   })
 
   it('migrates legacy time_summary_v2 into the overview widget only', () => {

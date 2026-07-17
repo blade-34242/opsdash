@@ -73,6 +73,46 @@ final class DeckController extends Controller {
         }
     }
 
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function stacks(): DataResponse {
+        $uid = (string)($this->userSession->getUser()?->getUID() ?? '');
+        if ($uid === '') {
+            return new DataResponse(['message' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
+        }
+        $boardId = (int)$this->request->getParam('boardId', 0);
+        if ($boardId <= 0) {
+            return new DataResponse(['message' => 'invalid_board'], Http::STATUS_BAD_REQUEST);
+        }
+        return new DataResponse([
+            'ok' => true,
+            'stacks' => $this->deckDataService->fetchStacks($uid, $boardId),
+        ], Http::STATUS_OK);
+    }
+
+    #[NoAdminRequired]
+    public function create(): DataResponse {
+        $uid = (string)($this->userSession->getUser()?->getUID() ?? '');
+        if ($uid === '') {
+            return new DataResponse(['message' => 'unauthorized'], Http::STATUS_UNAUTHORIZED);
+        }
+        $title = trim((string)$this->request->getParam('title', ''));
+        $stackId = (int)$this->request->getParam('stackId', 0);
+        if ($title === '' || $stackId <= 0) {
+            return new DataResponse(['message' => 'title_and_stack_required'], Http::STATUS_BAD_REQUEST);
+        }
+        if (mb_strlen($title) > 255) {
+            return new DataResponse(['message' => 'title_too_long'], Http::STATUS_BAD_REQUEST);
+        }
+        try {
+            $card = $this->deckDataService->createCard($uid, $title, $stackId);
+            return new DataResponse(['ok' => true, 'card' => $card], Http::STATUS_CREATED);
+        } catch (\Throwable $e) {
+            $this->logger->error('Deck card create failed: ' . $e->getMessage(), ['app' => 'opsdash']);
+            return new DataResponse(['message' => 'deck_card_create_failed'], Http::STATUS_SERVICE_UNAVAILABLE);
+        }
+    }
+
     private function toBool(mixed $value, bool $default): bool {
         if ($value === null) {
             return $default;

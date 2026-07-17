@@ -23,6 +23,13 @@
       </a>
       <button
         type="button"
+        class="deck-panel__create"
+        @click="createOpen = !createOpen"
+      >
+        {{ createOpen ? 'Cancel' : '+ Add card' }}
+      </button>
+      <button
+        type="button"
         class="deck-panel__refresh"
         @click="$emit('refresh')"
         :disabled="loading"
@@ -31,6 +38,31 @@
       </button>
     </div>
   </div>
+
+  <form v-if="createOpen" class="deck-create" @submit.prevent="createCard">
+    <label class="deck-create__field deck-create__field--title">
+      <span>New card</span>
+      <input v-model.trim="newTitle" :disabled="creating" required maxlength="255" placeholder="What needs doing?">
+    </label>
+    <label class="deck-create__field">
+      <span>Board</span>
+      <select v-model.number="newBoardId" :disabled="creating || !boards.length">
+        <option :value="0" disabled>Select board</option>
+        <option v-for="board in boards" :key="board.id" :value="board.id">{{ board.title }}</option>
+      </select>
+    </label>
+    <label class="deck-create__field">
+      <span>Stack</span>
+      <select v-model.number="newStackId" :disabled="creating || !stacks.length">
+        <option :value="0" disabled>{{ stacksLoading ? 'Loading stacks…' : 'Select stack' }}</option>
+        <option v-for="stack in stacks" :key="stack.id" :value="stack.id">{{ stack.title }}</option>
+      </select>
+    </label>
+    <button class="deck-create__submit" type="submit" :disabled="creating || !newTitle || !newStackId">
+      {{ creating ? 'Saving…' : 'Create card' }}
+    </button>
+    <p v-if="createError" class="deck-create__error">{{ createError }}</p>
+  </form>
 
   <div
     v-if="filtersEnabledFlag"
@@ -186,7 +218,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import type { DeckCardSummary } from '../../services/deck'
+import { createDeckCard, fetchDeckStacksMeta, type DeckCardSummary, type DeckStackMeta } from '../../services/deck'
 import type { DeckFilterMode } from '../../services/reporting'
 import { formatDateTime, parseDateTime } from '../../services/dateTime'
 
@@ -227,6 +259,8 @@ const props = defineProps<{
   title?: string
   cardBg?: string | null
   showHeader?: boolean
+  boards?: Array<{ id: number; title: string }>
+  onCardsChanged?: () => void | Promise<void>
 }>()
 
 const emit = defineEmits<{
@@ -280,6 +314,50 @@ const orderableFilters = computed(() => {
   return filterOptions.value.map((opt) => opt.value).filter((value) => !String(value).startsWith('custom_'))
 })
 const dragValue = ref<DeckFilterMode | null>(null)
+const createOpen = ref(false)
+const creating = ref(false)
+const createError = ref('')
+const newTitle = ref('')
+const newBoardId = ref(0)
+const newStackId = ref(0)
+const stacks = ref<DeckStackMeta[]>([])
+const stacksLoading = ref(false)
+const boards = computed(() => props.boards || [])
+
+watch(boards, (next) => {
+  if (!newBoardId.value && next.length) newBoardId.value = next[0].id
+}, { immediate: true })
+
+watch(newBoardId, async (boardId) => {
+  newStackId.value = 0
+  stacks.value = []
+  if (!boardId) return
+  stacksLoading.value = true
+  try {
+    stacks.value = await fetchDeckStacksMeta(boardId)
+    if (stacks.value.length) newStackId.value = stacks.value[0].id
+  } catch {
+    createError.value = 'Could not load Deck stacks.'
+  } finally {
+    stacksLoading.value = false
+  }
+}, { immediate: true })
+
+async function createCard() {
+  if (!newTitle.value || !newStackId.value || creating.value) return
+  creating.value = true
+  createError.value = ''
+  try {
+    await createDeckCard(newTitle.value, newStackId.value)
+    newTitle.value = ''
+    createOpen.value = false
+    await props.onCardsChanged?.()
+  } catch {
+    createError.value = 'Could not create the Deck card. Check your Deck permissions and try again.'
+  } finally {
+    creating.value = false
+  }
+}
 
 const bodyEl = ref<HTMLElement | null>(null)
 const listEl = ref<HTMLElement | null>(null)
@@ -454,6 +532,51 @@ function statusLabel(status: DeckCardSummary['status']) {
   padding: calc(4px * var(--widget-space, 1)) calc(12px * var(--widget-space, 1));
   font-size: calc(14px * var(--widget-scale, 1));
   cursor: pointer;
+}
+.deck-panel__create,
+.deck-create__submit {
+  border: 1px solid var(--brand);
+  border-radius: 7px;
+  padding: 6px 10px;
+  background: var(--brand);
+  color: var(--brand-fg, #fff);
+  cursor: pointer;
+  font-weight: 600;
+}
+.deck-create {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(130px, 1fr) minmax(130px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--soft);
+}
+.deck-create__field {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.deck-create input,
+.deck-create select {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: var(--card);
+  color: var(--fg);
+}
+.deck-create__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-error-text);
+  font-size: 12px;
+}
+@media (max-width: 720px) {
+  .deck-create { grid-template-columns: 1fr; }
+  .deck-create__submit { justify-self: start; }
 }
 .deck-panel__refresh:disabled {
   opacity: 0.6;

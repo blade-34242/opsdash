@@ -6,9 +6,7 @@ interface KeyboardShortcutDeps {
   goPrevious: () => void | Promise<void>
   goNext: () => void | Promise<void>
   toggleRange: () => void | Promise<void>
-  saveNotes?: () => void | Promise<void>
   openWidgetOptions?: () => void | Promise<void>
-  openNotesPanel?: () => void
   openConfigPanel?: () => void
   ensureSidebarVisible?: () => void
   toggleEditLayout?: () => void | Promise<void>

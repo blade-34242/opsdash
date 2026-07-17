@@ -48,6 +48,49 @@ class DeckDataService {
     }
 
     /**
+     * @return array<int, array{id:int, title:string}>
+     */
+    public function fetchStacks(string $uid, int $boardId): array {
+        $services = $this->prepareDeckServices($uid);
+        if ($services === null || $boardId <= 0) {
+            return [];
+        }
+        [, $stackService] = $services;
+        try {
+            $stacks = $stackService->findAll($boardId);
+        } catch (\Throwable $e) {
+            $this->logger->error('Deck stacks load failed: ' . $e->getMessage(), ['app' => self::APP_NAME]);
+            return [];
+        }
+        $result = [];
+        foreach ($stacks as $stack) {
+            $entry = $this->normalizeStack($stack, false);
+            if ($entry !== null) {
+                $result[] = ['id' => $entry['stackId'], 'title' => $entry['stackTitle']];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return array{id:int,title:string}
+     */
+    public function createCard(string $uid, string $title, int $stackId): array {
+        if (!$this->ensureDeckAvailable()) {
+            throw new \RuntimeException('Deck is unavailable');
+        }
+        try {
+            /** @var \OCA\Deck\Service\CardService $cardService */
+            $cardService = Server::get('OCA\\Deck\\Service\\CardService');
+            $card = $cardService->create($title, $stackId, 'plain', 999, $uid);
+            return ['id' => (int)$card->getId(), 'title' => $title];
+        } catch (\Throwable $e) {
+            $this->logger->error('Deck card create failed: ' . $e->getMessage(), ['app' => self::APP_NAME]);
+            throw $e;
+        }
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     /**

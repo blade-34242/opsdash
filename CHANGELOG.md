@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 - Raised the supported Nextcloud minimum from `30` to `31`; app metadata and contributor-facing compatibility references now match the active Forgejo server-test matrix (`31-34`).
+- Removed the unused Notes feature, including its dashboard widgets, API, report payload fields, keyboard shortcut, and legacy stored-content fixtures.
+- Added `occ opsdash:remove-notes --execute` to remove legacy weekly/monthly Notes entries from all users (or one user with `--user=<uid>`).
+- `Deck cards` can now create a real Deck card directly from the dashboard: choose a board and stack, enter a title, and save.
 
 
 ## 0.8.3 - 2026-07-11

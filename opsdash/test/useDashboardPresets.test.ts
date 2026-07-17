@@ -149,7 +149,7 @@ describe('useDashboardPresets', () => {
           id: 'tab-1',
           label: 'Overview',
           widgets: [
-            { id: 'widget-note', type: 'note_editor', layout: { width: 'half', height: 'm', order: 1 }, options: {}, version: 1 },
+            { id: 'widget-deck', type: 'deck_cards', layout: { width: 'half', height: 'm', order: 1 }, options: {}, version: 1 },
           ],
         },
       ],
@@ -195,7 +195,7 @@ describe('useDashboardPresets', () => {
     expect(manager.reportingConfig.value.enabled).toBe(true)
     expect(manager.deckSettings.value.enabled).toBe(false)
     expect(manager.deckSettings.value.defaultFilter).toBe('open_all')
-    expect(manager.widgetTabs.value.tabs[0].widgets[0].type).toBe('note_editor')
+    expect(manager.widgetTabs.value.tabs[0].widgets[0].type).toBe('deck_cards')
     expect(manager.onboardingState.value?.strategy).toBe('total_plus_categories')
     expect(manager.onboardingState.value?.dashboardMode).toBe('pro')
     expect(manager.setDashboardMode).toHaveBeenCalledWith('pro')

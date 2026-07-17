@@ -39,7 +39,6 @@ interface DashboardDeps {
   postJson: (url: string, body: Record<string, unknown>) => Promise<any>
   notifyError: (message: string) => void
   scheduleDraw: () => void
-  fetchNotes: () => Promise<void>
   isDebug?: () => boolean
   includeLookback?: () => boolean
   widgetTabs?: Ref<WidgetTabsState>
@@ -294,8 +293,6 @@ export function useDashboard(deps: DashboardDeps) {
         await nextTick()
         deps.scheduleDraw()
 
-        // Notes should not block dashboard readiness.
-        void deps.fetchNotes().catch(() => {})
       }
 
       const coreParams: Record<string, unknown> = {

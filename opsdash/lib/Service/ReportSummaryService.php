@@ -19,7 +19,6 @@ final class ReportSummaryService {
         private OverviewBalanceService $overviewBalanceService,
         private UserConfigService $userConfigService,
         private PersistSanitizer $persistSanitizer,
-        private NotesService $notesService,
         private IConfig $config,
     ) {
     }
@@ -266,9 +265,6 @@ final class ReportSummaryService {
             $longestEntry = $agg['long'][0];
         }
 
-        $notesPayload = $this->notesService->getNotes($uid, $range, $offset);
-        $notes = is_array($notesPayload['notes'] ?? null) ? $notesPayload['notes'] : ['current' => '', 'previous' => ''];
-
         $targetSummary = $this->buildTargetSummary(
             range: $range,
             targetsConfig: $targetsConfig,
@@ -317,10 +313,6 @@ final class ReportSummaryService {
                 'warnings' => array_values(array_map('strval', $balance['balanceOverview']['warnings'] ?? [])),
             ],
             'targets' => $targetSummary,
-            'notes' => [
-                'current' => trim((string)($notes['current'] ?? '')),
-                'previous' => trim((string)($notes['previous'] ?? '')),
-            ],
             'generated_at' => (new \DateTimeImmutable('now', $userTz))->format(\DateTimeInterface::ATOM),
             'charts' => $this->buildChartData($agg, $categoryMeta, $from, $to),
         ];

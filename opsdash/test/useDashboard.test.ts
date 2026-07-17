@@ -193,7 +193,6 @@ describe('useDashboard load', () => {
     expect(dashboard.charts.value).toEqual(response.charts)
 
     expect(scheduleDraw).toHaveBeenCalledTimes(1)
-    expect(fetchNotes).toHaveBeenCalledTimes(1)
     expect(notifyError).not.toHaveBeenCalled()
     expect(dashboard.userChangedSelection.value).toBe(false)
   })
@@ -301,11 +300,10 @@ describe('useDashboard load', () => {
     expect(dashboard.charts.value.pie.colors).toEqual(['#123456'])
     expect(dashboard.charts.value.perDaySeries.series[0].color).toBe('#123456')
     expect(dashboard.onboarding.value).toEqual(secondResponse.onboarding)
-    expect(fetchNotes).toHaveBeenCalledTimes(2)
     expect(scheduleDraw).toHaveBeenCalledTimes(2)
   })
 
-  it('does not block dashboard loading completion on notes fetch', async () => {
+  it('completes dashboard loading without a legacy notes request', async () => {
     const response = {
       meta: {
         from: '2024-01-01',
@@ -349,7 +347,6 @@ describe('useDashboard load', () => {
     const loadPromise = dashboard.load()
     await loadPromise
 
-    expect(fetchNotes).toHaveBeenCalledTimes(1)
     expect(dashboard.isLoading.value).toBe(false)
 
     resolveNotes?.()

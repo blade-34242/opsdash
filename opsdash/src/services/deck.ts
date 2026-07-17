@@ -40,6 +40,11 @@ export interface DeckRangeRequest {
   includeCompleted?: boolean
 }
 
+export interface DeckStackMeta {
+  id: number
+  title: string
+}
+
 interface DeckBoardsResponse {
   ok?: boolean
   boards?: DeckBoardMeta[]
@@ -48,6 +53,12 @@ interface DeckBoardsResponse {
 interface DeckCardsResponse {
   ok?: boolean
   cards?: DeckCardSummary[]
+  message?: string
+}
+
+interface DeckStacksResponse {
+  ok?: boolean
+  stacks?: DeckStackMeta[]
   message?: string
 }
 
@@ -85,15 +96,36 @@ export async function fetchDeckBoardsMeta(): Promise<DeckBoardMeta[]> {
   return Array.isArray(response?.boards) ? response.boards : []
 }
 
-async function requestJson(url: string): Promise<any> {
+export async function fetchDeckStacksMeta(boardId: number): Promise<DeckStackMeta[]> {
+  const payload = await requestJson(buildOpsdashUrl('/apps/opsdash/overview/deck/stacks', { boardId }))
+  const response = payload as DeckStacksResponse
+  if (response && response.ok === false) {
+    throw new Error(response.message || 'deck_stacks_fetch_failed')
+  }
+  return Array.isArray(response?.stacks) ? response.stacks : []
+}
+
+export async function createDeckCard(title: string, stackId: number): Promise<void> {
+  const payload = await requestJson(buildOpsdashUrl('/apps/opsdash/overview/deck/cards'), {
+    method: 'POST',
+    body: JSON.stringify({ title, stackId }),
+  })
+  if (payload && payload.ok === false) {
+    throw new Error(payload.message || 'deck_card_create_failed')
+  }
+}
+
+async function requestJson(url: string, options: RequestInit = {}): Promise<any> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.headers as Record<string, string> || {}),
   }
   const rt = getRequestToken()
   if (rt) {
     headers.requesttoken = rt
   }
-  const res = await fetch(url, { credentials: 'same-origin', headers })
+  const res = await fetch(url, { ...options, credentials: 'same-origin', headers })
   const text = await res.text()
   if (!res.ok) {
     throw new Error(`Deck request failed (${res.status})`)

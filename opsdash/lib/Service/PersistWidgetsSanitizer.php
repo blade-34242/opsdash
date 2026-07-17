@@ -24,8 +24,6 @@ final class PersistWidgetsSanitizer {
         'dayoff_trend' => true,
         'deck_cards' => true,
         'deck_stats' => true,
-        'note_editor' => true,
-        'note_snippet' => true,
         'targets_v2' => true,
         'text_block' => true,
         'time_summary_lookback' => true,
@@ -168,11 +166,6 @@ final class PersistWidgetsSanitizer {
                 'scope'           => ['t' => 'select', 'v' => ['all', 'mine', 'unassigned']],
                 'mineMode'        => ['t' => 'select', 'v' => ['assignee', 'creator', 'both']],
             ],
-            'note_editor' => $CORE + [
-                'prevLabel' => $TEXT,
-                'currLabel' => $TEXT,
-            ],
-            'note_snippet' => $CORE,
             'targets_v2' => $CORE + [
                 'showLegend'             => $BOOL,
                 'showDelta'              => $BOOL,
