@@ -462,6 +462,7 @@ class PersistSanitizerTest extends TestCase {
           'scope'           => 'evil',
           'boardIds'        => ['board1', '', 'board2', 42],
           'autoScroll'      => '1',
+          'compactList'     => true,
           'allowMine'       => false,
         ],
       ],
@@ -477,6 +478,7 @@ class PersistSanitizerTest extends TestCase {
     $this->assertArrayNotHasKey('scope', $opts, 'Unknown key for this type dropped');
     $this->assertSame(['board1', 'board2', '42'], $opts['boardIds'], 'Empty strings dropped, ints cast');
     $this->assertTrue($opts['autoScroll'], 'Truthy string cast to bool');
+    $this->assertTrue($opts['compactList'], 'Compact list preference is retained');
     $this->assertFalse($opts['allowMine']);
   }
 

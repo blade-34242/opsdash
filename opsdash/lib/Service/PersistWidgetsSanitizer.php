@@ -152,6 +152,7 @@ final class PersistWidgetsSanitizer {
                 'includeCompleted'=> $BOOL,
                 'showCount'       => $BOOL,
                 'autoScroll'      => $BOOL,
+                'compactList'     => $BOOL,
                 'boardIds'        => $ID_LIST,
                 'stackIds'        => $ID_LIST,
                 'filters'         => $ID_LIST,
