@@ -528,9 +528,7 @@ import { ONBOARDING_VERSION, getStrategyDefinitions } from './services/onboardin
 import {
   createDefaultWidgetTabs,
   filterWidgetTabsForStrategy,
-  getRestrictedWidgetTypesForStrategy,
   normalizeWidgetTabs,
-  syncWidgetTabsForStrategy,
   widgetsRegistry,
 } from './services/widgetsRegistry'
 import { formatDateKey, getWeekNumber, parseDateKey } from './services/dateTime'
@@ -978,9 +976,8 @@ const setDeckFilter = (value: DeckFilterMode) => {
 const onboardingState = onboarding
 watch(
   () => onboardingState.value?.strategy ?? null,
-  (strategy, previousStrategy) => {
+  (strategy) => {
     widgetStrategy.value = strategy
-    enforceStrategyWidgetConstraints(true, previousStrategy ?? null)
   },
   { immediate: true },
 )
@@ -1043,43 +1040,9 @@ const { queueSave, isSaving: reportingSaving } = useDashboardPersistence({
 
 widgetsQueueSaveRef.value = queueSave
 
-const availableWidgetTypesForStrategy = computed(() => {
-  const restricted = new Set(getRestrictedWidgetTypesForStrategy(onboardingState.value?.strategy))
-  if (!restricted.size) return availableWidgetTypes.value
-  return availableWidgetTypes.value.filter((entry) => !restricted.has(entry.type))
-})
-
-function enforceStrategyWidgetConstraints(syncDisplayOptions = false, previousStrategy: string | null = null) {
-  let next = filterWidgetTabsForStrategy(widgetTabsState.value as any, onboardingState.value?.strategy)
-  if (syncDisplayOptions) {
-    next = syncWidgetTabsForStrategy(next, onboardingState.value?.strategy, previousStrategy)
-  }
-  const currentJson = JSON.stringify(widgetTabsState.value)
-  const nextJson = JSON.stringify(next)
-  if (currentJson === nextJson) return
-  setTabsFromPayload(next)
-  if (hasInitialLoad.value) {
-    queueSave(false)
-  }
-}
-
-watch(
-  () => newWidgetType.value,
-  (type) => {
-    const restricted = new Set(getRestrictedWidgetTypesForStrategy(onboardingState.value?.strategy))
-    if (restricted.has(type)) {
-      newWidgetType.value = ''
-    }
-  },
-)
-
-watch(
-  () => widgetTabsState.value,
-  () => {
-    enforceStrategyWidgetConstraints()
-  },
-  { deep: true },
-)
+// Goal strategies shape only a newly applied Standard template. They never
+// restrict the picker or rewrite a dashboard the user has already customized.
+const availableWidgetTypesForStrategy = availableWidgetTypes
 
 const {
   isSelected,

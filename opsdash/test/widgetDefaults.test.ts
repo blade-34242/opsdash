@@ -1,28 +1,13 @@
 import { describe, it, expect } from 'vitest'
 
 import { createDefaultWidgetTabs } from '../src/services/widgetsRegistry'
-import { setWidgetPresets } from '../src/services/widgetDefaults'
 
 describe('widget defaults', () => {
-  it('includes deck stats in the standard preset when server presets are loaded', () => {
-    setWidgetPresets({
-      quick: [],
-      standard: [
-        {
-          id: 'widget-deck_stats-1',
-          type: 'deck_stats',
-          options: {},
-          layout: { width: 'half', height: 'm', order: 45 },
-          version: 1,
-        },
-      ],
-      pro: [],
-    })
-
+  it('keeps workspace widgets out of the standard overview', () => {
     const tabs = createDefaultWidgetTabs('standard')
 
     expect(tabs.tabs).toHaveLength(1)
-    expect(tabs.tabs[0].widgets.some((widget) => widget.type === 'deck_stats')).toBe(true)
+    expect(tabs.tabs[0].widgets.some((widget) => widget.type === 'deck_stats')).toBe(false)
   })
 
   it('uses the supplied Pro Workspace layout for Deck and Calendar stats', () => {
@@ -47,10 +32,13 @@ describe('widget defaults', () => {
 
     const types = (tabs: typeof singleGoal) => tabs.tabs.flatMap((tab) => tab.widgets.map((widget) => widget.type))
 
-    expect(types(singleGoal)).toEqual(['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'])
+    expect(types(singleGoal)).toEqual(['targets_v2', 'time_summary_overview', 'dayoff_trend'])
     expect(types(calendarGoals)).toContain('calendar_table')
+    expect(types(calendarGoals)).toHaveLength(6)
     expect(types(calendarGoals)).not.toContain('balance_index')
     expect(types(calendarGoals)).not.toContain('category_mix_trend')
+    expect(types(fullGoals)).not.toContain('deck_stats')
+    expect(types(fullGoals)).not.toContain('deck_cards')
     expect(types(fullGoals)).toContain('balance_index')
     expect(types(fullGoals)).toContain('category_mix_trend')
   })

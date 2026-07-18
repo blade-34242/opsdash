@@ -46,11 +46,10 @@ final class DashboardDefaultsService {
      */
     private function buildStandardPresetForStrategy(string $strategy): array {
         $allowedByStrategy = [
-            'total_only' => ['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'],
+            'total_only' => ['targets_v2', 'time_summary_overview', 'dayoff_trend'],
             'total_plus_categories' => [
                 'targets_v2', 'time_summary_overview', 'dayoff_trend', 'chart_pie',
-                'calendar_table', 'chart_stacked', 'chart_per_day', 'chart_dow',
-                'chart_hod', 'deck_stats', 'deck_cards',
+                'calendar_table', 'chart_stacked',
             ],
         ];
         $allowed = $allowedByStrategy[$strategy] ?? null;
@@ -336,26 +335,6 @@ final class DashboardDefaultsService {
                 'version' => 1,
             ],
             [
-                'id' => 'widget-deck_stats-6',
-                'type' => 'deck_stats',
-                'options' => [
-                    'heightMode' => 'auto',
-                    'includeArchived' => true,
-                    'includeCompleted' => true,
-                    'metrics' => [
-                        'open_now',
-                        'overdue_now',
-                        'created_in_range',
-                        'completed_in_range',
-                        'due_in_range',
-                    ],
-                    'scope' => 'all',
-                    'mineMode' => 'assignee',
-                ],
-                'layout' => ['width' => 'half', 'height' => 'm', 'order' => 55],
-                'version' => 1,
-            ],
-            [
                 'id' => 'widget-calendar_table-8',
                 'type' => 'calendar_table',
                 'options' => [
@@ -419,30 +398,6 @@ final class DashboardDefaultsService {
                     'lookbackMode' => 'overlay',
                 ],
                 'layout' => ['width' => 'full', 'height' => 'l', 'order' => 59],
-                'version' => 1,
-            ],
-            [
-                'id' => 'widget-deck_cards-13',
-                'type' => 'deck_cards',
-                'options' => [
-                    'allowMine' => true,
-                    'includeArchived' => true,
-                    'includeCompleted' => true,
-                    'showCount' => true,
-                    'autoScroll' => false,
-                    'filters' => [
-                        'focus_all',
-                        'focus_mine',
-                        'backlog_all',
-                        'backlog_mine',
-                        'all',
-                    ],
-                    'intervalSeconds' => 5,
-                    'minFilterCount' => 0,
-                    'maxVisible' => 8,
-                    'defaultFilter' => 'focus_all',
-                ],
-                'layout' => ['width' => 'full', 'height' => 'm', 'order' => 69],
                 'version' => 1,
             ],
             [

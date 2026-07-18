@@ -103,26 +103,6 @@ const STANDARD_TABS: WidgetTabsState = {
           version: 1,
         },
         {
-          id: 'widget-deck_stats-6',
-          type: 'deck_stats',
-          options: {
-            scope: 'all',
-            mineMode: 'assignee',
-            includeArchived: true,
-            includeCompleted: true,
-            metrics: [
-              'open_now',
-              'overdue_now',
-              'created_in_range',
-              'completed_in_range',
-              'due_in_range',
-            ],
-            heightMode: 'auto',
-          },
-          layout: { width: 'half', height: 'm', order: 55 },
-          version: 1,
-        },
-        {
           id: 'widget-calendar_table-8',
           type: 'calendar_table',
           options: {
@@ -186,35 +166,6 @@ const STANDARD_TABS: WidgetTabsState = {
             reverseOrder: false,
           },
           layout: { width: 'full', height: 'l', order: 59 },
-          version: 1,
-        },
-        {
-          id: 'widget-deck_cards-13',
-          type: 'deck_cards',
-          options: {
-            allowMine: true,
-            includeArchived: true,
-            includeCompleted: true,
-            autoScroll: false,
-            intervalSeconds: 5,
-            showCount: true,
-            minFilterCount: 0,
-            maxVisible: 8,
-            autoTagsEnabled: true,
-            compactList: false,
-            customFilters: [],
-            filters: [
-              'focus_all',
-              'focus_mine',
-              'backlog_all',
-              'backlog_mine',
-              'all',
-            ],
-            defaultFilter: 'focus_all',
-            mineMode: 'assignee',
-            heightMode: 'fixed',
-          },
-          layout: { width: 'full', height: 'xl', order: 69 },
           version: 1,
         },
         {
@@ -544,7 +495,7 @@ export function getWidgetPreset(mode: DashboardMode): WidgetDefinition[] {
 
 const STANDARD_WIDGET_TYPES_BY_STRATEGY: Record<string, string[]> = {
   // A single total does not need calendar or category analysis widgets.
-  total_only: ['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'],
+  total_only: ['targets_v2', 'time_summary_overview', 'dayoff_trend'],
   // Calendar planning keeps the calendar analysis, but omits category-only widgets.
   total_plus_categories: [
     'targets_v2',
@@ -553,11 +504,6 @@ const STANDARD_WIDGET_TYPES_BY_STRATEGY: Record<string, string[]> = {
     'chart_pie',
     'calendar_table',
     'chart_stacked',
-    'chart_per_day',
-    'chart_dow',
-    'chart_hod',
-    'deck_stats',
-    'deck_cards',
   ],
 }
 

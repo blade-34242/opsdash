@@ -8,13 +8,14 @@ use OCA\Opsdash\Service\DashboardDefaultsService;
 use PHPUnit\Framework\TestCase;
 
 final class DashboardDefaultsServiceTest extends TestCase {
-    public function testStandardPresetIncludesDeckStats(): void {
+    public function testStandardPresetExcludesWorkspaceWidgets(): void {
         $service = new DashboardDefaultsService();
 
         $tabs = $service->createDefaultTabs('standard');
         $widgets = $tabs['tabs'][0]['widgets'] ?? [];
 
-        $this->assertContains('deck_stats', array_column($widgets, 'type'));
+        $this->assertNotContains('deck_stats', array_column($widgets, 'type'));
+        $this->assertNotContains('deck_cards', array_column($widgets, 'type'));
     }
 
     public function testProTabsUseWorkspaceForDeckAndCalendarStats(): void {
@@ -39,8 +40,9 @@ final class DashboardDefaultsServiceTest extends TestCase {
         $calendarTypes = array_column($service->createDefaultTabs('standard', 'total_plus_categories')['tabs'][0]['widgets'], 'type');
         $fullTypes = array_column($service->createDefaultTabs('standard', 'full_granular')['tabs'][0]['widgets'], 'type');
 
-        $this->assertSame(['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'], $singleTypes);
+        $this->assertSame(['targets_v2', 'time_summary_overview', 'dayoff_trend'], $singleTypes);
         $this->assertContains('calendar_table', $calendarTypes);
+        $this->assertCount(6, $calendarTypes);
         $this->assertNotContains('balance_index', $calendarTypes);
         $this->assertContains('balance_index', $fullTypes);
         $this->assertContains('category_mix_trend', $fullTypes);
