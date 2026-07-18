@@ -22,13 +22,13 @@ final class DashboardDefaultsService {
     /**
      * @return array{tabs: array<int, array{id: string, label: string, widgets: array<int, array<string,mixed>>}>, defaultTabId: string}
      */
-    public function createDefaultTabs(string $mode): array {
+    public function createDefaultTabs(string $mode, string $strategy = ''): array {
         if ($mode === 'pro') {
             return $this->buildProTabs();
         }
         $preset = $mode === 'quick'
             ? $this->buildQuickPreset()
-            : $this->buildStandardPreset();
+            : $this->buildStandardPresetForStrategy($strategy);
         return [
             'tabs' => [
                 [
@@ -39,6 +39,29 @@ final class DashboardDefaultsService {
             ],
             'defaultTabId' => 'tab-1',
         ];
+    }
+
+    /**
+     * @return array<int, array<string,mixed>>
+     */
+    private function buildStandardPresetForStrategy(string $strategy): array {
+        $allowedByStrategy = [
+            'total_only' => ['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'],
+            'total_plus_categories' => [
+                'targets_v2', 'time_summary_overview', 'dayoff_trend', 'chart_pie',
+                'calendar_table', 'chart_stacked', 'chart_per_day', 'chart_dow',
+                'chart_hod', 'deck_stats', 'deck_cards',
+            ],
+        ];
+        $allowed = $allowedByStrategy[$strategy] ?? null;
+        $preset = $this->buildStandardPreset();
+        if ($allowed === null) {
+            return $preset;
+        }
+        return array_values(array_filter(
+            $preset,
+            static fn (array $widget): bool => in_array((string)($widget['type'] ?? ''), $allowed, true),
+        ));
     }
 
     /**
@@ -420,6 +443,18 @@ final class DashboardDefaultsService {
                     'defaultFilter' => 'focus_all',
                 ],
                 'layout' => ['width' => 'full', 'height' => 'm', 'order' => 69],
+                'version' => 1,
+            ],
+            [
+                'id' => 'widget-category_mix_trend-standard',
+                'type' => 'category_mix_trend',
+                'options' => [
+                    'density' => 'normal', 'labelMode' => 'period', 'colorMode' => 'hybrid',
+                    'trendIndicator' => 'none', 'squareCells' => false, 'reverseOrder' => false,
+                    'showHeader' => true, 'showBadge' => true, 'shareLowColor' => '#E2E8F0',
+                    'shareHighColor' => '#60A5FA', 'toneLowColor' => '#E11D48', 'toneHighColor' => '#10B981',
+                ],
+                'layout' => ['width' => 'full', 'height' => 'm', 'order' => 79],
                 'version' => 1,
             ],
         ];

@@ -194,6 +194,7 @@ final class OverviewLoadContextService {
                 $dashboardMode = $candidate;
             }
         }
+        $dashboardStrategy = (string)($onboardingPayload['strategy'] ?? '');
         if ($includeWidgets) {
             $widgetPresets = $this->dashboardDefaults->getPresets();
             try {
@@ -206,7 +207,7 @@ final class OverviewLoadContextService {
                 }
             } catch (\Throwable) {}
             if (empty($widgets)) {
-                $widgets = $this->dashboardDefaults->createDefaultTabs($dashboardMode);
+                $widgets = $this->dashboardDefaults->createDefaultTabs($dashboardMode, $dashboardStrategy);
             }
         }
 

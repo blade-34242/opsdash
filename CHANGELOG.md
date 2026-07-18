@@ -2,28 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
-- Raised the supported Nextcloud minimum from `30` to `31`; app metadata and contributor-facing compatibility references now match the active Forgejo server-test matrix (`31-34`).
-- Removed the unused Notes feature, including its dashboard widgets, API, report payload fields, keyboard shortcut, and legacy stored-content fixtures.
-- Added `occ opsdash:remove-notes --execute` to remove legacy weekly/monthly Notes entries from all users (or one user with `--user=<uid>`).
-- `Deck cards` can now create a real Deck card directly from the dashboard: choose a board and stack, enter a title, and save.
-- Added `Calendar stats`, a configurable compact summary for tracked time, planned time, event count, and average event duration across the currently selected calendars.
-
-
-## 0.8.3 - 2026-07-11
+## 0.8.3 - 2026-07-20
 ### Added
 - Added a redesigned `Time Summary (Overview)` widget focused on the current day and current week.
 - Added strategy-aware mini tabs for the overview card: `Single Goal` stays daily-only, `Calendar Goals` can switch between Daily and Calendars, and `Calendar + Category Goals` can switch between Daily, Calendars, and Categories.
 - Added today-by-calendar and today-by-category lanes with color-filled rows, a compact weekly bar overview, and a six-card Daily KPI grid for the overview widget.
+- Added `Calendar stats`, a configurable compact summary for tracked time, planned time, event count, and average event duration across the currently selected calendars.
+- `Deck cards` can now create a real Deck card directly from the dashboard: choose a board and stack, enter a title, and save.
+- Added `occ opsdash:remove-notes --execute` to remove legacy weekly/monthly Notes entries from all users (or one user with `--user=<uid>`).
 
 ### Changed
 - Release preparation for 0.8.3.
 - Cleaned up `Time Summary (Overview)` configuration so it exposes daily KPI, week chart, and lane controls instead of old text-summary toggles.
 - Removed automatic lookback creation from the overview widget defaults and legacy split path. Existing `time_summary_lookback` widgets still render, but new overview layouts stay current-week focused.
+- Raised the supported Nextcloud minimum from `30` to `31`; app metadata and contributor-facing compatibility references now match the active Forgejo server-test matrix (`31-34`).
+- The active saved-profile badge now lives in the tab bar instead of the Targets widget; clicking it opens Profiles, including from a collapsed sidebar.
 
 ### Fixed
 - Daily event count and avg/event now use today's week-row data instead of falling back to full-period values when the current day is empty.
 - Scheduled monthly final reports now catch up for missed first-day background-job runs and still send the completed previous month instead of silently skipping the recap.
+- Deck Cards `Compact list` is now retained after saving and reloading the dashboard.
+- Removed the unused Notes feature, including its dashboard widgets, API, report payload fields, keyboard shortcut, and legacy stored-content fixtures.
 
 
 ## 0.8.2 - 2026-07-09

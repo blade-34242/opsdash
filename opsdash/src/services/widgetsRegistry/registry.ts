@@ -247,7 +247,7 @@ export function syncWidgetTabsForStrategy(
 }
 
 export function createDefaultWidgetTabs(mode: DashboardMode, strategy?: StrategyId | string | null): WidgetTabsState {
-  const state = createDefaultWidgetTabsFromDefaults(mode)
+  const state = createDefaultWidgetTabsFromDefaults(mode, strategy)
   return syncWidgetTabsForStrategy(state, strategy)
 }
 

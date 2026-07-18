@@ -220,6 +220,7 @@ export function useDashboard(deps: DashboardDeps) {
           const mode = json.onboarding?.dashboardMode
           const fallback = deps.widgetTabs.value || createDefaultWidgetTabs(
             mode === 'quick' || mode === 'pro' ? mode : 'standard',
+            json.onboarding?.strategy,
           )
           deps.widgetTabs.value = normalizeWidgetTabs(json.widgets, fallback)
         }

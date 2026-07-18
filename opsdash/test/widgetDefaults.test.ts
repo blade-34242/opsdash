@@ -40,6 +40,21 @@ describe('widget defaults', () => {
     expect(workspaceTab?.widgets[2].layout).toEqual({ width: 'quarter', height: 'xl', order: 99 })
   })
 
+  it('uses a focused Standard template for each goal strategy', () => {
+    const singleGoal = createDefaultWidgetTabs('standard', 'total_only')
+    const calendarGoals = createDefaultWidgetTabs('standard', 'total_plus_categories')
+    const fullGoals = createDefaultWidgetTabs('standard', 'full_granular')
+
+    const types = (tabs: typeof singleGoal) => tabs.tabs.flatMap((tab) => tab.widgets.map((widget) => widget.type))
+
+    expect(types(singleGoal)).toEqual(['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'])
+    expect(types(calendarGoals)).toContain('calendar_table')
+    expect(types(calendarGoals)).not.toContain('balance_index')
+    expect(types(calendarGoals)).not.toContain('category_mix_trend')
+    expect(types(fullGoals)).toContain('balance_index')
+    expect(types(fullGoals)).toContain('category_mix_trend')
+  })
+
   it('aligns strategy-owned widget options when creating defaults for calendar goals', () => {
     const tabs = createDefaultWidgetTabs('pro', 'total_plus_categories')
     const overview = tabs.tabs.flatMap((tab) => tab.widgets).find((widget) => widget.type === 'time_summary_overview')

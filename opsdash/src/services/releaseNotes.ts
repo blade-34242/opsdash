@@ -27,7 +27,7 @@ export interface ReleaseNotesEntry {
 const RELEASE_NOTES: ReleaseNotesEntry[] = [
   {
     version: '0.8.3',
-    date: '2026-07-11',
+    date: '2026-07-20',
     title: 'Time Summary now reads like a daily control panel',
     teaser: 'Opsdash 0.8.3 turns Time Summary (Overview) into a current-week daily KPI card, adds a focused Deck action queue, and fixes missed monthly final recaps after month-end.',
     summary: 'Version 0.8.3 focuses the Time Summary overview on what you need to read today and makes Deck cards useful as an operational queue. Time Summary starts with today’s hours and events, adapts its tabs to your goal type, fills Daily with six KPI cards, and keeps historical lookback separate. Deck cards now opens on dated active work, separates undated items into Backlog, limits the initial list, and relies on normal user-controlled scrolling. Monthly final reports also get a safer catch-up path: if the background job misses the first send slot after month-end, Opsdash still sends the completed previous month instead of dropping the recap.',
@@ -46,6 +46,11 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'Deck card configuration now centers boards, stacks, starting view, list size, and compact rows rather than the previous broad filter matrix.',
       'Time Off Trend can now ignore selected calendars or assigned calendar categories, so personal sport and trip calendars do not make every day look occupied.',
       'Scheduled monthly final reports now catch up after missed first-day runs and keep reporting the completed previous month.',
+      'Calendar stats adds a compact, configurable scan of tracked time, planned time, events, and average event duration for the selected calendars.',
+      'Deck cards can create a new Deck card directly from the dashboard after you choose its board and stack.',
+      'The active saved-profile badge moved from Targets to the tab bar; click it to open Profiles, even when the sidebar is collapsed.',
+      'Deck Cards now retains the Compact list setting after dashboard saves and reloads.',
+      'The unused Notes widgets and API are gone; legacy data can be cleaned up safely with the supplied occ command.',
     ],
     images: [
       {

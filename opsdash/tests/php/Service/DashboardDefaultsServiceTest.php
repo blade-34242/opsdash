@@ -31,4 +31,18 @@ final class DashboardDefaultsServiceTest extends TestCase {
         $this->assertContains('deck_stats', $types);
         $this->assertContains('calendar_stats', $types);
     }
+
+    public function testStandardTabsFollowGoalStrategy(): void {
+        $service = new DashboardDefaultsService();
+
+        $singleTypes = array_column($service->createDefaultTabs('standard', 'total_only')['tabs'][0]['widgets'], 'type');
+        $calendarTypes = array_column($service->createDefaultTabs('standard', 'total_plus_categories')['tabs'][0]['widgets'], 'type');
+        $fullTypes = array_column($service->createDefaultTabs('standard', 'full_granular')['tabs'][0]['widgets'], 'type');
+
+        $this->assertSame(['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'], $singleTypes);
+        $this->assertContains('calendar_table', $calendarTypes);
+        $this->assertNotContains('balance_index', $calendarTypes);
+        $this->assertContains('balance_index', $fullTypes);
+        $this->assertContains('category_mix_trend', $fullTypes);
+    }
 }

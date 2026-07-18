@@ -218,13 +218,23 @@ const STANDARD_TABS: WidgetTabsState = {
           version: 1,
         },
         {
-          id: 'widget-calendar_table-1779236255213',
-          type: 'calendar_table',
+          id: 'widget-category_mix_trend-standard',
+          type: 'category_mix_trend',
           options: {
-            calendarFilter: [],
-            compact: false,
+            density: 'normal',
+            labelMode: 'period',
+            colorMode: 'hybrid',
+            trendIndicator: 'none',
+            squareCells: false,
+            reverseOrder: false,
+            showHeader: true,
+            showBadge: true,
+            shareLowColor: '#E2E8F0',
+            shareHighColor: '#60A5FA',
+            toneLowColor: '#E11D48',
+            toneHighColor: '#10B981',
           },
-          layout: { width: 'full', height: 'l', order: 79 },
+          layout: { width: 'full', height: 'm', order: 79 },
           version: 1,
         },
       ],
@@ -532,9 +542,42 @@ export function getWidgetPreset(mode: DashboardMode): WidgetDefinition[] {
   return cloneWidgets(list)
 }
 
-export function createDefaultWidgetTabs(mode: DashboardMode): WidgetTabsState {
+const STANDARD_WIDGET_TYPES_BY_STRATEGY: Record<string, string[]> = {
+  // A single total does not need calendar or category analysis widgets.
+  total_only: ['targets_v2', 'time_summary_overview', 'dayoff_trend', 'deck_stats'],
+  // Calendar planning keeps the calendar analysis, but omits category-only widgets.
+  total_plus_categories: [
+    'targets_v2',
+    'time_summary_overview',
+    'dayoff_trend',
+    'chart_pie',
+    'calendar_table',
+    'chart_stacked',
+    'chart_per_day',
+    'chart_dow',
+    'chart_hod',
+    'deck_stats',
+    'deck_cards',
+  ],
+}
+
+function createStandardTabs(strategy?: string | null): WidgetTabsState {
+  const state = cloneTabsState(STANDARD_TABS)
+  const allowed = strategy ? STANDARD_WIDGET_TYPES_BY_STRATEGY[strategy] : null
+  if (!allowed) return state
+
+  return {
+    ...state,
+    tabs: state.tabs.map((tab) => ({
+      ...tab,
+      widgets: tab.widgets.filter((widget) => allowed.includes(widget.type)),
+    })),
+  }
+}
+
+export function createDefaultWidgetTabs(mode: DashboardMode, strategy?: string | null): WidgetTabsState {
   if (mode === 'quick') return cloneTabsState(QUICK_TABS)
-  if (mode === 'standard') return cloneTabsState(STANDARD_TABS)
+  if (mode === 'standard') return createStandardTabs(strategy)
   if (mode === 'pro') return cloneTabsState(PRO_TABS)
   const widgets = getWidgetPreset(mode)
   return {

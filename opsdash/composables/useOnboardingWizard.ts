@@ -117,32 +117,39 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
   const suggestionsError = ref('')
   const historyWindows = ref<CalendarHistorySlot[]>([])
   const existingSeed = ref<ExistingWizardSeed | null>(null)
-  const dashboardPresets = [
-    {
-      id: 'quick' as const,
-      title: 'Empty',
-      subtitle: 'Start from a mostly blank dashboard and grow it later.',
-      description: 'Start from a mostly blank dashboard and grow it later.',
-      badge: 'manual build',
-      widgets: '0 widgets',
-    },
-    {
-      id: 'standard' as const,
-      title: 'Standard',
-      subtitle: 'Balanced default with enough structure to be useful immediately.',
-      description: 'Balanced default with enough structure to be useful immediately.',
-      badge: 'recommended',
-      widgets: '14 widgets',
-    },
-    {
-      id: 'pro' as const,
-      title: 'Advanced',
-      subtitle: 'Show more widgets and analysis from the first load.',
-      description: 'Show more widgets and analysis from the first load.',
-      badge: 'power users',
-      widgets: '18 widgets',
-    },
-  ]
+  const dashboardPresets = computed(() => {
+    const count = (mode: 'quick' | 'standard' | 'pro') =>
+      filterWidgetTabsForStrategy(createDefaultWidgetTabs(mode, selectedStrategy.value), selectedStrategy.value)
+        .tabs.reduce((total, tab) => total + tab.widgets.length, 0)
+    const widgetLabel = (mode: 'quick' | 'standard' | 'pro') => `${count(mode)} widgets`
+
+    return [
+      {
+        id: 'quick' as const,
+        title: 'Empty',
+        subtitle: 'Start from a mostly blank dashboard and grow it later.',
+        description: 'Start from a mostly blank dashboard and grow it later.',
+        badge: 'manual build',
+        widgets: widgetLabel('quick'),
+      },
+      {
+        id: 'standard' as const,
+        title: 'Standard',
+        subtitle: 'Balanced default with enough structure to be useful immediately.',
+        description: 'Balanced default with enough structure to be useful immediately.',
+        badge: 'recommended',
+        widgets: widgetLabel('standard'),
+      },
+      {
+        id: 'pro' as const,
+        title: 'Advanced',
+        subtitle: 'Show more widgets and analysis from the first load.',
+        description: 'Show more widgets and analysis from the first load.',
+        badge: 'power users',
+        widgets: widgetLabel('pro'),
+      },
+    ]
+  })
   const categoryPresets: CategoryPreset[] = [
     {
       id: 'work_hobby_sport',
@@ -262,7 +269,7 @@ export function useOnboardingWizard(options: { props: WizardProps; emit: WizardE
   const isClosable = computed(() => props.closable !== false)
 
   const dashboardWidgets = computed(() =>
-    filterWidgetTabsForStrategy(createDefaultWidgetTabs(dashboardMode.value), selectedStrategy.value),
+    filterWidgetTabsForStrategy(createDefaultWidgetTabs(dashboardMode.value, selectedStrategy.value), selectedStrategy.value),
   )
 
   const enabledSteps = computed(() => [...stepOrder])
