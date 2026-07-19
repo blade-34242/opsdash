@@ -197,6 +197,27 @@ describe('useDashboard load', () => {
     expect(dashboard.userChangedSelection.value).toBe(false)
   })
 
+  it('coalesces rapid refreshes into one active load request', async () => {
+    let resolveCore: ((value: any) => void) | undefined
+    const corePending = new Promise((resolve) => { resolveCore = resolve })
+    const getJson = vi.fn().mockReturnValue(corePending)
+    const postJson = vi.fn().mockResolvedValue({ meta: {}, stats: {}, byCal: [], byDay: [], longest: [], charts: {} })
+    const dashboard = createDashboard({ getJson, postJson })
+
+    const first = dashboard.load()
+    const second = dashboard.load()
+    const third = dashboard.load()
+
+    expect(second).toBe(first)
+    expect(third).toBe(first)
+    expect(getJson).toHaveBeenCalledTimes(1)
+
+    resolveCore?.({ meta: {}, calendars: [], colors: {}, groups: {}, targets: {}, targetsConfig: {}, selected: [] })
+    await first
+
+    expect(postJson).toHaveBeenCalledTimes(1)
+  })
+
   it('preserves existing palette when the server falls back to hashed colors', async () => {
     const configA = createDefaultTargetsConfig()
     const configB = createDefaultTargetsConfig()

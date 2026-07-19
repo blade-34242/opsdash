@@ -146,7 +146,7 @@
                       </svg>
                     </button>
                   </div>
-                  <button class="bar-btn-ref" type="button" :disabled="isInitialLoading" @click="loadCurrent">Refresh</button>
+                  <button class="bar-btn-ref" type="button" :disabled="isInitialLoading || isRefreshing" @click="loadCurrent">Refresh</button>
                 </div>
 
                 <!-- Tab strip + Edit layout button -->

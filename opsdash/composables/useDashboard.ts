@@ -78,7 +78,21 @@ export function useDashboard(deps: DashboardDeps) {
   const deckSettings = ref<DeckFeatureSettings>(createDefaultDeckSettings())
 
   let loadSeq = 0
-  async function load() {
+  let activeLoad: Promise<void> | null = null
+
+  function load(): Promise<void> {
+    // A manual refresh can be clicked faster than the server's per-user load
+    // limiter permits. Reuse the active request instead of producing a second
+    // expensive request that would receive HTTP 429.
+    if (activeLoad) return activeLoad
+
+    activeLoad = runLoad().finally(() => {
+      activeLoad = null
+    })
+    return activeLoad
+  }
+
+  async function runLoad() {
     const currentSeq = ++loadSeq
     isLoading.value = true
     const prevColorsById: Record<string, string> = { ...colorsById.value }
