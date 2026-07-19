@@ -446,7 +446,10 @@ final class OverviewDataService {
         $appendPeriod($currentRangeLabels, $currentPerDayByCal);
         $addHod($currentHod);
 
-        for ($step = 1; $step < $lookbackPeriods; $step++) {
+        // The Time Off Trend exposes `lookbackPeriods` historical entries in
+        // addition to the current period. Include each of them in the
+        // per-calendar series so local exclusions can rebuild the full trend.
+        for ($step = 1; $step <= $lookbackPeriods; $step++) {
             [$lookFrom, $lookTo] = $this->calendarAccess->rangeBounds($range, $offset - $step, $userTz, $weekStart);
             $collect = $this->eventsCollector->collect(
                 principal: $principal,

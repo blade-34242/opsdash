@@ -705,7 +705,10 @@ const widgetTabsRef = computed({
   },
 })
 
-const lookbackWidgetTypes = new Set(['chart_per_day', 'chart_dow', 'chart_hod', 'time_summary_lookback', 'time_summary_v2'])
+// Time Off Trend rebuilds its values from the per-calendar history when a
+// calendar/category filter is selected, so it needs the same history payload
+// as the dedicated lookback charts.
+const lookbackWidgetTypes = new Set(['chart_per_day', 'chart_dow', 'chart_hod', 'time_summary_lookback', 'time_summary_v2', 'dayoff_trend'])
 const shouldIncludeLookback = () => {
   if (trendLookbackWeeks.value <= 1) return false
   for (const tab of layoutTabs.value || []) {

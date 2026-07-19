@@ -145,11 +145,9 @@ final class OverviewIncludeResolver {
         }
         $allowed = $scope === 'core' ? self::CORE_KEYS : self::DATA_KEYS;
         $set = array_intersect_key($includes, array_fill_keys($allowed, true));
-        if ($scope === 'data' && isset($set['data'])) {
-            foreach (self::DATA_KEYS as $key) {
-                $set[$key] = true;
-            }
-        }
+        // `data` expands to the regular data payload, but not to optional
+        // lookback history. Keep the requested keys distinct so a cached
+        // normal response can never satisfy a later `data + lookback` load.
         ksort($set);
         return $set;
     }

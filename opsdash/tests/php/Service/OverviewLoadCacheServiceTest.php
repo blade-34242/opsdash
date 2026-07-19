@@ -140,6 +140,24 @@ final class OverviewLoadCacheServiceTest extends TestCase {
     $this->assertSame($meta, $cached['meta']);
   }
 
+  public function testDataCacheDoesNotReuseNormalDataForLookbackRequests(): void {
+    putenv('OPSDASH_CACHE_TTL=10');
+    $service = $this->buildService('10');
+    $baseIncludes = ['data' => true, 'stats' => true, 'byCal' => true, 'byDay' => true, 'longest' => true, 'charts' => true];
+    $lookbackIncludes = [...$baseIncludes, 'lookback' => true];
+
+    $service->writeDataCache(
+      'opsdash', 'admin', 'week', 0, ['cal-1'], ['cal-1' => 0], ['cal-1' => 12], ['cal-1' => 48],
+      ['totalHours' => 48], ['enabled' => false], ['enabled' => true], $baseIncludes, 'UTC', 'en', 1,
+      ['charts' => ['perDaySeries' => []]], ['truncated' => false],
+    );
+
+    $this->assertNull($service->readDataCache(
+      'opsdash', 'admin', 'week', 0, ['cal-1'], ['cal-1' => 0], ['cal-1' => 12], ['cal-1' => 48],
+      ['totalHours' => 48], ['enabled' => false], ['enabled' => true], $lookbackIncludes, 'UTC', 'en', 1,
+    ));
+  }
+
   private function buildService(string $cacheEnabledValue): OverviewLoadCacheService {
     $cache = new FakeCache();
     $factory = new FakeCacheFactory($cache);

@@ -567,6 +567,31 @@ describe('widgetsRegistry targets_v2', () => {
     ])
   })
 
+  it('dayoff_trend still filters loaded periods when one older period is unavailable', () => {
+    const trend = [
+      { offset: 0, label: 'This week', from: '2026-07-13', to: '2026-07-14', totalDays: 2, daysOff: 0, daysWorked: 2 },
+      { offset: 1, label: '-1 wk', from: '2026-07-06', to: '2026-07-12', totalDays: 7, daysOff: 2, daysWorked: 5 },
+    ]
+
+    const result = widgetsRegistry.dayoff_trend.buildProps({
+      id: 'd1', type: 'dayoff_trend', version: 1, layout: {}, options: { ignoreCalendarIds: ['personal'] },
+    } as any, {
+      activityDayOffTrend: trend,
+      charts: {
+        perDaySeriesByOffset: [{
+          offset: 0,
+          labels: ['2026-07-13', '2026-07-14'],
+          series: [{ id: 'personal', data: [2, 0] }],
+        }],
+      },
+    } as any) as any
+
+    expect(result.trend).toEqual([
+      { ...trend[0], daysOff: 2, daysWorked: 0 },
+      trend[1],
+    ])
+  })
+
   it('common title prefix is applied when provided', () => {
     const entry = widgetsRegistry.balance_index
     const def: any = {

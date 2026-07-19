@@ -61,11 +61,11 @@ export function buildFilteredDayOffTrend(
       .map((period: any) => [Number(period.offset), period]),
   )
 
-  // Never replace a complete server result with a partial client reconstruction.
-  if (baseline.some((entry) => !seriesByPeriod.has(entry.offset))) return baseline
-
   return baseline.map((entry) => {
     const period = seriesByPeriod.get(entry.offset)
+    // Keep only an unavailable period at its server value. Other periods must
+    // still react to the widget's filters.
+    if (!period) return entry
     const labels = Array.isArray(period?.labels) ? period.labels.map((value: any) => String(value)) : []
     const series = Array.isArray(period?.series) ? period.series : []
     const visibleIndexes = labels
