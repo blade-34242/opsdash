@@ -184,6 +184,18 @@
               <template v-else>
                 <!-- Row 1: tabs only -->
                 <div class="bar-row">
+                  <button
+                    v-if="!navOpen"
+                    class="show-btn"
+                    type="button"
+                    title="Open sidebar"
+                    :aria-label="navToggleLabel"
+                    @click="openSidebarFromEdit"
+                  >
+                    <svg width="10" height="11" viewBox="0 0 10 11" fill="none">
+                      <path d="M1 1l4 4.5L1 10M5 1l4 4.5L5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
                   <div class="tab-strip" role="tablist" aria-label="Dashboard tabs">
                     <div v-for="tab in layoutTabs" :key="tab.id" class="tab-item">
                       <button
@@ -599,10 +611,24 @@ type BalanceOverviewSummary = {
 
 const { navOpen, toggleNav, navToggleLabel, navToggleIcon } = useSidebarState()
 const profilesOverlayOpen = ref(false)
+function isCompactViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 1100px)').matches
+}
+
 function ensureSidebarVisible() {
+  // Below the desktop breakpoint the navigation is an overlay. Keeping edit
+  // mode active there would put the edit surface behind (or, when floating,
+  // above) the sidebar, so leave edit mode before opening it.
+  if (isLayoutEditing.value && isCompactViewport()) {
+    toggleLayoutEditing()
+  }
   if (!navOpen.value) {
     toggleNav()
   }
+}
+
+function openSidebarFromEdit() {
+  ensureSidebarVisible()
 }
 
 function openProfilesPanel() {
@@ -623,6 +649,7 @@ watch(
 onBeforeUnmount(() => {
   if (typeof document === 'undefined') return
   document.body.style.removeProperty('--opsdash-nav-offset')
+  document.body.style.removeProperty('--opsdash-sticky-left')
 })
 
 const range = ref<'week'|'month'>('week')
@@ -776,6 +803,12 @@ function handleDuplicateWidgetToTab(id: string, tabId: string) {
 }
 
 function toggleLayoutEditing() {
+  const enteringEditMode = !isLayoutEditing.value
+  // At compact widths the sidebar is fixed above the dashboard. Close it
+  // before showing layout controls so borders and controls never overlap.
+  if (enteringEditMode && navOpen.value && isCompactViewport()) {
+    toggleNav()
+  }
   isLayoutEditing.value = !isLayoutEditing.value
   if (!isLayoutEditing.value) {
     resetTabEditContext()
@@ -783,6 +816,21 @@ function toggleLayoutEditing() {
     inlineGroupOpen.value = null
   }
 }
+
+function keepCompactEditSurfaceClear() {
+  if (isLayoutEditing.value && navOpen.value && isCompactViewport()) {
+    toggleNav()
+  }
+}
+
+// The Nextcloud sidebar toggle can also be reached without our app-bar
+// button. Keep that path safe too: compact edit mode never shares its canvas
+// with the overlay sidebar.
+watch(navOpen, (open) => {
+  if (open && isLayoutEditing.value && isCompactViewport()) {
+    toggleLayoutEditing()
+  }
+})
 
 // ── New bar helpers ────────────────────────────────────────
 const showAddWidgetModal = ref(false)
@@ -834,6 +882,10 @@ function measureItbRow(container: HTMLElement) {
     itbFloatThreshold = 0
     return
   }
+  // A floating row is positioned against the viewport, while the app bar is
+  // positioned inside the dashboard grid. Measure the real grid edge instead
+  // of duplicating sidebar width and page-padding calculations in CSS.
+  document.body.style.setProperty('--opsdash-sticky-left', `${Math.round(appBar.getBoundingClientRect().left)}px`)
   const floatTopOffset = getItbFloatTopOffset()
   const rowRect = row.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
@@ -849,7 +901,11 @@ function getItbFloatTopOffset() {
   return (Number.isFinite(headerHeight) ? headerHeight : 50) + 12
 }
 
-onMounted(() => { setupItbScroll() })
+onMounted(() => {
+  setupItbScroll()
+  window.addEventListener('resize', keepCompactEditSurfaceClear, { passive: true })
+  keepCompactEditSurfaceClear()
+})
 watch(isLayoutEditing, async (editing) => {
   if (!editing) {
     itbFloating.value = false
@@ -861,7 +917,10 @@ watch(isLayoutEditing, async (editing) => {
     setupItbScroll()
   })
 })
-onBeforeUnmount(() => { teardownItbScroll?.() })
+onBeforeUnmount(() => {
+  teardownItbScroll?.()
+  window.removeEventListener('resize', keepCompactEditSurfaceClear)
+})
 
 function setRange(v: 'week' | 'month') {
   range.value = v
@@ -1246,9 +1305,7 @@ const {
   goNext,
   toggleRange: toggleRangeCollapsed,
   openConfigPanel: () => ensureSidebarVisible(),
-  toggleEditLayout: () => {
-    isLayoutEditing.value = !isLayoutEditing.value
-  },
+  toggleEditLayout: toggleLayoutEditing,
   openWidgetOptions: () => {
     if (!isLayoutEditing.value) return
     layoutRef.value?.openOptionsForSelected?.()

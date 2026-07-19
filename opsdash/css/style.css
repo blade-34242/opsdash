@@ -2045,7 +2045,7 @@
 #opsdash .itb-row.itb-row--floating{
   position:fixed;
   top:calc(var(--header-height, 50px) + 12px);
-  left:calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap));
+  left:var(--opsdash-sticky-left, calc(16px + var(--opsdash-nav-offset, 0px) + var(--opsdash-gap)));
   right:16px;
   z-index:120;
   border:1px solid color-mix(in oklab, var(--brand), var(--line) 62%);
@@ -2072,6 +2072,9 @@
     top:calc(var(--header-height, 50px) + 10px);
     left:12px;
     right:12px;
+    /* The compact sidebar is an overlay. It must remain above a stale
+       floating edit row while the edit-mode guard closes that sidebar. */
+    z-index:80;
   }
 }
 
@@ -2174,7 +2177,7 @@
   display:flex !important;
   flex-direction:row !important;
   align-items:stretch;gap:3px;
-  flex:0 0 auto;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+  flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
 }
 #opsdash .tab-strip::-webkit-scrollbar{ display:none; }
 #opsdash .tab-item{ display:inline-flex !important;align-items:stretch;flex:0 0 auto; }

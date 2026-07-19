@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Deck Cards `Compact list` is now retained after saving and reloading the dashboard.
 - Time Off Trend calendar and category exclusions now reliably rebuild the current and every historical comparison. The required lookback data is loaded separately in the cache, so an earlier non-lookback response can no longer leave the trend unchanged.
 - Rapid repeated dashboard refreshes are coalesced into one request, preventing an avoidable `429 Too Many Requests` error.
+- The floating widget configuration row now aligns to the real dashboard grid edge, so it no longer overlaps the open sidebar while scrolling in layout edit mode. On compact screens, entering layout editing closes the overlay sidebar; opening it again leaves edit mode cleanly.
 - Removed the unused Notes feature, including its dashboard widgets, API, report payload fields, keyboard shortcut, and legacy stored-content fixtures.
 
 

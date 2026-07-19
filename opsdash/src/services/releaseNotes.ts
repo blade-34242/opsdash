@@ -46,6 +46,7 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'Deck card configuration now centers boards, stacks, starting view, list size, and compact rows rather than the previous broad filter matrix.',
       'Time Off Trend exclusions now reliably update the current and historical comparison periods; choose calendars directly, or categories that have calendars assigned to them.',
       'Rapid clicks on Refresh now reuse the active dashboard request instead of showing a rate-limit error.',
+      'Layout editing now keeps the floating widget controls aligned with the dashboard instead of drawing them over the sidebar. On smaller screens, the overlay sidebar closes before editing starts.',
       'Scheduled monthly final reports now catch up after missed first-day runs and keep reporting the completed previous month.',
       'Calendar stats adds a compact, configurable scan of tracked time, planned time, events, and average event duration for the selected calendars.',
       'Deck cards can create a new Deck card directly from the dashboard after you choose its board and stack.',
