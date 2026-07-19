@@ -22,6 +22,8 @@ All notable changes to this project will be documented in this file.
 - Daily event count and avg/event now use today's week-row data instead of falling back to full-period values when the current day is empty.
 - Scheduled monthly final reports now catch up for missed first-day background-job runs and still send the completed previous month instead of silently skipping the recap.
 - Deck Cards `Compact list` is now retained after saving and reloading the dashboard.
+- Time Off Trend calendar and category exclusions now reliably rebuild the current and every historical comparison. The required lookback data is loaded separately in the cache, so an earlier non-lookback response can no longer leave the trend unchanged.
+- Rapid repeated dashboard refreshes are coalesced into one request, preventing an avoidable `429 Too Many Requests` error.
 - Removed the unused Notes feature, including its dashboard widgets, API, report payload fields, keyboard shortcut, and legacy stored-content fixtures.
 
 
