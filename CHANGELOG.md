@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - Removed automatic lookback creation from the overview widget defaults and legacy split path. Existing `time_summary_lookback` widgets still render, but new overview layouts stay current-week focused.
 - Raised the supported Nextcloud minimum from `30` to `31`; app metadata and contributor-facing compatibility references now match the active Forgejo server-test matrix (`31-34`).
 - The active saved-profile badge now lives in the tab bar instead of the Targets widget; clicking it opens Profiles, including from a collapsed sidebar.
+- The layout-edit toolbar now starts with a clear widget-selection prompt instead of a blurred row of disabled actions. Selecting a widget reveals a more prominent Settings button with the existing slider icon.
+- Lookback context now appears once beside the active-profile badge as `Last N weeks` or `Last N months`. The duplicate pills in Time Off Trend and Balance Index were removed; chart legends and data labels are unchanged.
 
 ### Fixed
 - Daily event count and avg/event now use today's week-row data instead of falling back to full-period values when the current day is empty.

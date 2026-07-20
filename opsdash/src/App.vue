@@ -168,13 +168,22 @@
                     </div>
                   </div>
                   <div class="bar-flex1" />
-                  <button
-                    v-if="activePresetRef"
-                    class="active-profile-badge"
-                    type="button"
-                    title="Open profiles"
-                    @click="openProfilesPanel"
-                  >{{ activePresetRef }}</button>
+                  <div v-if="activePresetRef || globalLookbackLabel" class="dashboard-context-badges">
+                    <button
+                      v-if="activePresetRef"
+                      class="active-profile-badge"
+                      type="button"
+                      title="Open profiles"
+                      @click="openProfilesPanel"
+                    >{{ activePresetRef }}</button>
+                    <span v-if="globalLookbackLabel" class="global-lookback-badge" title="Global trend lookback">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M10.5 6a4.5 4.5 0 1 1-1.32-3.18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        <path d="M10.5 1.5v3h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      {{ globalLookbackLabel }}
+                    </span>
+                  </div>
                   <span v-if="isRefreshing" class="refresh-badge" role="status" aria-live="polite">Updating…</span>
                   <button class="btn-ghost" type="button" @click="toggleLayoutEditing">Edit layout</button>
                 </div>
@@ -231,13 +240,22 @@
                     <button type="button" class="tab tab--add" @click="addTab()">+ Tab</button>
                   </div>
                   <div class="bar-flex1" />
-                  <button
-                    v-if="activePresetRef"
-                    class="active-profile-badge"
-                    type="button"
-                    title="Open profiles"
-                    @click="openProfilesPanel"
-                  >{{ activePresetRef }}</button>
+                  <div v-if="activePresetRef || globalLookbackLabel" class="dashboard-context-badges">
+                    <button
+                      v-if="activePresetRef"
+                      class="active-profile-badge"
+                      type="button"
+                      title="Open profiles"
+                      @click="openProfilesPanel"
+                    >{{ activePresetRef }}</button>
+                    <span v-if="globalLookbackLabel" class="global-lookback-badge" title="Global trend lookback">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M10.5 6a4.5 4.5 0 1 1-1.32-3.18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        <path d="M10.5 1.5v3h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      {{ globalLookbackLabel }}
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Row 2: edit context + actions -->
@@ -253,7 +271,7 @@
                   class="itb-row-slot"
                   :style="itbFloating && itbRowHeight ? { minHeight: `${itbRowHeight}px` } : undefined"
                 >
-                  <div ref="itbRowRef" class="bar-row sep itb-row" :class="{ 'itb-row--floating': itbFloating }">
+                  <div ref="itbRowRef" class="bar-row sep itb-row" :class="{ 'itb-row--floating': itbFloating, 'itb-row--empty': !inlineSelectedItem }">
                     <div class="itb">
 
                     <!-- Selected widget chip (far left) -->
@@ -272,9 +290,13 @@
                     </div>
                     <div v-else class="sel-chip sel-chip--empty">
                       <div class="sel-dot sel-dot--empty" />
-                      No selection
+                      <span class="sel-chip__empty-copy">
+                        <strong>Select a widget</strong>
+                        <span>to edit its layout and settings</span>
+                      </span>
                     </div>
 
+                    <template v-if="inlineSelectedItem">
                     <div class="vsep" />
 
                     <!-- Width group -->
@@ -420,14 +442,14 @@
                         @move-to-tab="(tabId) => handleMoveWidgetToTab(inlineSelectedItem!.id, tabId)"
                         @duplicate-to-tab="(tabId) => handleDuplicateWidgetToTab(inlineSelectedItem!.id, tabId)"
                       />
-                      <button v-else class="ic" type="button" disabled title="Widget configuration">
+                      <button v-else class="ic ic--config" type="button" disabled title="Widget settings">
                         <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
                           <path d="M1 3h12M1 6h12M1 9h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                           <circle cx="4" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/>
                           <circle cx="10" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/>
                           <circle cx="6" cy="9" r="1.5" stroke="currentColor" stroke-width="1.3"/>
                         </svg>
-                        <span class="ic-lbl">Config</span>
+                        <span class="ic-lbl">Settings</span>
                       </button>
                     </div>
 
@@ -446,6 +468,16 @@
                       <svg width="11" height="12" viewBox="0 0 11 12" fill="none"><path d="M1 3h9M3.5 3V2a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v1M4.5 5.5v3.5M6.5 5.5v3.5M2 3l.6 7a.5.5 0 00.5.5h4.8a.5.5 0 00.5-.5L9 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       <span class="ic-lbl">Remove</span>
                     </button>
+                    </template>
+                    <div v-else class="itb-empty-preview" aria-hidden="true">
+                      <svg width="16" height="14" viewBox="0 0 14 12" fill="none">
+                        <path d="M1 3h12M1 6h12M1 9h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        <circle cx="4" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                        <circle cx="10" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                        <circle cx="6" cy="9" r="1.5" stroke="currentColor" stroke-width="1.3"/>
+                      </svg>
+                      <span>Settings and layout controls appear here</span>
+                    </div>
 
                     </div>
                   </div>
@@ -1459,6 +1491,12 @@ const balanceCardConfig = computed(() => ({
 const trendLookbackWeeks = computed(() =>
   Math.max(1, Math.min(6, balanceConfigFull.value.trend?.lookbackWeeks ?? 1)),
 )
+const globalLookbackLabel = computed(() => {
+  const count = trendLookbackWeeks.value
+  if (count <= 1) return ''
+  const unit = range.value === 'month' ? 'month' : 'week'
+  return `Last ${count} ${count === 1 ? unit : `${unit}s`}`
+})
 
 const balanceNote = computed(() => '')
 

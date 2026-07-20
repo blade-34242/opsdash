@@ -1,13 +1,13 @@
 <template>
   <div class="options-wrapper" @keydown.stop>
-    <button ref="triggerRef" type="button" class="ic" title="Configure widget" @click.stop="togglePop">
+    <button ref="triggerRef" type="button" class="ic ic--config" title="Open widget settings" @click.stop="togglePop">
       <svg width="14" height="12" viewBox="0 0 14 12" fill="none" aria-hidden="true">
         <path d="M1 3h12M1 6h12M1 9h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
         <circle cx="4" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/>
         <circle cx="10" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/>
         <circle cx="6" cy="9" r="1.5" stroke="currentColor" stroke-width="1.3"/>
       </svg>
-      <span class="ic-lbl">Config</span>
+      <span class="ic-lbl">Settings</span>
     </button>
     <div v-if="open" class="options-pop" :style="popStyle">
       <div class="opt-section">

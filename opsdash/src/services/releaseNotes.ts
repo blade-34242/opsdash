@@ -51,6 +51,8 @@ const RELEASE_NOTES: ReleaseNotesEntry[] = [
       'Calendar stats adds a compact, configurable scan of tracked time, planned time, events, and average event duration for the selected calendars.',
       'Deck cards can create a new Deck card directly from the dashboard after you choose its board and stack.',
       'The active saved-profile badge moved from Targets to the tab bar; click it to open Profiles, even when the sidebar is collapsed.',
+      'Trend lookback now appears once beside the active profile as Last N weeks or months, instead of repeating in Time Off Trend and Balance Index.',
+      'Layout editing starts with a clear Select a widget prompt; after selection, the familiar slider icon appears in a prominent Settings button.',
       'Deck Cards now retains the Compact list setting after dashboard saves and reloads.',
       'The unused Notes widgets and API are gone; legacy data can be cleaned up safely with the supplied occ command.',
     ],

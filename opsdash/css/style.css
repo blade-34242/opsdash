@@ -2050,8 +2050,11 @@
   z-index:120;
   border:1px solid color-mix(in oklab, var(--brand), var(--line) 62%);
   border-radius:0 0 16px 16px;
+  background:var(--card);
   box-shadow:0 12px 34px rgba(15,23,42,.18), 0 3px 10px rgba(15,23,42,.10);
-  backdrop-filter:blur(14px);
+  /* This toolbar is already nearly opaque. A blur here makes its empty state
+     and its available controls look disabled or out of focus. */
+  backdrop-filter:none;
 }
 #opsdash.opsdash-theme-dark .itb-row.itb-row--floating{
   box-shadow:0 12px 34px rgba(2,6,23,.62), 0 3px 10px rgba(2,6,23,.30);
@@ -2066,6 +2069,15 @@
   cursor:pointer;white-space:nowrap;flex-shrink:0;
 }
 #opsdash .active-profile-badge:hover{ background:color-mix(in srgb,var(--brand,#2563eb) 20%,transparent); }
+#opsdash .dashboard-context-badges{ display:inline-flex;align-items:center;gap:6px;flex-shrink:0; }
+#opsdash .global-lookback-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--brand,#2563eb) 16%,transparent);
+  background:color-mix(in srgb,var(--brand,#2563eb) 7%,transparent);
+  color:color-mix(in srgb,var(--brand,#2563eb) 74%,var(--muted));
+  font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0;
+}
 
 @media (max-width: 1100px){
   #opsdash .itb-row.itb-row--floating{
@@ -2297,6 +2309,25 @@
   border:1px solid color-mix(in oklab,var(--brand),transparent 82%);
   background:color-mix(in oklab,var(--brand),transparent 96%);
 }
+#opsdash .ic--config{
+  width:auto;
+  min-width:82px;
+  padding:0 11px;
+  flex-direction:row;
+  gap:7px;
+  border:1px solid color-mix(in oklab,var(--brand),transparent 60%);
+  background:color-mix(in oklab,var(--brand),transparent 88%);
+  color:var(--brand);
+  box-shadow:0 3px 10px color-mix(in oklab,var(--brand),transparent 88%);
+}
+#opsdash .ic--config svg{ width:18px;height:16px; }
+#opsdash .ic--config .ic-lbl{ font-size:10px; }
+#opsdash .ic--config:hover:not(:disabled),
+#opsdash .ic--config:focus-visible{
+  background:color-mix(in oklab,var(--brand),transparent 80%);
+  outline:2px solid color-mix(in oklab,var(--brand),transparent 65%);
+  outline-offset:2px;
+}
 #opsdash .ic-group.open .ic-group__trigger{
   background:color-mix(in oklab,var(--brand),transparent 90%);
   color:var(--brand);
@@ -2371,7 +2402,8 @@
   background:color-mix(in oklab,var(--brand),transparent 90%);
   color:var(--brand);
 }
-#opsdash .ic:disabled{ opacity:.28;cursor:default; }
+#opsdash .ic:disabled{ opacity:.38;cursor:default; }
+#opsdash .itb-row--empty .ic:disabled{ opacity:.5;filter:none; }
 #opsdash .ic-danger:hover:not(:disabled){
   background:rgba(220,38,38,.10);color:#dc2626;
 }
@@ -2421,10 +2453,28 @@
   font-style:italic;font-weight:700;
 }
 #opsdash .sel-chip--empty{
-  opacity:.4;
-  border-style:dashed;
-  background:transparent;
+  min-width:250px;
+  height:auto;
+  padding:7px 11px;
+  border-style:solid;
+  border-color:color-mix(in oklab,var(--brand),transparent 72%);
+  background:color-mix(in oklab,var(--brand),transparent 94%);
+  color:var(--fg);
 }
+#opsdash .sel-chip__empty-copy{ display:flex;flex-direction:column;gap:1px;line-height:1.25; }
+#opsdash .sel-chip__empty-copy strong{ color:var(--brand);font-size:11px; }
+#opsdash .sel-chip__empty-copy span{ color:var(--muted);font-size:10px;font-weight:650; }
+#opsdash .itb-empty-preview{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-left:4px;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  white-space:nowrap;
+}
+#opsdash .itb-empty-preview svg{ color:var(--brand);opacity:.72;flex-shrink:0; }
 #opsdash .sel-dot{
   width:7px;height:7px;border-radius:50%;
   background:var(--brand);opacity:.75;flex-shrink:0;

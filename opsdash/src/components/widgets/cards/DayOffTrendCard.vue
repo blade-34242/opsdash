@@ -2,7 +2,6 @@
   <div class="card dayoff-card" :style="cardStyle">
     <div class="dayoff-card__header" v-if="showHeader">
       <span>{{ titleText }}</span>
-      <span v-if="lookbackLabel" class="pill">{{ lookbackLabel }}</span>
     </div>
     <div
       v-if="tiles.length"
@@ -140,13 +139,6 @@ const tiles = computed<DayOffTrendTile[]>(() => {
     return base
   }
   return base.slice().reverse()
-})
-
-const lookbackLabel = computed(() => {
-  const history = historyCount.value
-  if (history <= 0) return ''
-  const unitWord = props.unit === 'mo' ? 'month' : 'week'
-  return `Last ${history} ${history === 1 ? unitWord : `${unitWord}s`}`
 })
 
 const titleText = computed(() => props.title || 'Days off trend')

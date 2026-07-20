@@ -3,7 +3,6 @@
     <div class="header" :class="{ compact: isCompact }">
       <div class="title-row" v-if="showHeader">
         <span class="title">{{ titleText }}</span>
-        <span v-if="lookbackLabel && showTrend" class="pill">{{ lookbackLabel }}</span>
       </div>
       <div class="index" :class="{ centered: isCompact }" v-if="overview">
         <div class="index-badge" :style="indexBadgeStyle" :title="indexTitle">
@@ -218,12 +217,6 @@ const isCompact = computed(() => {
   const noMessages = props.showMessages === false || limitedMessages.value.length === 0
   const noConfig = props.showConfig === false
   return noTrend && noMessages && noConfig
-})
-const lookbackLabel = computed(() => {
-  const history = historyCount.value
-  if (history <= 0) return ''
-  const unitWord = historyUnit.value === 'mo' ? 'month' : 'week'
-  return `Last ${history} ${history === 1 ? unitWord : `${unitWord}s`}`
 })
 const currentIndex = computed(() => {
   const raw = props.overview?.index
