@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
 ## 0.8.3 - 2026-07-20
 ### Added
 - Added a redesigned `Time Summary (Overview)` widget focused on the current day and current week.

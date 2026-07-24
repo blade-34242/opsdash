@@ -43,6 +43,19 @@ root = pathlib.Path('.').resolve()
 workspace_root = root.parent
 today = date.today().isoformat()
 
+# Validate every changelog insertion point before touching a version source.
+# A missing marker must fail atomically rather than leaving a partial bump.
+def require_unreleased_heading(path: pathlib.Path) -> None:
+    text = path.read_text(encoding='utf-8')
+    if not re.search(r'## Unreleased\n.*?(?=\n## |\Z)', text, re.S):
+        raise SystemExit(f'[version-bump] Could not find "## Unreleased" in {path}.')
+
+app_changelog = root / 'CHANGELOG.md'
+docs_changelog = workspace_root / 'opsdash-docs' / 'release' / 'CHANGELOG.md'
+require_unreleased_heading(app_changelog)
+if docs_changelog.exists():
+    require_unreleased_heading(docs_changelog)
+
 info_path = root / 'opsdash' / 'appinfo' / 'info.xml'
 info_text = info_path.read_text(encoding='utf-8')
 info_text, count = re.subn(r'<version>\s*[^<]+\s*</version>', f'<version>{version}</version>', info_text, count=1)
@@ -86,7 +99,7 @@ for path in replace_targets:
 def ensure_version_heading(path: pathlib.Path, heading_body: str) -> None:
     text = path.read_text(encoding='utf-8')
     heading = f'## {version} - {today}'
-    if heading in text:
+    if re.search(rf'^## {re.escape(version)} - ', text, re.M):
         return
     match = re.search(r'## Unreleased\n.*?(?=\n## |\Z)', text, re.S)
     if not match:
@@ -95,7 +108,6 @@ def ensure_version_heading(path: pathlib.Path, heading_body: str) -> None:
     text = text[:insert_at] + '\n\n' + heading_body + text[insert_at:]
     path.write_text(text, encoding='utf-8')
 
-app_changelog = root / 'CHANGELOG.md'
 ensure_version_heading(
     app_changelog,
     (
@@ -105,7 +117,6 @@ ensure_version_heading(
     ),
 )
 
-docs_changelog = workspace_root / 'opsdash-docs' / 'release' / 'CHANGELOG.md'
 if docs_changelog.exists():
     ensure_version_heading(
         docs_changelog,
